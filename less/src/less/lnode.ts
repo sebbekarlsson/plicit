@@ -1,14 +1,21 @@
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
+import { getElementsAttributesDiff } from "./element";
 import { LProxy, proxy, ref, Ref, unref } from "./proxy";
-import { isInputElement, isText, NativeElement, NativeElementListeners, ReactiveDep } from "./types";
+import {
+  isHTMLElement,
+  isText,
+  NativeElement,
+  NativeElementListeners,
+  ReactiveDep,
+} from "./types";
 
 type LNodeChild = LNode | Component;
 
 export enum ELNodeType {
   ELEMENT = "ELEMENT",
-  TEXT_ELEMENT = "TEXT_ELEMENT"
-} 
+  TEXT_ELEMENT = "TEXT_ELEMENT",
+}
 
 export type LNodeAttributes = {
   text?: any;
@@ -19,10 +26,10 @@ export type LNodeAttributes = {
   style?: CSSProperties | string;
   nodeType?: ELNodeType;
   [key: string]: any;
-}
+};
 export class LNode {
-  _lnode: 'lnode' = 'lnode' as 'lnode';
-  key: string = '';
+  _lnode: "lnode" = "lnode" as "lnode";
+  key: string = "";
   el?: HTMLElement | Text;
   parent: Ref<LNode | undefined>;
   attributes: LProxy<LNodeAttributes>;
@@ -37,36 +44,43 @@ export class LNode {
     this.attributes = proxy<LNodeAttributes>(attributes || {});
     this.parent = ref<LNode | undefined>(undefined);
     this.component = ref<Component | undefined>(undefined);
-    this.key = this.attributes.key || '';
+    this.key = this.attributes.key || "";
     this.type = this.attributes.nodeType || this.type;
 
     for (const dep of this.attributes.deps || []) {
       dep.subscribe({
-        get: () => {
-         // if (!this.component.value) {
-         //   this.invalidate();
-         // }
-        },
+        get: () => {},
         set: () => {
           this.invalidate();
-        }
-      })
+        },
+      });
     }
   }
 
   invalidate() {
     if (!this.parent.value) return;
-    if (this.el) {
+    const old = this.el;
+    if (this.el && old) {
       const component = this.component.value;
       if (component) {
         const next = unwrapComponentTree(component);
         const nextEl = next.getElement();
 
-        // TODO: get rid of this hack (this prevents re-rendering entire input field)
-        if (isInputElement(this.el) && isInputElement(nextEl)) {
-          this.el.value = nextEl.value;
+        if (isHTMLElement(old) && isHTMLElement(nextEl)) {
+          if (old.innerHTML !== nextEl.innerHTML) {
+            this.el.replaceWith(nextEl);
+            this.el = nextEl;
+          } else {
+            const diff = getElementsAttributesDiff(old, nextEl);
+            diff.forEach(([key, value]) => {
+              this.attributes[key] = value;
+              old.setAttribute(key, value);
+              (old as any)[key] = value;
+            });
+          }
           return;
         }
+
         this.el.replaceWith(nextEl);
         this.el = nextEl;
         return;
@@ -84,12 +98,13 @@ export class LNode {
   }
 
   createElement() {
-    if (this.type === ELNodeType.TEXT_ELEMENT) return document.createTextNode(this.attributes.text || '');
+    if (this.type === ELNodeType.TEXT_ELEMENT)
+      return document.createTextNode(this.attributes.text || "");
     return document.createElement(this.name);
   }
 
   ensureElement(forceNew: boolean = false) {
-    if (forceNew) return this.createElement(); 
+    if (forceNew) return this.createElement();
     if (this.el) return this.el;
     const el = this.createElement();
     this.el = el;
@@ -113,7 +128,7 @@ export class LNode {
     if (!this.children.includes(child)) {
       this.children.push(child);
     }
-    this.mappedChildren[key] = child; 
+    this.mappedChildren[key] = child;
     unwrapped.parent.value = this;
   }
 
@@ -129,37 +144,40 @@ export class LNode {
       if (isText(el)) {
         el.data = this.attributes.text;
       } else {
-        el.innerHTML = '';
-        el.innerText = unref(this.attributes.text) + '';
-       }
+        el.innerHTML = "";
+        el.innerText = unref(this.attributes.text) + "";
+      }
     }
     const style = this.attributes.style;
     if (style) {
       if (!isText(el)) {
-        el.setAttribute('style', typeof style === 'string' ? style : cssPropsToString(style));
+        el.setAttribute(
+          "style",
+          typeof style === "string" ? style : cssPropsToString(style),
+        );
       }
     }
     for (const [key, value] of Object.entries(this.attributes.on || {})) {
       el.addEventListener(key, value);
     }
     for (const [key, value] of Object.entries(this.attributes)) {
-      if (['text', 'children', 'on', 'style', 'nodeType'].includes(key)) continue;
-      if (typeof value !== 'string') continue;
+      if (["text", "children", "on", "style", "nodeType"].includes(key))
+        continue;
+      if (typeof value !== "string") continue;
       if (isText(el)) continue;
       el.setAttribute(key, value);
-      if (key === 'value') {
+      if (key === "value") {
         (el as HTMLInputElement).value = value;
       }
     }
-    for (const child of (this.attributes.children || [])) {
+    for (const child of this.attributes.children || []) {
       this.appendChild(child);
     }
     return el;
   }
 }
 
-
-export const lnode = (name: string, attributes?: LNodeAttributes) => new LNode(name, attributes); 
-
-
-export const isLNode = (x: any): x is LNode => typeof x === 'object' && x._lnode === 'lnode'
+export const lnode = (name: string, attributes?: LNodeAttributes) =>
+  new LNode(name, attributes);
+export const isLNode = (x: any): x is LNode =>
+  typeof x === "object" && x._lnode === "lnode";

@@ -49,6 +49,7 @@ const ItemList = () => {
               nextItem.value = next;
             }}
             type="text"
+            placeholder="Name your item..."
             value={nextItem.value}
             deps={[nextItem]}
           />
