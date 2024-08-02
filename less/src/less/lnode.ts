@@ -1,7 +1,7 @@
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
 import { LProxy, proxy, ref, Ref, unref } from "./proxy";
-import { isText, NativeElement, NativeElementListeners, ReactiveDep } from "./types";
+import { isInputElement, isText, NativeElement, NativeElementListeners, ReactiveDep } from "./types";
 
 type LNodeChild = LNode | Component;
 
@@ -61,6 +61,12 @@ export class LNode {
       if (component) {
         const next = unwrapComponentTree(component);
         const nextEl = next.getElement();
+
+        // TODO: get rid of this hack (this prevents re-rendering entire input field)
+        if (isInputElement(this.el) && isInputElement(nextEl)) {
+          this.el.value = nextEl.value;
+          return;
+        }
         this.el.replaceWith(nextEl);
         this.el = nextEl;
         return;
@@ -111,6 +117,12 @@ export class LNode {
     unwrapped.parent.value = this;
   }
 
+  setAttribute(key: string, value: string) {
+    if (!this.el) return;
+    if (isText(this.el)) return;
+    this.el.setAttribute(key, value);
+  }
+
   render(forceNew: boolean = false) {
     const el = this.ensureElement(forceNew);
     if (this.attributes.text) {
@@ -134,8 +146,10 @@ export class LNode {
       if (['text', 'children', 'on', 'style', 'nodeType'].includes(key)) continue;
       if (typeof value !== 'string') continue;
       if (isText(el)) continue;
-      
       el.setAttribute(key, value);
+      if (key === 'value') {
+        (el as HTMLInputElement).value = value;
+      }
     }
     for (const child of (this.attributes.children || [])) {
       this.appendChild(child);
