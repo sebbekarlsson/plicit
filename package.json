@@ -1,0 +1,31 @@
+{
+  "name": "less",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "cd less && npm run build"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "workspaces": [
+    "less",
+    "less-dev"
+  ],
+  "exports": {
+    "./less": {
+      "import": {
+        "types": "./less/dist/index.d.ts",
+        "default": "./less/dist/index.js"
+      },
+      "require": {
+        "types": "./less/dist/index.d.ts",
+        "default": "./less/dist/index.js"
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.1.0"
+  }
+}
