@@ -1,4 +1,4 @@
-import { Dict, Indexable } from "./types";
+import { Indexable } from "./types";
 
 export type LProxy<T extends Indexable> = T;
 

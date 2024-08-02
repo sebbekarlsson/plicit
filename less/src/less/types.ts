@@ -10,3 +10,9 @@ export type UnknownNativeListener = (this: HTMLButtonElement, ev: HTMLElementEve
 export type NativeElementListeners = Record<keyof HTMLElementEventMap, UnknownNativeListener>;
 
 export type ReactiveDep = Ref
+
+
+export const isText = (x: any): x is Text => {
+  if (typeof x !== 'object') return false;
+  return typeof x.appendChild === 'undefined';// && typeof x.data === 'string';
+}

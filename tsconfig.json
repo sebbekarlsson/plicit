@@ -16,7 +16,9 @@
     "listFiles": false,
     "pretty": true,
     "lib": ["es2020", "dom"],
-    "types": ["node"]
+    "types": ["node"],
+    "jsx": "react",
+    "jsxFactory": "ljsx"
   },
   "compileOnSave": false
 }

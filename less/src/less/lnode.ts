@@ -1,8 +1,14 @@
 import { Component, isComponent, unwrapComponentTree } from "./component";
+import { CSSProperties, cssPropsToString } from "./css";
 import { LProxy, proxy, ref, Ref, unref } from "./proxy";
-import { NativeElement, NativeElementListeners, ReactiveDep } from "./types";
+import { isText, NativeElement, NativeElementListeners, ReactiveDep } from "./types";
 
 type LNodeChild = LNode | Component;
+
+export enum ELNodeType {
+  ELEMENT = "ELEMENT",
+  TEXT_ELEMENT = "TEXT_ELEMENT"
+} 
 
 export type LNodeAttributes = {
   text?: any;
@@ -10,20 +16,21 @@ export type LNodeAttributes = {
   on?: Partial<NativeElementListeners>;
   deps?: ReactiveDep[];
   key?: string;
+  style?: CSSProperties | string;
+  nodeType?: ELNodeType;
   [key: string]: any;
 }
-
-
 export class LNode {
   _lnode: 'lnode' = 'lnode' as 'lnode';
   key: string = '';
-  el?: HTMLElement;
+  el?: HTMLElement | Text;
   parent: Ref<LNode | undefined>;
   attributes: LProxy<LNodeAttributes>;
   name: string;
   children: LNodeChild[] = [];
   mappedChildren: Record<string, LNodeChild> = {};
   component: Ref<Component | undefined>;
+  type: ELNodeType = ELNodeType.ELEMENT;
 
   constructor(name: string, attributes?: LNodeAttributes) {
     this.name = name;
@@ -31,6 +38,7 @@ export class LNode {
     this.parent = ref<LNode | undefined>(undefined);
     this.component = ref<Component | undefined>(undefined);
     this.key = this.attributes.key || '';
+    this.type = this.attributes.nodeType || this.type;
 
     for (const dep of this.attributes.deps || []) {
       dep.subscribe({
@@ -69,10 +77,15 @@ export class LNode {
     target.appendChild(el);
   }
 
+  createElement() {
+    if (this.type === ELNodeType.TEXT_ELEMENT) return document.createTextNode(this.attributes.text || '');
+    return document.createElement(this.name);
+  }
+
   ensureElement(forceNew: boolean = false) {
-    if (forceNew) return document.createElement(this.name);
+    if (forceNew) return this.createElement(); 
     if (this.el) return this.el;
-    const el = document.createElement(this.name);
+    const el = this.createElement();
     this.el = el;
     return el;
   }
@@ -89,6 +102,7 @@ export class LNode {
     }
     const key = unwrapped.key;
     const el = this.ensureElement();
+    if (isText(el)) return;
     unwrapped.mountTo(el);
     if (!this.children.includes(child)) {
       this.children.push(child);
@@ -100,15 +114,27 @@ export class LNode {
   render(forceNew: boolean = false) {
     const el = this.ensureElement(forceNew);
     if (this.attributes.text) {
-      el.innerHTML = '';
-      el.innerText = unref(this.attributes.text) + '';
+      if (isText(el)) {
+        el.data = this.attributes.text;
+      } else {
+        el.innerHTML = '';
+        el.innerText = unref(this.attributes.text) + '';
+       }
+    }
+    const style = this.attributes.style;
+    if (style) {
+      if (!isText(el)) {
+        el.setAttribute('style', typeof style === 'string' ? style : cssPropsToString(style));
+      }
     }
     for (const [key, value] of Object.entries(this.attributes.on || {})) {
       el.addEventListener(key, value);
     }
     for (const [key, value] of Object.entries(this.attributes)) {
-      if (['text', 'children', 'on'].includes(key)) continue;
+      if (['text', 'children', 'on', 'style', 'nodeType'].includes(key)) continue;
       if (typeof value !== 'string') continue;
+      if (isText(el)) continue;
+      
       el.setAttribute(key, value);
     }
     for (const child of (this.attributes.children || [])) {
