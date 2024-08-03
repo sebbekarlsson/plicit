@@ -1,89 +1,57 @@
 import "./assets/css/index.css";
-import { ljsx, ref } from "less";
+import { computed, ljsx, ref } from "less";
 import { ModalContainer } from "./components/modal/container";
 import { NavBar } from "./components/navbar";
 import { Card } from "./components/card";
-import { Button } from "./components/button";
+import { Counter } from "./components/counter";
+import { ItemList } from "./components/item-list";
+import { useFakeDatabase } from "./hooks/useFakeDatabase";
+import { ITable, ITableRow } from "./components/table/types";
+import { Table } from "./components/table";
 import { InputField } from "./components/input-field";
 
-const Counter = () => {
-  const counter = ref<number>(0);
-  return () => {
-    return (
-      <div class="space-y-2">
-        <div class="text-gray-700 text-sm">
-          The counter is{" "}
-          {() => (
-            <span class="text-gray-900 font-semibold" deps={[counter]}>
-              {counter.value}
-            </span>
-          )}
-        </div>
-        <Button
-          on={{
-            click: () => (counter.value = counter.value + 1),
-          }}
-        >
-          Click
-        </Button>
-      </div>
-    );
-  };
-};
+globalThis.ljsx = ljsx;
 
-const ItemList = () => {
-  const items = ref<{ label: string, id: number }[]>([]);
-  const nextItem = ref<string>("");
-  let idCounter: number = 0;
+const PeopleTable = () => {
+  const query = ref<string>('');
+  const db = useFakeDatabase({
+    query,
+    count: 256
+  });
 
-  const addItem = (label: string) => {
-    items.value = [...items.value, { label, id: idCounter++ }]
+  const rows = computed((): ITableRow[] => {
+    return db.users.value.map((user) => {
+      return {
+        columns: [
+          {
+            label: 'firstname',
+            body: () => <span>{user.firstname}</span>
+          },
+          {
+            label: 'lastname',
+            body: () => <span>{user.lastname}</span>
+          },
+          {
+            label: 'age',
+            body: () => <span>{user.age}</span>
+          }  
+        ]
+      }
+    })
+  }, [db.users, query]);
+
+  const table: ITable = {
+    rows
   }
 
-  return (
-    <div class="space-y-2">
-      <div class="grid grid-cols-[1fr,max-content] gap-[1rem]">
-        {() => (
-          <InputField
-            onChange={(next) => {
-              nextItem.value = next;
-            }}
-            type="text"
-            placeholder="Name your item..."
-            value={nextItem.value}
-            deps={[nextItem]}
-          />
-        )}
-        <Button
-          on={{
-            click: () => {
-              if (nextItem.value.length <= 0) return;
-              addItem(nextItem.value);
-              nextItem.value = "";
-            },
-          }}
-        >
-          Add Item
-        </Button>
-      </div>
-      {() => (
-        <div deps={[items]} class="h-[300px] overflow-auto">
-          {items.value.map((it) => {
-            return (
-              <div class="w-full h-[2rem] flex items-center text-gray-700 hover:bg-blue-100 cursor-pointer" on={{
-                click: () => {
-                  items.value = items.value.filter(item => item.id !== it.id); 
-                }
-              }}>
-                {it.label}
-              </div>
-            );
-          })}
-        </div>
-      )}
+  return () => <div class="h-[300px] flex flex-col">
+    <div class="h-[4rem] flex-none flex items-start">
+      <InputField value={query.value} type="text" onChange={(val) => query.value = val} deps={[query]} placeholder="Search..."/>
     </div>
-  );
-};
+    <Table table={table}/> 
+  </div> 
+}
+
 
 const App = (
   <div class="w-full h-full">
@@ -101,6 +69,9 @@ const App = (
         </Card>
         <Card title="Item List">
           <ItemList />
+        </Card>
+        <Card title="Table">
+          <PeopleTable/>
         </Card>
       </div>
     </div>

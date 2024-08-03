@@ -1,4 +1,4 @@
-import { Ref } from "./proxy";
+import { isRef, Ref } from "./proxy";
 
 export type Dict<T = any> = {[key: string]: T};
 
@@ -9,7 +9,15 @@ export type NativeListener<K extends keyof HTMLElementEventMap> = (this: HTMLBut
 export type UnknownNativeListener = (this: HTMLButtonElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any;
 export type NativeElementListeners = Record<keyof HTMLElementEventMap, UnknownNativeListener>;
 
-export type ReactiveDep = Ref
+export type ReactiveDep<T = any> = Ref<T> | (() => T) | (() => any);
+
+export const unwrapReactiveDep = <T = any>(dep: ReactiveDep<T>): Ref<T> => {
+  if (isRef<T>(dep)) return dep;
+  if (typeof dep === 'function') {
+    return unwrapReactiveDep<T>(dep());
+  };
+  throw new Error('Not a ref');
+}
 
 
 export const isText = (x: any): x is Text => {

@@ -1,17 +1,18 @@
-import { ref } from "./proxy";
-import { ReactiveDep } from "./types";
+import { Ref, ref } from "./proxy";
+import { ReactiveDep, unwrapReactiveDep } from "./types";
 
-export const computed = <T = any>(fun: () => T, deps: ReactiveDep[] = []) => {
+export const computed = <T = any>(fun: () => T, deps: ReactiveDep[] = []): Ref<T> => {
   const r = ref<T>(fun());
 
   deps.forEach((dep) => {
-    dep.subscribe({
+    const d = unwrapReactiveDep(dep);
+    d.subscribe({
       set: () => {
         r.value = fun();
       },
-      get: () => {}
-    })
+      get: () => {},
+    });
   });
 
   return r;
-}
+};

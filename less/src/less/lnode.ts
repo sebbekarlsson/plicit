@@ -8,7 +8,9 @@ import {
   NativeElement,
   NativeElementListeners,
   ReactiveDep,
+  unwrapReactiveDep,
 } from "./types";
+import { stringGenerator } from "./utils";
 
 type LNodeChild = LNode | Component;
 
@@ -25,8 +27,12 @@ export type LNodeAttributes = {
   key?: string;
   style?: CSSProperties | string;
   nodeType?: ELNodeType;
+  tag?: string;
   [key: string]: any;
 };
+
+const stringGen = stringGenerator();
+
 export class LNode {
   _lnode: "lnode" = "lnode" as "lnode";
   key: string = "";
@@ -38,9 +44,10 @@ export class LNode {
   mappedChildren: Record<string, LNodeChild> = {};
   component: Ref<Component | undefined>;
   type: ELNodeType = ELNodeType.ELEMENT;
+  uid: string = stringGen.next(16)
 
   constructor(name: string, attributes?: LNodeAttributes) {
-    this.name = name;
+    this.name = attributes.tag || name;
     this.attributes = proxy<LNodeAttributes>(attributes || {});
     this.parent = ref<LNode | undefined>(undefined);
     this.component = ref<Component | undefined>(undefined);
@@ -48,7 +55,8 @@ export class LNode {
     this.type = this.attributes.nodeType || this.type;
 
     for (const dep of this.attributes.deps || []) {
-      dep.subscribe({
+      const d = unwrapReactiveDep(dep);
+      d.subscribe({
         get: () => {},
         set: () => {
           this.invalidate();

@@ -51,6 +51,7 @@ export type RawRef<T = any> = {
   trigger: (key: string) => void;
 };
 export type Ref<T = any> = LProxy<RawRef<T>>;
+export type MaybeRef<T = any> = Ref<T> | T;
 
 export const ref = <T = any>(initial: T): Ref<T> => {
   const state = proxy<RefState<T>>({
