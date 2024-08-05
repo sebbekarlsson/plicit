@@ -1,5 +1,6 @@
 import { Component, isComponent } from "./component";
 import { ELNodeType, isLNode, lnode, LNodeAttributes } from "./lnode";
+import { isRef } from "./proxy";
 
 export function ljsx(
   tag: string | Component,
@@ -13,7 +14,7 @@ export function ljsx(
         : child,
     )
     .flat()
-    .filter((it) => isLNode(it) || isComponent(it));
+    .filter((it) => isLNode(it) || isComponent(it) || isRef(it));
 
   if (isComponent(tag)) {
     return () => tag({ ...attribs, children: children });

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "My webpack project",
+  "description": "less-dev",
   "name": "less-dev",
   "scripts": {
     "build": "webpack --mode=production --node-env=production",

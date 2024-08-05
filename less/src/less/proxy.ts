@@ -1,4 +1,4 @@
-import { Indexable } from "./types";
+import { Indexable, ReactiveDep } from "./types";
 
 export type LProxy<T extends Indexable> = T;
 
@@ -17,13 +17,13 @@ export const proxy = <T extends Indexable>(
       subscribers.forEach((sub) => sub.get(target, key, _receiver));
       return target[key];
     },
-    set: (target, p, next, _receiver) => {
+    set: (target, p, next, receiver) => {
       const key = p as keyof T;
-      const prev = target[key];
+      const prev = Reflect.get(target, key, receiver);
       if (prev === next) return true;
-      target[key] = next;
-      subscribers.forEach((sub) => sub.set(target, key, next, _receiver));
-      return true;
+      const result = Reflect.set(target,p, next, receiver);
+      subscribers.forEach((sub) => sub.set(target, key, next, receiver));
+      return result;
     },
   });
 };
@@ -47,6 +47,7 @@ export type RawRef<T = any> = {
   value: T;
   _ref: "ref";
   _state: LProxy<RefState<T>>;
+  _deps: ReactiveDep[];
   subscribe: (subscriber: RefSubscriber<T>) => () => void;
   trigger: (key: string) => void;
 };
@@ -61,6 +62,7 @@ export const ref = <T = any>(initial: T): Ref<T> => {
     value: initial,
     _ref: "ref" as "ref",
     _state: state,
+    _deps: [],
     subscribe: (sub) => {
       state.subscribers.push(sub);
 

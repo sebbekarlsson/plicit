@@ -1,7 +1,7 @@
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
 import { getElementsAttributesDiff } from "./element";
-import { LProxy, proxy, ref, Ref, unref } from "./proxy";
+import { isRef, LProxy, MaybeRef, proxy, ref, Ref, unref } from "./proxy";
 import {
   isHTMLElement,
   isText,
@@ -12,7 +12,7 @@ import {
 } from "./types";
 import { stringGenerator } from "./utils";
 
-type LNodeChild = LNode | Component;
+type LNodeChild = MaybeRef<LNode> | Component;
 
 export enum ELNodeType {
   ELEMENT = "ELEMENT",
@@ -44,7 +44,7 @@ export class LNode {
   mappedChildren: Record<string, LNodeChild> = {};
   component: Ref<Component | undefined>;
   type: ELNodeType = ELNodeType.ELEMENT;
-  uid: string = stringGen.next(16)
+  uid: string = stringGen.next(16);
 
   constructor(name: string, attributes?: LNodeAttributes) {
     this.name = attributes.tag || name;
@@ -72,7 +72,7 @@ export class LNode {
       const component = this.component.value;
       if (component) {
         const next = unwrapComponentTree(component);
-        const nextEl = next.getElement();
+        const nextEl = unref(next).getElement();
 
         if (isHTMLElement(old) && isHTMLElement(nextEl)) {
           if (old.innerHTML !== nextEl.innerHTML) {
@@ -120,24 +120,47 @@ export class LNode {
   }
 
   getElement(forceNew: boolean = false) {
-    if (this.el) return this.el;
+    if (this.el && !forceNew) return this.el;
     return this.render(forceNew);
+  }
+
+  private onReceiveChild(child: LNodeChild) {
+    if (isRef(child)) {
+      child._deps.forEach((d) => {
+        const un = unwrapReactiveDep(d);
+        un.subscribe({
+          get: (_target, key) => {
+            if (key === "value") {
+              unref(child).invalidate();
+            }
+          },
+          set: (_target, key) => {
+            if (key === "value") {
+              this.appendChild(child);
+            }
+          },
+        });
+      });
+    }
   }
 
   appendChild(child: LNodeChild) {
     const unwrapped = unwrapComponentTree(child);
+    const unreffed = unref(unwrapped);
     if (isComponent(child)) {
-      unwrapped.component.value = child;
+      unreffed.component.value = child;
     }
-    const key = unwrapped.key;
+    const key = unreffed.key;
     const el = this.ensureElement();
     if (isText(el)) return;
-    unwrapped.mountTo(el);
     if (!this.children.includes(child)) {
       this.children.push(child);
+      this.onReceiveChild(child);
     }
+
     this.mappedChildren[key] = child;
-    unwrapped.parent.value = this;
+    unreffed.parent.value = this;
+    unreffed.mountTo(el);
   }
 
   setAttribute(key: string, value: string) {
@@ -159,7 +182,7 @@ export class LNode {
     const style = this.attributes.style;
     if (style) {
       if (!isText(el)) {
-        el.setAttribute(
+        this.setAttribute(
           "style",
           typeof style === "string" ? style : cssPropsToString(style),
         );
@@ -173,7 +196,7 @@ export class LNode {
         continue;
       if (typeof value !== "string") continue;
       if (isText(el)) continue;
-      el.setAttribute(key, value);
+      this.setAttribute(key, value);
       if (key === "value") {
         (el as HTMLInputElement).value = value;
       }

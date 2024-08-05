@@ -1,4 +1,4 @@
-import { ref } from "less";
+import { computed, ref } from "less";
 import { Button } from "../button";
 
 export const Counter = () => {
@@ -8,10 +8,11 @@ export const Counter = () => {
       <div class="space-y-2">
         <div class="text-gray-700 text-sm">
           The counter is{" "}
-          {() => (
-            <span class="text-gray-900 font-semibold" deps={[counter]}>
-              {counter.value}
-            </span>
+          {computed(
+            () => (
+              <span class="text-gray-900 font-semibold">{counter.value}</span>
+            ),
+            [counter],
           )}
         </div>
         <Button
