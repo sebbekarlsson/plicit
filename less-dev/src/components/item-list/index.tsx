@@ -1,14 +1,25 @@
 import { ref } from "less";
 import { InputField } from "../input-field";
 import { Button } from "../button";
+import { useToasts } from "../toast/hook";
 
 export const ItemList = () => {
+
+  const toasts = useToasts();
+  
   const items = ref<{ label: string, id: number }[]>([]);
   const nextItem = ref<string>("");
   let idCounter: number = 0;
 
   const addItem = (label: string) => {
-    items.value = [...items.value, { label, id: idCounter++ }]
+    items.value = [...items.value, { label, id: idCounter++ }];
+
+    toasts.push({ message: `You added ${label}!` })
+  }
+
+  const removeItem = (id: number) => {
+    items.value = items.value.filter(item => item.id !== id)
+    toasts.push({ message: `You deleted an item!` })
   }
 
   return (
@@ -43,7 +54,7 @@ export const ItemList = () => {
             return (
               <div class="w-full h-[2rem] flex items-center text-gray-700 hover:bg-blue-100 cursor-pointer" on={{
                 click: () => {
-                  items.value = items.value.filter(item => item.id !== it.id); 
+                  removeItem(it.id);
                 }
               }}>
                 {it.label}

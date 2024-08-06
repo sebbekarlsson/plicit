@@ -35,3 +35,13 @@ export const isInputElement = (x: any): x is HTMLInputElement => {
   if (typeof x !== 'object') return false;
   return isHTMLElement(x) && x.tagName === 'INPUT';
 }
+
+export const isSVGElement = (x: any): x is SVGSVGElement => {
+  if (typeof x !== 'object') return false;
+  return isHTMLElement(x) && x.tagName === 'SVG';
+}
+
+export const isSVGPathElement = (x: any): x is SVGPathElement => {
+  if (typeof x !== 'object') return false;
+  return isHTMLElement(x) && x.tagName === 'PATH';
+}

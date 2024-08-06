@@ -4,6 +4,8 @@ import { getElementsAttributesDiff } from "./element";
 import { isRef, LProxy, MaybeRef, proxy, ref, Ref, unref } from "./proxy";
 import {
   isHTMLElement,
+  isSVGElement,
+  isSVGPathElement,
   isText,
   NativeElement,
   NativeElementListeners,
@@ -36,7 +38,7 @@ const stringGen = stringGenerator();
 export class LNode {
   _lnode: "lnode" = "lnode" as "lnode";
   key: string = "";
-  el?: HTMLElement | Text;
+  el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
   parent: Ref<LNode | undefined>;
   attributes: LProxy<LNodeAttributes>;
   name: string;
@@ -106,6 +108,11 @@ export class LNode {
   }
 
   createElement() {
+    if (this.name === 'svg') {
+      return document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    } else if (this.name === 'path') {
+      return document.createElementNS("http://www.w3.org/2000/svg", 'path');
+    }
     if (this.type === ELNodeType.TEXT_ELEMENT)
       return document.createTextNode(this.attributes.text || "");
     return document.createElement(this.name);
@@ -174,7 +181,7 @@ export class LNode {
     if (this.attributes.text) {
       if (isText(el)) {
         el.data = this.attributes.text;
-      } else {
+      } else if (!isSVGElement(el) && !isSVGPathElement(el)) {
         el.innerHTML = "";
         el.innerText = unref(this.attributes.text) + "";
       }

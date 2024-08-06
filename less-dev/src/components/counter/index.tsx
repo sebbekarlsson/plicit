@@ -5,7 +5,7 @@ export const Counter = () => {
   const counter = ref<number>(0);
   return () => {
     return (
-      <div class="space-y-2">
+      <div class="flex gap-4 items-center">
         <div class="text-gray-700 text-sm">
           The counter is{" "}
           {computed(
@@ -20,7 +20,7 @@ export const Counter = () => {
             click: () => (counter.value = counter.value + 1),
           }}
         >
-          Click
+          Increment
         </Button>
       </div>
     );

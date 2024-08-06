@@ -9,6 +9,8 @@ import { useFakeDatabase } from "./hooks/useFakeDatabase";
 import { ITable, ITableRow } from "./components/table/types";
 import { Table } from "./components/table";
 import { InputField } from "./components/input-field";
+import { RangeSlider } from "./components/range-slider";
+import { ToastContainer } from "./components/toast/container";
 
 globalThis.ljsx = ljsx;
 
@@ -54,28 +56,41 @@ const PeopleTable = () => {
 
 
 const App = (
-  <div class="w-full h-full">
+  <div class="w-full h-full flex flex-col">
     <NavBar />
-    <div class="p-4">
+    <div class="p-4 overflow-auto">
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(1rem, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(30%, 1fr))",
           gap: "1rem",
         }}
       >
-        <Card title="Counter">
+        <Card title="Counter" subtitle="Classic Counter">
           <Counter />
         </Card>
-        <Card title="Item List">
+        <Card title="Item List" subtitle="Reactive Item List">
           <ItemList />
         </Card>
-        <Card title="Table">
+        <Card title="Table" subtitle="Reactive Table">
           <PeopleTable/>
+        </Card>
+        <Card title="Range Slider" subtitle="Reactive Range Slider">
+          {
+            () => {
+              const state = ref<number>(50);
+              
+              return <div>
+                <div class="text-gray-700 font-semibold text-sm">{ computed(() => <span>{state.value}</span>, [state]) }</div>
+                <RangeSlider onChange={(value) => state.value = value} value={state}/>
+              </div> 
+            }
+          }
         </Card>
       </div>
     </div>
     <ModalContainer />
+    <ToastContainer/>
   </div>
 );
 
