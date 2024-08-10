@@ -96,7 +96,7 @@ export const ref = <T = any>(initial: T): Ref<T> => {
 };
 
 export const isRef = <T = any>(x: any): x is Ref<T> =>
-  typeof x === "object" && x._ref === "ref";
+  x !== null && !!x && typeof x === "object" && x._ref === "ref";
 
 export const unref = <T = any>(x: T | Ref<T>): T => {
   if (isRef<T>(x)) return x.value;

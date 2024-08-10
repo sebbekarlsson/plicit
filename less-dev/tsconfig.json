@@ -8,6 +8,6 @@
       "less/*": ["../less"]
     }
   },
-    "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/svg.d.ts"],
   "references": [{ "path": "../less" }]
 }

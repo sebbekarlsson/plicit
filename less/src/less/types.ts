@@ -1,4 +1,5 @@
-import { isRef, Ref } from "./proxy";
+import { isFunction } from "./is";
+import { isRef, MaybeRef, Ref } from "./proxy";
 
 export type Dict<T = any> = {[key: string]: T};
 
@@ -9,14 +10,14 @@ export type NativeListener<K extends keyof HTMLElementEventMap> = (this: HTMLBut
 export type UnknownNativeListener = (this: HTMLButtonElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any;
 export type NativeElementListeners = Record<keyof HTMLElementEventMap, UnknownNativeListener>;
 
-export type ReactiveDep<T = any> = Ref<T> | (() => T) | (() => any);
+export type ReactiveDep<T = any> = Ref<T> | MaybeRef<T> | (() => T) | (() => any);
 
-export const unwrapReactiveDep = <T = any>(dep: ReactiveDep<T>): Ref<T> => {
+export const unwrapReactiveDep = <T = any>(dep: ReactiveDep<T>): MaybeRef<T> => {
   if (isRef<T>(dep)) return dep;
-  if (typeof dep === 'function') {
+  if (isFunction(dep)) {
     return unwrapReactiveDep<T>(dep());
   };
-  throw new Error('Not a ref');
+  return dep;
 }
 
 
@@ -37,11 +38,12 @@ export const isInputElement = (x: any): x is HTMLInputElement => {
 }
 
 export const isSVGElement = (x: any): x is SVGSVGElement => {
+  if (!x) return false;
   if (typeof x !== 'object') return false;
-  return isHTMLElement(x) && x.tagName === 'SVG';
+  return isHTMLElement(x) && (x.tagName || '').toLowerCase() === 'svg';
 }
 
 export const isSVGPathElement = (x: any): x is SVGPathElement => {
   if (typeof x !== 'object') return false;
-  return isHTMLElement(x) && x.tagName === 'PATH';
+  return isHTMLElement(x) && (x.tagName || '').toLowerCase() === 'path';
 }
