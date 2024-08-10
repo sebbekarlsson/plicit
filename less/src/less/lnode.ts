@@ -198,15 +198,11 @@ export class LNode {
   appendChild(child: LNodeChild) {
     const unwrapped = unwrapComponentTree(child);
     const unreffed = unref(unwrapped);
-    if (isComponent(child)) {
-      unreffed.component.value = child;
-    }
+    
     if (isLNode(child)) {
       child.parent.value = this;
     }
-    if (isLNode(unreffed)) {
-      unreffed.parent.value = this;
-    }
+    
     const key = unreffed.key;
     const el = this.ensureElement();
     if (isText(el)) return;
@@ -216,8 +212,15 @@ export class LNode {
     }
 
     this.mappedChildren[key] = child;
-    unreffed.parent.value = this;
-    unreffed.mountTo(el);
+
+    if (isLNode(unreffed)) {
+      unreffed.parent.value = this;
+      unreffed.mountTo(el);
+
+      if (isComponent(child)) {
+        unreffed.component.value = child;
+      }
+    }
   }
 
   setAttribute(key: string, value: string) {

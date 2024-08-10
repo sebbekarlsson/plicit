@@ -7,3 +7,4 @@ export * from './less/types';
 export * from './less/jsx';
 export * from './less/utils';
 export * from './less/is';
+export * from './less/setup';

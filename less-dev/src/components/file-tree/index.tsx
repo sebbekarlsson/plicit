@@ -1,9 +1,10 @@
-import { Component } from "less";
+import { Component, computed, ref, unref, type Ref } from "less";
 import { EFileType, FSNode } from "./types";
 import { ITree } from "../tree/types";
 import { Tree } from "../tree";
 import { Icon } from "../icon";
 import { IconPrimitive } from "../icon/types";
+import { useTree } from "../tree/hooks";
 
 
 const directory = (node: Omit<FSNode, 'isDir'>): FSNode => {
@@ -41,30 +42,33 @@ const getIcon = (node: FSNode): IconPrimitive => {
   }
 }
 
-const createTree = (root: FSNode): ITree<FSNode> => {
+const createTree = (root: FSNode): Ref<ITree<FSNode>> => {
   let count: number = 0;
   
-  const create = (node: FSNode, depth: number = 0): ITree<FSNode> => {
-    return {
+  const create = (node: FSNode, id: number, depth: number = 0): Ref<ITree<FSNode>> => {
+    return ref({
       name: node.name,
-      id: count,
+      id: id,
       data: node,
-      children: (node.children || []).map(child => create(child, depth + 1)),
+      children: (node.children || []).map(child => create(child, count++, depth + 1)),
 
-      render: (_props) => {
-        return <div class="select-none text-gray-600 cursor-pointer hover:text-blue-500" style={{
+      render: (x) => {
+        return <div  class="select-none text-gray-600 cursor-pointer hover:text-blue-500" style={{
           display: 'grid',
           gridTemplateColumns: `${NODE_SIZE} max-content`,
           gap: '0.5rem',
-          alignItems: 'center'
+          alignItems: 'center',
+          ...(unref(x.node).selected ? {
+            background: 'red'
+          } : {})
         }}>
           <Icon class="text-gray-300" icon={getIcon(node)}/>
           <div class="text-xs">{node.name}</div>
         </div>;
       }
-    }
+    })
   }
-  return create(root);
+  return create(root, count++);
 }
 
 export const FileTree: Component = () => {
@@ -92,5 +96,9 @@ export const FileTree: Component = () => {
 
   const root = createTree(fsRoot);
 
-  return <Tree root={root}/>
+  const hook = useTree({
+    root: root
+  });
+
+  return <Tree deps={[hook.selectedId]} root={root} hook={hook}/>
 }
