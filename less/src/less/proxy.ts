@@ -1,4 +1,4 @@
-import { Indexable, ReactiveDep } from "./types";
+import { Indexable, notNullish, ReactiveDep } from "./types";
 
 export type LProxy<T extends Indexable> = T;
 
@@ -32,9 +32,11 @@ type RefState<T = any> = {
   subscribers: RefSubscriber<T>[];
 };
 
-type RefSubscriber<T = any> = {
-  get: (target: RawRef<T>, key: keyof RawRef<T>, receiver: any) => any;
-  set: (
+
+
+export type EffectSubscriber<T = any> = {
+  onGet?: (target: RawRef<T>, key: keyof RawRef<T>, receiver: any) => any;
+  onSet?: (
     target: RawRef<T>,
     key: keyof RawRef<T>,
     next: RawRef<T>[keyof RawRef<T>],
@@ -42,6 +44,8 @@ type RefSubscriber<T = any> = {
   ) => any;
   lastValue?: any;
 };
+
+export type RefSubscriber<T = any> = EffectSubscriber<T>; 
 
 export type RawRef<T = any> = {
   value: T;
@@ -71,7 +75,8 @@ export const ref = <T = any>(initial: T): Ref<T> => {
       };
     },
     trigger: (key: string) => {
-      state.subscribers.forEach((sub) => sub.get(obj, key as any, {}));
+      const onGetters = state.subscribers.map(it => it.onGet).filter(notNullish);
+      onGetters.forEach((sub) => sub(obj, key as any, {}));
     }
   };
   return proxy<RawRef<T>>(obj, [
@@ -80,16 +85,18 @@ export const ref = <T = any>(initial: T): Ref<T> => {
         const next = target[key];
         state.subscribers.forEach((sub) => {
           const last = sub.lastValue;
-          if (last !== next) {
-            sub.get(target, key, receiver)
+          if (last !== next && sub.onGet) {
+            sub.onGet(target, key, receiver)
             sub.lastValue = last;
           }
         });
       },
       set: (target, key, next, receiver) => {
-        state.subscribers.forEach((sub) =>
-          sub.set(target, key, next, receiver),
-        );
+        state.subscribers.forEach((sub) => {
+          if (sub.onSet) {
+            sub.onSet(target, key, next, receiver);
+          }
+        });
       },
     },
   ]);

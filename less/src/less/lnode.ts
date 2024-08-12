@@ -1,4 +1,4 @@
-import { EventEmitter, EventSubscriber, LessEvent } from './event';
+import { EventEmitter, EventSubscriber, LessEvent } from "./event";
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
 import { getElementsAttributesDiff } from "./element";
@@ -15,8 +15,11 @@ import {
 } from "./types";
 import { stringGenerator } from "./utils";
 import { ENodeEvent } from "./nodeEvents";
+import { deepSubscribe } from "./subscribe";
 
 type LNodeChild = MaybeRef<LNode> | Component;
+
+export type LNodeRef = Ref<LNode | undefined>;
 
 export enum ELNodeType {
   ELEMENT = "ELEMENT",
@@ -34,12 +37,11 @@ export type LNodeAttributes = {
   tag?: string;
   onMounted?: (node: LNode) => any;
   onLoaded?: (node: LNode) => any;
+  ref?: LNodeRef;
   [key: string]: any;
 };
 
-
-export type NodeEventPayload = {
-}
+export type NodeEventPayload = {};
 
 export type NodeEvent<Payload> = LessEvent<Payload, ENodeEvent, LNode>;
 
@@ -57,7 +59,11 @@ export class LNode {
   component: Ref<Component | undefined>;
   type: ELNodeType = ELNodeType.ELEMENT;
   uid: string = stringGen.next(16);
-  events: EventEmitter<NodeEventPayload, ENodeEvent, LNode> = new EventEmitter<NodeEventPayload, ENodeEvent, LNode>();
+  events: EventEmitter<NodeEventPayload, ENodeEvent, LNode> = new EventEmitter<
+    NodeEventPayload,
+    ENodeEvent,
+    LNode
+  >();
 
   didMount: boolean = false;
 
@@ -70,22 +76,35 @@ export class LNode {
     this.type = this.attributes.nodeType || this.type;
 
     for (const dep of this.attributes.deps || []) {
-      const d = unwrapReactiveDep(dep);
-
-      if (isRef(d)) {
-        d.subscribe({
-          get: () => {},
-          set: () => {
-            this.invalidate();
+      deepSubscribe(
+        dep,
+        {
+          onSet: () => {
+            queueMicrotask(() => {
+              this.invalidate();
+            });
           },
-        });
-      }
+        },
+        1,
+      );
+
+      //const d = unwrapReactiveDep(dep);
+
+      //if (isRef(d)) {
+      //  d.subscribe({
+      //    get: () => {},
+      //    set: () => {
+      //      this.invalidate();
+      //    },
+      //  });
+      //}
     }
   }
 
   invalidate() {
     if (!this.parent.value) return;
     const old = this.el;
+
     if (this.el && old) {
       const component = this.component.value;
       if (component) {
@@ -93,6 +112,20 @@ export class LNode {
         const nextEl = unref(next).getElement();
 
         if (isHTMLElement(old) && isHTMLElement(nextEl)) {
+          if (isLNode(next)) {
+            if (
+              old.innerHTML === nextEl.innerHTML &&
+              JSON.stringify(
+                Array.from(old.attributes).map((it) => it.value),
+              ) ===
+                JSON.stringify(
+                  Array.from(nextEl.attributes).map((it) => it.value),
+                )
+            ) {
+              return;
+            }
+          }
+
           if (old.innerHTML !== nextEl.innerHTML) {
             this.el.replaceWith(nextEl);
             this.setElement(nextEl);
@@ -109,6 +142,7 @@ export class LNode {
 
         this.el.replaceWith(nextEl);
         this.setElement(nextEl);
+
         return;
       }
       const next = this.render(true);
@@ -117,24 +151,36 @@ export class LNode {
     }
   }
 
-  emit(event: Omit<NodeEvent<any>, 'target'>) {
-    this.events.emit({...event, target: this});
+  emit(event: Omit<NodeEvent<any>, "target">) {
+    queueMicrotask(() => {
+      this.events.emit({ ...event, target: this });
 
-    switch (event.type) {
-      case ENodeEvent.MOUNTED: {
-        if (this.attributes.onMounted) {
-          this.attributes.onMounted(this);
-        }
-      }; break;
-      case ENodeEvent.LOADED: {
-        if (this.attributes.onLoaded) {
-          this.attributes.onLoaded(this);
-        }
-      }; break;
-    }
+      switch (event.type) {
+        case ENodeEvent.MOUNTED:
+          {
+            if (this.attributes.onMounted) {
+              this.attributes.onMounted(this);
+            }
+            if (this.attributes.ref) {
+              this.attributes.ref.value = this;
+            }
+          }
+          break;
+        case ENodeEvent.LOADED:
+          {
+            if (this.attributes.onLoaded) {
+              this.attributes.onLoaded(this);
+            }
+          }
+          break;
+      }
+    });
   }
 
-  addEventListener(evtype: ENodeEvent, sub: EventSubscriber<NodeEventPayload, ENodeEvent, LNode>) {
+  addEventListener(
+    evtype: ENodeEvent,
+    sub: EventSubscriber<NodeEventPayload, ENodeEvent, LNode>,
+  ) {
     return this.events.addEventListener(evtype, sub);
   }
 
@@ -154,6 +200,23 @@ export class LNode {
     if (this.type === ELNodeType.TEXT_ELEMENT)
       return document.createTextNode(this.attributes.text || "");
     return document.createElement(this.name);
+  }
+
+  private listenForMutation() {
+    const el = this.el;
+    if (!el) return;
+    if (!isHTMLElement(el)) return;
+
+    const observer = new MutationObserver(function (mutations) {
+      if (document.contains(el)) {
+        console.log("It's in the DOM!");
+        observer.disconnect();
+      }
+    });
+    observer.observe(el, {
+      childList: true,
+      attributes: true,
+    });
   }
 
   setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement) {
@@ -179,12 +242,12 @@ export class LNode {
         const un = unwrapReactiveDep(d);
         if (isRef(un)) {
           un.subscribe({
-            get: (_target, key) => {
+            onGet: (_target, key) => {
               if (key === "value") {
                 unref(child).invalidate();
               }
             },
-            set: (_target, key) => {
+            onSet: (_target, key) => {
               if (key === "value") {
                 this.appendChild(child);
               }
@@ -198,11 +261,11 @@ export class LNode {
   appendChild(child: LNodeChild) {
     const unwrapped = unwrapComponentTree(child);
     const unreffed = unref(unwrapped);
-    
+
     if (isLNode(child)) {
       child.parent.value = this;
     }
-    
+
     const key = unreffed.key;
     const el = this.ensureElement();
     if (isText(el)) return;
@@ -239,6 +302,15 @@ export class LNode {
   }
 
   render(forceNew: boolean = false) {
+    const _this = this;
+    setTimeout(() => {
+      this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
+      this.emit({ type: ENodeEvent.LOADED, payload: {} });
+      if (this.attributes.ref) {
+        this.attributes.ref.value = _this;
+      }
+    }, 1000);
+
     const el = this.ensureElement(forceNew);
     if (this.attributes.text) {
       if (isText(el)) {
@@ -274,7 +346,7 @@ export class LNode {
       this.appendChild(child);
     }
 
-    this.emit({ type: ENodeEvent.LOADED, payload: {} })
+    this.emit({ type: ENodeEvent.LOADED, payload: {} });
 
     return el;
   }

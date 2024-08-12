@@ -11,6 +11,7 @@ export type UnknownNativeListener = (this: HTMLButtonElement, ev: HTMLElementEve
 export type NativeElementListeners = Record<keyof HTMLElementEventMap, UnknownNativeListener>;
 
 export type ReactiveDep<T = any> = Ref<T> | MaybeRef<T> | (() => T) | (() => any);
+export const notNullish = <T = any>(val?: T | null | undefined): val is T => val != null
 
 export const unwrapReactiveDep = <T = any>(dep: ReactiveDep<T>): MaybeRef<T> => {
   if (isRef<T>(dep)) return dep;

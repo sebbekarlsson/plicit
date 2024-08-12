@@ -1,4 +1,5 @@
 import { isRef, Ref, ref } from "./proxy";
+import { deepSubscribe } from "./subscribe";
 import { ReactiveDep, unwrapReactiveDep } from "./types";
 
 type ComputedFun<T = any> = () => T;
@@ -12,15 +13,11 @@ export const computed = <T = any>(
   r._deps = deps;
 
   deps.forEach((dep) => {
-    const d = unwrapReactiveDep(dep);
-    if (isRef(d)) {
-      d.subscribe({
-        set: () => {
-          r.value = fun();
-        },
-        get: () => {},
-      });
-    }
+    deepSubscribe(dep, {
+      onSet: () => {
+        r.value = fun();
+      }
+    })
   });
 
   return r;
@@ -55,10 +52,10 @@ export const computedAsync = <T = any>(
     const d = unwrapReactiveDep(dep);
     if (isRef(d)) {
       d.subscribe({
-        set: () => {
+        onSet: () => {
           refresh().catch((e) => console.error(e));
         },
-        get: () => {},
+        onGet: () => {},
       });
     }
   });

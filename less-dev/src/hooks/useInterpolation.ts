@@ -36,6 +36,7 @@ export const useInterpolation = (props: UseInterpolationProps): UseInterpolation
         const elapsed = (time - timeStarted) / 1000;
         if (elapsed >= duration) {
           resolve();
+          value.value = endValue;
           return;
         };
         const f = clamp(elapsed / duration, 0, 1);
