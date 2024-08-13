@@ -25,7 +25,6 @@ export enum ELNodeType {
   ELEMENT = "ELEMENT",
   TEXT_ELEMENT = "TEXT_ELEMENT",
 }
-
 export type LNodeAttributes = {
   text?: any;
   children?: LNodeChild[];

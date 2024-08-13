@@ -4,6 +4,7 @@ export * from './less/lnode';
 export * from './less/proxy';
 export * from './less/computed';
 export * from './less/effect';
+export * from './less/signal/signal';
 export * from './less/subscribe';
 export * from './less/types';
 export * from './less/jsx';
