@@ -24,7 +24,7 @@ export type Signal<T = any> = {
   peek: () => T;
   trigger: () => void;
   sym: "Signal";
-  emitter: EventEmitter<SignalEventPayload, ESignalEvent>;
+  emitter: EventEmitter<SignalEventPayload, ESignalEvent, Signal<T>>;
 };
 
 export type SignalNode<T = any> = {

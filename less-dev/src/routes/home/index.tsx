@@ -5,6 +5,7 @@ import { ItemList } from "../../components/item-list";
 import { RangeSlider } from "../../components/range-slider";
 import { PeopleTable } from "../../components/people-table";
 import { FileTree } from "../../components/file-tree";
+import { TextReverser } from "../../components/text-reverser";
 
 export const HomeRoute: Component = () => {
   return (
@@ -49,6 +50,9 @@ export const HomeRoute: Component = () => {
         </Card>
         <Card title="File Tree" subtitle="A virtual filesystem">
           <FileTree />
+        </Card>
+        <Card title="Text Reverser" subtitle="Reactive text reverser">
+          <TextReverser/>
         </Card>
       </div>
     </div>

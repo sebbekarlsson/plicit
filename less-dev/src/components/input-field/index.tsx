@@ -2,7 +2,7 @@ import { Component, LNodeAttributes, ljsx } from "less";
 
 type InputFieldProps = LNodeAttributes & {
   value: string;
-  onChange: (x: string) => void;
+  onChange?: (x: string) => void;
 };
 
 export const InputField: Component<InputFieldProps> = (props) => {
@@ -14,7 +14,9 @@ export const InputField: Component<InputFieldProps> = (props) => {
         on={{
           input: (ev: InputEvent) => {
             const target = ev.target as HTMLInputElement;
-            props.onChange(target.value);
+            if (props.onChange) {
+              props.onChange(target.value);
+            }
           },
         }}
         {...props}

@@ -254,30 +254,36 @@ export class LNode {
       });
     }
 
+    
+  }
+
+  appendChild(child: LNodeChild) {
     if (isSignal(child)) {
-      child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, () => {
-        const lnode = child.node._value;
+      child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, (event) => {
+        const sig = event.target;
+        const lnode = sig.node._value;
         const thisEl = this.el;
-        if (isLNode(lnode) && thisEl && isHTMLElement(thisEl)) {
-          const index = this.children.indexOf(child);
-          if (index >= 0) {
-            const myChild = Array.from(thisEl.children)[index];
+        if (isLNode(lnode)) {
+          console.log('yes');
+          if (thisEl && isHTMLElement(thisEl)) {
+            const index = this.children.indexOf(child);
+            if (index >= 0) {
+              const myChild = Array.from(thisEl.children)[index];
 
-            if (myChild && isHTMLElement(myChild)) {
               const nextEl = lnode.render();
-
-              if (isHTMLElement(nextEl)) {
-                patchElements(myChild, nextEl, () => {})
-                //myChild.replaceWith(nextEl);
+              if (myChild) {
+                if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
+                  patchElements(myChild, nextEl, () => {});
+                } else {
+                  myChild.replaceWith(nextEl);
+                }
               }
             }
           }
         }
       });
+      child = child.get();
     }
-  }
-
-  appendChild(child: LNodeChild) {
     const unwrapped = unwrapComponentTree(child);
 
     let unreffed = unref(unwrapped);
@@ -300,7 +306,7 @@ export class LNode {
       this.children.push(child);
       this.onReceiveChild(child);
     }
-    if (isText(el))  return;
+    if (isText(el)) return;
 
     this.mappedChildren[key] = child;
 
