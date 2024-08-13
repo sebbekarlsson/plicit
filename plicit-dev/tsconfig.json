@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig",
+  "compilerOptions": {
+    "target": "esnext",
+    "outDir": "./dist",
+      "esModuleInterop": true,
+      "paths": {
+      "plicit/*": ["../plicit"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/svg.d.ts"],
+  "references": [{ "path": "../plicit" }]
+}

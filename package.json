@@ -1,28 +1,28 @@
 {
-  "name": "less",
+  "name": "plicit",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "cd less && npm run build",
-    "dev": "cd less-dev && npm run dev"
+    "build": "cd plicit && npm run build",
+    "dev": "cd plicit-dev && npm run dev"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "workspaces": [
-    "less",
-    "less-dev"
+    "plicit",
+    "plicit-dev"
   ],
   "exports": {
-    "./less": {
+    "./plicit": {
       "import": {
-        "types": "./less/dist/index.d.ts",
-        "default": "./less/dist/index.js"
+        "types": "./plicit/dist/index.d.ts",
+        "default": "./plicit/dist/index.js"
       },
       "require": {
-        "types": "./less/dist/index.d.ts",
-        "default": "./less/dist/index.js"
+        "types": "./plicit/dist/index.d.ts",
+        "default": "./plicit/dist/index.js"
       }
     }
   },
