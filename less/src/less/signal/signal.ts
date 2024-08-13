@@ -1,19 +1,30 @@
+import { EventEmitter, LessEvent } from "../event";
 import { proxy } from "../proxy";
 import { stringGenerator } from "../utils";
 import { ESignalState } from "./constants";
+import { ESignalEvent } from "./event";
 
 let stack: Signal[] = [];
 const uidGen = stringGenerator();
 
+export type SignalOptions = {
+  isEffect?: boolean;
+  isComputed?: boolean;
+}
+
 type Fun<T = any> = () => T;
+
+export type SignalEventPayload = {}
 
 export type Signal<T = any> = {
   uid: string;
   node: SignalNode<T>;
   set: (fun: (old: T) => T) => void;
   get: () => T;
+  peek: () => T;
   trigger: () => void;
   sym: "Signal";
+  emitter: EventEmitter<SignalEventPayload, ESignalEvent>;
 };
 
 export type SignalNode<T = any> = {
@@ -35,10 +46,11 @@ export const isSignal = <T = any>(x: any): x is Signal<T> => {
 
 let trackedIds: string[] = [];
 
+export type MaybeSignal<T = any> = T | Signal<T>;
+
 export const signal = <T = any>(
   init: Fun<T>,
-  isEffect: boolean = false,
-  isComputed: boolean = false
+  options: SignalOptions = {}
 ): Signal<T> => {
 
   const node: SignalNode<T> = proxy<SignalNode<T>>({
@@ -52,12 +64,23 @@ export const signal = <T = any>(
     parent: undefined,
   });
 
+  const emit = (event: Omit<LessEvent<SignalEventPayload, ESignalEvent, Signal>, 'target'>) => {
+    sig.emitter.emit({...event, target: sig});
+  }  
+
   const trigger = () => {
 //    if (![ESignalState.DIRTY, ESignalState.UNINITIALIZED].includes(node.state)) return;
     
-    if (isEffect) {
+    emit({ type: ESignalEvent.TRIGGER, payload: {} })
+    if (options.isEffect || options.isComputed) {
       trackedIds = [];
-      init();
+
+      emit({ type: ESignalEvent.BEFORE_UPDATE, payload: {} });
+      const next = init();
+      if (options.isComputed) {
+        node._value = next;
+      }
+      emit({ type: ESignalEvent.AFTER_UPDATE, payload: {} });
       const trackedItems = stack.filter((it) => trackedIds.includes(it.uid));
 
       for (const tracked of trackedItems) {
@@ -72,11 +95,14 @@ export const signal = <T = any>(
 
       trackedIds = [];
       return;
-    }
-
-    if (isComputed) {
-      node._value = init();
-
+    } else {
+      trackedIds = [];
+      emit({ type: ESignalEvent.BEFORE_UPDATE, payload: {} });
+      const next = init();
+      if (options.isComputed) {
+        node._value = next;
+      }
+      emit({ type: ESignalEvent.AFTER_UPDATE, payload: {} });
       const trackedItems = stack.filter((it) => trackedIds.includes(it.uid));
 
       for (const tracked of trackedItems) {
@@ -88,9 +114,6 @@ export const signal = <T = any>(
           }
         }
       }
-
-      trackedIds = [];
-      return;
     }
 
     node.dependants.forEach((dep) => {
@@ -104,13 +127,16 @@ export const signal = <T = any>(
 
   const track = () => {
     trackedIds.push(sig.uid);
+    emit({ type: ESignalEvent.TRACK, payload: {} })
   };
 
   const sig: Signal<T> = {
+    emitter: new EventEmitter(),
     sym: "Signal",
     uid: uidGen.next(24),
     node,
     trigger,
+    peek: () => node._value || init(),
     set: (fun: (old: T) => T) => {
       node._value = fun(node._value);
       node.state = ESignalState.DIRTY;
@@ -126,7 +152,7 @@ export const signal = <T = any>(
     },
   };
 
-  if (isEffect || isComputed) {
+  if (options.isEffect || options.isComputed) {
     trigger();
   }
 
@@ -136,3 +162,14 @@ export const signal = <T = any>(
 
   return sig;
 };
+
+
+export const computedSignal = <T = any>(
+  init: Fun<T>,
+  options: SignalOptions = { isComputed: true }
+): Signal<T> => signal<T>(init, options);
+
+export const effectSignal = <T = any>(
+  init: Fun<T>,
+  options: SignalOptions = { isEffect: true }
+): Signal<T> => signal<T>(init, options);

@@ -1,7 +1,7 @@
 import { EventEmitter, EventSubscriber, LessEvent } from "./event";
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
-import { getElementsAttributesDiff } from "./element";
+import { getElementsAttributesDiff, patchElements } from "./element";
 import { isRef, LProxy, MaybeRef, proxy, ref, Ref, unref } from "./proxy";
 import {
   isHTMLElement,
@@ -16,8 +16,10 @@ import {
 import { stringGenerator } from "./utils";
 import { ENodeEvent } from "./nodeEvents";
 import { deepSubscribe } from "./subscribe";
+import { isSignal, type Signal } from "./signal";
+import { ESignalEvent } from "./signal/event";
 
-type LNodeChild = MaybeRef<LNode> | Component;
+export type LNodeChild = MaybeRef<LNode> | Component | Signal<any>;
 
 export type LNodeRef = Ref<LNode | undefined>;
 
@@ -56,6 +58,7 @@ export class LNode {
   children: LNodeChild[] = [];
   mappedChildren: Record<string, LNodeChild> = {};
   component: Ref<Component | undefined>;
+  signal: Signal<LNode> | undefined;
   type: ELNodeType = ELNodeType.ELEMENT;
   uid: string = stringGen.next(16);
   events: EventEmitter<NodeEventPayload, ENodeEvent, LNode> = new EventEmitter<
@@ -100,6 +103,36 @@ export class LNode {
     }
   }
 
+  patchWith(other: LNodeChild) {
+    const old = this.el;
+    if (!old) return;
+
+    const next = unwrapComponentTree(other);
+    let unreffed = unref(next);
+
+    if (isSignal(unreffed)) {
+      unreffed = unreffed.get();
+    }
+
+    const nextEl = unreffed.getElement();
+
+    if (isHTMLElement(old) && isHTMLElement(nextEl)) {
+      if (isLNode(next)) {
+        if (
+          old.innerHTML === nextEl.innerHTML &&
+          JSON.stringify(Array.from(old.attributes).map((it) => it.value)) ===
+            JSON.stringify(Array.from(nextEl.attributes).map((it) => it.value))
+        ) {
+          return;
+        }
+      }
+
+      this.el = patchElements(old, nextEl, ([key, value]) => {
+        this.attributes[key] = value;
+      });
+    }
+  }
+
   invalidate() {
     if (!this.parent.value) return;
     const old = this.el;
@@ -107,41 +140,7 @@ export class LNode {
     if (this.el && old) {
       const component = this.component.value;
       if (component) {
-        const next = unwrapComponentTree(component);
-        const nextEl = unref(next).getElement();
-
-        if (isHTMLElement(old) && isHTMLElement(nextEl)) {
-          if (isLNode(next)) {
-            if (
-              old.innerHTML === nextEl.innerHTML &&
-              JSON.stringify(
-                Array.from(old.attributes).map((it) => it.value),
-              ) ===
-                JSON.stringify(
-                  Array.from(nextEl.attributes).map((it) => it.value),
-                )
-            ) {
-              return;
-            }
-          }
-
-          if (old.innerHTML !== nextEl.innerHTML) {
-            this.el.replaceWith(nextEl);
-            this.setElement(nextEl);
-          } else {
-            const diff = getElementsAttributesDiff(old, nextEl);
-            diff.forEach(([key, value]) => {
-              this.attributes[key] = value;
-              old.setAttribute(key, value);
-              (old as any)[key] = value;
-            });
-          }
-          return;
-        }
-
-        this.el.replaceWith(nextEl);
-        this.setElement(nextEl);
-
+        this.patchWith(component);
         return;
       }
       const next = this.render(true);
@@ -201,14 +200,13 @@ export class LNode {
     return document.createElement(this.name);
   }
 
-  private listenForMutation() {
+  private _listenForMutation() {
     const el = this.el;
     if (!el) return;
     if (!isHTMLElement(el)) return;
 
     const observer = new MutationObserver(function (mutations) {
       if (document.contains(el)) {
-        console.log("It's in the DOM!");
         observer.disconnect();
       }
     });
@@ -255,23 +253,54 @@ export class LNode {
         }
       });
     }
+
+    if (isSignal(child)) {
+      child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, () => {
+        const lnode = child.node._value;
+        const thisEl = this.el;
+        if (isLNode(lnode) && thisEl && isHTMLElement(thisEl)) {
+          const index = this.children.indexOf(child);
+          if (index >= 0) {
+            const myChild = Array.from(thisEl.children)[index];
+
+            if (myChild && isHTMLElement(myChild)) {
+              const nextEl = lnode.render();
+
+              if (isHTMLElement(nextEl)) {
+                patchElements(myChild, nextEl, () => {})
+                //myChild.replaceWith(nextEl);
+              }
+            }
+          }
+        }
+      });
+    }
   }
 
   appendChild(child: LNodeChild) {
     const unwrapped = unwrapComponentTree(child);
-    const unreffed = unref(unwrapped);
+
+    let unreffed = unref(unwrapped);
+
+    let signalKey: string | undefined = undefined;
+
+    if (isSignal<LNode>(unreffed)) {
+      unreffed = unreffed.get();
+      signalKey = unreffed.uid;
+    }
 
     if (isLNode(child)) {
       child.parent.value = this;
     }
 
-    const key = unreffed.key;
+    const key = signalKey || unreffed.key;
+
     const el = this.ensureElement();
-    if (isText(el)) return;
     if (!this.children.includes(child)) {
       this.children.push(child);
       this.onReceiveChild(child);
     }
+    if (isText(el))  return;
 
     this.mappedChildren[key] = child;
 
@@ -281,6 +310,12 @@ export class LNode {
 
       if (isComponent(child)) {
         unreffed.component.value = child;
+      }
+
+      if (isSignal(unwrapped)) {
+        unreffed.signal = unwrapped;
+      } else if (isSignal(child)) {
+        unreffed.signal = child;
       }
     }
   }

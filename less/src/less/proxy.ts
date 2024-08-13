@@ -1,3 +1,4 @@
+import { isSignal } from "./signal";
 import { Indexable, notNullish, ReactiveDep } from "./types";
 
 export type LProxy<T extends Indexable> = T;
@@ -107,5 +108,6 @@ export const isRef = <T = any>(x: any): x is Ref<T> =>
 
 export const unref = <T = any>(x: T | Ref<T>): T => {
   if (isRef<T>(x)) return x.value;
+   //if (isSignal<T>(x)) return x.get();
   return x;
 };
