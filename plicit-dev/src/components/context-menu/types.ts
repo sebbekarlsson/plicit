@@ -1,5 +1,5 @@
 import { IconPrimitive } from "../icon/types";
-import { Vector } from 'tsmath';
+import { Vector } from 'tsmathutil';
 import { UseContextMenu } from "./hooks/useContextMenu";
 
 export type IContextMenuItem = {

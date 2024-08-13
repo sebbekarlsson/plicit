@@ -8,7 +8,7 @@ import {
   ref,
 } from "plicit";
 import { IContextMenu, IContextMenuConfig } from "../types";
-import { AABB, getAABBSize, VEC2 } from "tsmath";
+import { AABB, getAABBSize, VEC2 } from "tsmathutil";
 import { useInterpolation } from "../../../hooks/useInterpolation";
 
 const HOVER_TIMEOUT_LEAVE_MENU = 90;

@@ -1,5 +1,5 @@
 import { ref } from "plicit"
-import { VEC2, Vector } from "tsmath"
+import { VEC2, Vector } from "tsmathutil"
 
 export const useMousePosition = () => {
   const pos = ref<Vector>(VEC2(0, 0));
