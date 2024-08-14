@@ -41,9 +41,9 @@ const App: Component = () => {
       <NavBar />
       <div class="h-full w-full grid grid-cols-[300px,1fr]">
         <SideMenu menu={sideMenu}/>
-        <div class="px-4 pt-4 pb-6 overflow-auto" style={{
+        <div class="overflow-auto" style={{
           height: '100%',
-          maxHeight: 'calc(100% - 4rem)'
+          maxHeight: 'calc(100% - 3rem)'
         }}>
           <RouterView />
         </div>

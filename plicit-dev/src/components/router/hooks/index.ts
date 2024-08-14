@@ -15,7 +15,7 @@ const getCachedPath = () => {
   sessionStorage.setItem(cacheKey, window.location.pathname);
   return window.location.pathname
 }
-console.log(123)
+
 const router = ref<IRouter>({
   routes: [],
   current: {

@@ -2,13 +2,17 @@ import {
   Component,
   computed,
   effect,
+  effectSignal,
   isHTMLElement,
   LNodeRef,
   MaybeRef,
   ref,
+  signal,
+  unref,
 } from "plicit";
 import { AABB, clamp, getAABBSize, remap, VEC2, Vector } from "tsmathutil";
 import { useMousePosition } from "../../hooks/useMousePosition";
+import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
 
 type RangeSliderProps = {
   value: MaybeRef<number>;
@@ -23,10 +27,10 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
   };
 
   const wrapper: LNodeRef = ref(undefined);
-  const mouse = useMousePosition();
-  const dragging = ref<boolean>(false);
+  const mouse = useMousePositionSignal();
+  const dragging = signal<boolean>(false); 
   const knobPosition = ref<Vector>(VEC2(0, 0));
-  const clickPos = ref<Vector>(VEC2(0, 0));
+  const clickPos = signal<Vector>(VEC2(0, 0));
 
   const wrapperBounds = computed(() => {
     const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
@@ -56,18 +60,28 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     return v;
   };
 
-  effect(() => {
-    const mousePos = mouse.pos.value;
-    const localPos = mousePos.sub(wrapperBounds.value.min).sub(clickPos.value);
-    if (dragging.value) {
+  const getInverseComputedValue = (value: number) => {
+    return remap(value, { min: 0, max: 100 }, trackRange.value);
+  }
+
+  queueMicrotask(() => {
+    setTimeout(() => {
+      knobPosition.value = VEC2(getInverseComputedValue(unref(props.value)), 0);
+    }, 0);
+  })
+
+  effectSignal(() => {
+    const mousePos = mouse.pos.get();
+    const localPos = mousePos.sub(wrapperBounds.value.min).sub(clickPos.get());
+    if (dragging.get()) {
       const x = clamp(localPos.x, 0, trackRange.value.max);
       knobPosition.value = VEC2(x, 0);
       handleChange(getComputedValue());
     }
-  }, [mouse.pos, dragging, wrapperBounds]);
+  })
 
   window.addEventListener("mouseup", () => {
-    dragging.value = false;
+    dragging.set(() => false);
   });
 
   const Track = () => {
@@ -94,14 +108,14 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
             ev.stopPropagation();
             const el = ev.target as HTMLElement;
             const box = el.getBoundingClientRect();
-            const mousePos = mouse.pos.value;
+            const mousePos = mouse.pos.get();
             const localPos = mousePos.sub(VEC2(box.x, box.y));
-            clickPos.value = localPos;
+            clickPos.set(() => localPos);
 
-            dragging.value = true;
+            dragging.set(() => true);
           },
           mouseup: () => {
-            dragging.value = false;
+            dragging.set(() => false);
           },
         }}
         class="h-[1.25rem] aspect-[1/1] bg-amaranth-500 absolute rounded-full cursor-grab"

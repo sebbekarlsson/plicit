@@ -29,7 +29,7 @@ export type SignalNode<T = any> = {
 };
 export declare const isSignal: <T = any>(x: any) => x is Signal<T>;
 export type MaybeSignal<T = any> = T | Signal<T>;
-export declare const signal: <T = any>(init: Fun<T>, options?: SignalOptions) => Signal<T>;
+export declare const signal: <T = any>(initial: Fun<T> | T, options?: SignalOptions) => Signal<T>;
 export declare const computedSignal: <T = any>(init: Fun<T>, options?: SignalOptions) => Signal<T>;
 export declare const effectSignal: <T = any>(init: Fun<T>, options?: SignalOptions) => Signal<T>;
 export {};

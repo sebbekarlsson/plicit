@@ -9,7 +9,7 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
       {props.menu.sections.map((sec) => {
         return (
           <div class="w-full">
-            {sec.label && <div class="w-full h-[4rem] flex items-center px-4 text-lg bg-amaranth-700">{sec.label}</div>}
+            {sec.label && <div class="w-full h-[4rem] flex items-center px-4 text-lg bg-amaranth-700 font-semibold uppercase">{sec.label}</div>}
             <div class="w-full">
               {sec.items.map((it) => {
                 const isActive = computed(() => route.value.path === it.path, [route])

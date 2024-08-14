@@ -1,4 +1,5 @@
 import { EventEmitter, PlicitEvent } from "../event";
+import { isFunction } from "../is";
 import { proxy } from "../proxy";
 import { stringGenerator } from "../utils";
 import { ESignalState } from "./constants";
@@ -49,9 +50,11 @@ let trackedIds: string[] = [];
 export type MaybeSignal<T = any> = T | Signal<T>;
 
 export const signal = <T = any>(
-  init: Fun<T>,
+  initial: Fun<T> | T,
   options: SignalOptions = {}
 ): Signal<T> => {
+
+  const init = isFunction(initial) ? initial : () => initial;
 
   const node: SignalNode<T> = proxy<SignalNode<T>>({
     index: -1,

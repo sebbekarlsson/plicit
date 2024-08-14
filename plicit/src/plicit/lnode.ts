@@ -262,29 +262,36 @@ export class LNode {
   }
 
   appendChild(child: LNodeChild) {
-    if (isSignal(child)) {
-      child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, (event) => {
-        const sig = event.target;
-        const lnode = sig.node._value;
-        const thisEl = this.el;
-        if (isLNode(lnode)) {
-          if (thisEl && isHTMLElement(thisEl)) {
-            const index = this.children.indexOf(child);
-            if (index >= 0) {
-              const myChild = Array.from(thisEl.children)[index];
 
-              const nextEl = lnode.render();
-              if (myChild) {
-                if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
-                  patchElements(myChild, nextEl);
-                } else {
-                  myChild.replaceWith(nextEl);
+    const patchChild = () => {
+      if (isSignal(child)) {
+        child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, (event) => {
+          const sig = event.target;
+          const lnode = sig.node._value;
+          const thisEl = this.el;
+          if (isLNode(lnode)) {
+            if (thisEl && isHTMLElement(thisEl)) {
+              const index = this.children.indexOf(child);
+              if (index >= 0) {
+                const myChild = Array.from(thisEl.children)[index];
+
+                const nextEl = lnode.render();
+                if (myChild) {
+                  if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
+                    patchElements(myChild, nextEl);
+                  } else {
+                    myChild.replaceWith(nextEl);
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      }
+    }
+    
+    if (isSignal(child)) {
+      patchChild();
       child = child.get();
     }
     const unwrapped = unwrapComponentTree(child);
@@ -312,11 +319,13 @@ export class LNode {
 
     this.mappedChildren[key] = child;
     
-    if (isText(el)) return;
 
     if (isLNode(unreffed)) {
       unreffed.parent.value = this;
-      unreffed.mountTo(el);
+
+      if (!isText(el)) {
+        unreffed.mountTo(el);
+      }
 
       if (isComponent(child)) {
         unreffed.component.value = child;

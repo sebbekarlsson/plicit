@@ -21,9 +21,10 @@ export const proxy = <T extends Indexable>(
       const key = p as keyof T;
       const prev = Reflect.get(target, key, receiver);
       if (prev === next) return true;
-      const result = Reflect.set(target,p, next, receiver);
+      target[p] = next;
+      //const result = Reflect.set(target,p, next, receiver);
       subscribers.forEach((sub) => sub.set(target, key, next, receiver));
-      return result;
+      return true;
     },
   });
 };
@@ -68,7 +69,6 @@ export const ref = <T = any>(initial: T): Ref<T> => {
     _state: state,
     _deps: [],
     subscribe: (sub) => {
-      console.log('Subscribers: ' + state.subscribers.length)
       if (!state.subscribers.includes(sub)) {
         state.subscribers.push(sub);
       }

@@ -18,6 +18,7 @@ export const getElementsDiff = (a: HTMLElement, b: HTMLElement) => {
   return getElementsAttributesDiff(a, b);
 };
 
+
 export const patchElements = (
   old: HTMLElement,
   nextEl: HTMLElement,
