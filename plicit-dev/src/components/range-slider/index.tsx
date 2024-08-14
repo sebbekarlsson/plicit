@@ -1,4 +1,14 @@
-import { Component, MaybeRef } from "plicit";
+import {
+  Component,
+  computed,
+  effect,
+  isHTMLElement,
+  LNodeRef,
+  MaybeRef,
+  ref,
+} from "plicit";
+import { AABB, clamp, getAABBSize, remap, VEC2, Vector } from "tsmathutil";
+import { useMousePosition } from "../../hooks/useMousePosition";
 
 type RangeSliderProps = {
   value: MaybeRef<number>;
@@ -6,58 +16,125 @@ type RangeSliderProps = {
 };
 
 export const RangeSlider: Component<RangeSliderProps> = (props) => {
-  const handleChange = (ev: InputEvent) => {
-    const target = ev.target as HTMLInputElement;
-    const value = Number(target.value);
+  const handleChange = (value: number) => {
     if (props.onChange) {
       props.onChange(value);
     }
   };
 
+  const wrapper: LNodeRef = ref(undefined);
+  const mouse = useMousePosition();
+  const dragging = ref<boolean>(false);
+  const knobPosition = ref<Vector>(VEC2(0, 0));
+  const clickPos = ref<Vector>(VEC2(0, 0));
+
+  const wrapperBounds = computed(() => {
+    const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
+    const node = wrapper.value;
+    if (!node) return empty;
+    const el = node.el;
+    if (!el || !isHTMLElement(el)) return empty;
+    const box = el.getBoundingClientRect();
+    const pos = VEC2(box.x, box.y);
+    const size = VEC2(box.width, box.height);
+    return {
+      min: pos,
+      max: pos.add(size),
+    };
+  }, [wrapper]);
+
+  const trackRange = computed(() => {
+    const bounds = wrapperBounds.value;
+    const trackLength = bounds.max.x - bounds.min.x;
+    const knobLength = 16;
+    return { min: 0, max: trackLength - knobLength };
+  }, [wrapperBounds]);
+
+  const getComputedValue = () => {
+    const pos = knobPosition.value;
+    const v = remap(pos.x, trackRange.value, { min: 0, max: 100 });
+    return v;
+  };
+
+  effect(() => {
+    const mousePos = mouse.pos.value;
+    const localPos = mousePos.sub(wrapperBounds.value.min).sub(clickPos.value);
+    if (dragging.value) {
+      const x = clamp(localPos.x, 0, trackRange.value.max);
+      knobPosition.value = VEC2(x, 0);
+      handleChange(getComputedValue());
+    }
+  }, [mouse.pos, dragging, wrapperBounds]);
+
+  window.addEventListener("mouseup", () => {
+    dragging.value = false;
+  });
+
+  const Track = () => {
+    return (
+      <div
+        class="w-full bg-gray-100 h-full absolute rounded-full shadow-inner"
+        style={{
+          left: "0px",
+          right: "0px",
+          top: "0px",
+          bottom: "0px",
+          margin: "auto",
+        }}
+      />
+    );
+  };
+
+  const Knob = () => {
+    return () => (
+      <div
+        on={{
+          mousedown: (ev: MouseEvent) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const el = ev.target as HTMLElement;
+            const box = el.getBoundingClientRect();
+            const mousePos = mouse.pos.value;
+            const localPos = mousePos.sub(VEC2(box.x, box.y));
+            clickPos.value = localPos;
+
+            dragging.value = true;
+          },
+          mouseup: () => {
+            dragging.value = false;
+          },
+        }}
+        class="h-[1.25rem] aspect-[1/1] bg-amaranth-500 absolute rounded-full cursor-grab"
+        style={{
+          left: knobPosition.value.x + "px",
+          top: "0px",
+          bottom: "0px",
+          margin: "auto",
+          zIndex: 2,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          filter: 'drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.5))'
+        }}
+        deps={[knobPosition]}
+      >
+        <div class="h-[60%] aspect-[1/1] bg-white rounded-full" style={{
+          pointerEvents: 'none'
+        }}/>
+      </div>
+    );
+  };
+
   return (
-    <input
-      deps={[props.value]}
-      on={{
-        input: handleChange,
+    <div
+      class="h-[0.65rem] relative"
+      ref={wrapper}
+      style={{
+        zIndex: 1,
       }}
-      value={props.value + ''}
-      type="range"
-      class="w-full bg-transparent cursor-pointer appearance-none disabled:opacity-50 disabled:pointer-events-none focus:outline-none
-  [&::-webkit-slider-thumb]:w-2.5
-  [&::-webkit-slider-thumb]:h-2.5
-  [&::-webkit-slider-thumb]:-mt-0.5
-  [&::-webkit-slider-thumb]:appearance-none
-  [&::-webkit-slider-thumb]:bg-white
-  [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(37,99,235,1)]
-  [&::-webkit-slider-thumb]:rounded-full
-  [&::-webkit-slider-thumb]:transition-all
-  [&::-webkit-slider-thumb]:duration-150
-  [&::-webkit-slider-thumb]:ease-in-out
-  [&::-webkit-slider-thumb]:dark:bg-neutral-700
-
-  [&::-moz-range-thumb]:w-2.5
-  [&::-moz-range-thumb]:h-2.5
-  [&::-moz-range-thumb]:appearance-none
-  [&::-moz-range-thumb]:bg-white
-  [&::-moz-range-thumb]:border-4
-  [&::-moz-range-thumb]:border-blue-600
-  [&::-moz-range-thumb]:rounded-full
-  [&::-moz-range-thumb]:transition-all
-  [&::-moz-range-thumb]:duration-150
-  [&::-moz-range-thumb]:ease-in-out
-
-  [&::-webkit-slider-runnable-track]:w-full
-  [&::-webkit-slider-runnable-track]:h-2
-  [&::-webkit-slider-runnable-track]:bg-gray-100
-  [&::-webkit-slider-runnable-track]:rounded-full
-  [&::-webkit-slider-runnable-track]:dark:bg-neutral-700
-
-  [&::-moz-range-track]:w-full
-  [&::-moz-range-track]:h-2
-  [&::-moz-range-track]:bg-gray-100
-  [&::-moz-range-track]:rounded-full"
-      id="basic-range-slider-usage"
-      aria-orientation="horizontal"
-    />
+    >
+      <Track />
+      <Knob />
+    </div>
   );
 };

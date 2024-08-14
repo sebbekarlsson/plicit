@@ -21,7 +21,7 @@ export const getElementsDiff = (a: HTMLElement, b: HTMLElement) => {
 export const patchElements = (
   old: HTMLElement,
   nextEl: HTMLElement,
-  attributeCallback: (pair: KeyPair) => void,
+  attributeCallback?: (pair: KeyPair) => void,
 ) => {
   if (old.innerHTML !== nextEl.innerHTML) {
     old.replaceWith(nextEl);
@@ -29,7 +29,9 @@ export const patchElements = (
   } else {
     const diff = getElementsAttributesDiff(old, nextEl);
     diff.forEach(([key, value]) => {
-      attributeCallback([key, value]);
+      if (attributeCallback) {
+        attributeCallback([key, value]);
+      }
       old.setAttribute(key, value);
       (old as any)[key] = value;
     });

@@ -9,7 +9,8 @@ export type LNodeChild = MaybeRef<LNode> | Component | Signal<any>;
 export type LNodeRef = Ref<LNode | undefined>;
 export declare enum ELNodeType {
     ELEMENT = "ELEMENT",
-    TEXT_ELEMENT = "TEXT_ELEMENT"
+    TEXT_ELEMENT = "TEXT_ELEMENT",
+    FRAGMENT = "FRAGMENT"
 }
 export type LNodeAttributes = {
     text?: any;
@@ -42,6 +43,7 @@ export declare class LNode {
     uid: string;
     events: EventEmitter<NodeEventPayload, ENodeEvent, LNode>;
     didMount: boolean;
+    unsubs: Array<() => void>;
     constructor(name: string, attributes?: LNodeAttributes);
     patchWith(other: LNodeChild): void;
     invalidate(): void;
@@ -49,14 +51,13 @@ export declare class LNode {
     addEventListener(evtype: ENodeEvent, sub: EventSubscriber<NodeEventPayload, ENodeEvent, LNode>): () => void;
     mountTo(target: NativeElement | null | undefined): void;
     createElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
-    private _listenForMutation;
     setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement): void;
-    ensureElement(forceNew?: boolean): HTMLElement | Text | SVGSVGElement | SVGPathElement;
-    getElement(forceNew?: boolean): HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    ensureElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    getElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
     private onReceiveChild;
     appendChild(child: LNodeChild): void;
     setAttribute(key: string, value: string): void;
-    render(forceNew?: boolean): HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    render(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
 }
 export declare const lnode: (name: string, attributes?: LNodeAttributes) => LNode;
 export declare const isLNode: (x: any) => x is LNode;

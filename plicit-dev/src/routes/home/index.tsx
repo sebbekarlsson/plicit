@@ -3,14 +3,14 @@ import { Card } from "../../components/card";
 import { Counter } from "../../components/counter";
 import { ItemList } from "../../components/item-list";
 import { RangeSlider } from "../../components/range-slider";
-import { PeopleTable } from "../../components/people-table";
 import { FileTree } from "../../components/file-tree";
 import { TextReverser } from "../../components/text-reverser";
 
 export const HomeRoute: Component = () => {
   return (
-    <div class="w-full h-full flex flex-col">
+    <div class="w-full h-full">
       <div
+        class="h-full w-full"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(30%, 1fr))",
@@ -23,16 +23,13 @@ export const HomeRoute: Component = () => {
         <Card title="Item List" subtitle="Reactive Item List">
           <ItemList />
         </Card>
-        <Card title="Table" subtitle="Reactive Table">
-          <PeopleTable />
-        </Card>
         <Card title="Range Slider" subtitle="Reactive Range Slider">
           {() => {
-            const state = ref<number>(50);
+            const state = ref<number>(0);
 
             return (
-              <div>
-                <div class="text-gray-700 font-semibold text-sm">
+              <div class="space-y-2">
+                <div class="text-gray-700 font-semibold text-sm select-none">
                   {computed(
                     () => (
                       <span>{state.value}</span>

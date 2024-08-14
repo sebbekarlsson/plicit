@@ -7,11 +7,20 @@ import {
   RouterNavigationAction,
 } from "../types";
 
+const cacheKey = '__router__path__';
+
+const getCachedPath = () => {
+  const path = sessionStorage.getItem(cacheKey);
+  if (path) return path;
+  sessionStorage.setItem(cacheKey, window.location.pathname);
+  return window.location.pathname
+}
+console.log(123)
 const router = ref<IRouter>({
   routes: [],
   current: {
     nav: ref<RouterNavigationAction>({
-      path: window.location.pathname,
+      path: getCachedPath(),
       props: {},
     }),
   },
@@ -35,9 +44,11 @@ export const createRouter = (props: IRouterConfig) => {
 };
 
 export const useRouter = () => {
-  const push = (nav: RouterNavigationAction) => {
+  const push = (navig: RouterNavigationAction | string) => {
+    const nav = typeof navig === 'string' ? { path: navig, props: {} } : navig;
     router.value.history.push(nav);
     router.value.current.nav.value = nav;
+    sessionStorage.setItem(cacheKey, nav.path);
   };
 
   const back = () => {

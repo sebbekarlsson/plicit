@@ -2,10 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+    font-family: Open-Sans;
+    src: url("../font/OpenSans-VariableFont_wdth,wght.ttf");
+}
+
+* {
+    font-family: Open-Sans;
+    box-sizing: border-box;
+}
 
 html {
     width: 100vw;
-    height: 100vh;
+    height: 100svh;
     overflow: hidden;
 }
 

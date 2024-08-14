@@ -1,4 +1,4 @@
-import { Component } from "plicit";
+import { Component, ELNodeType } from "plicit";
 import { useRoute, useRouter } from "../../hooks";
 
 export const RouterView: Component = (props) => {
@@ -6,9 +6,9 @@ export const RouterView: Component = (props) => {
   const router = useRouter();
 
   return (
-    <div class="w-full h-full">
+    <div class="w-full h-full" nodeType={ELNodeType.FRAGMENT}>
       {() => (
-        <div deps={[route, router.router, router.router.value.current.nav]}>
+        <div class="w-full h-full"  deps={[router.router.value.current.nav]}>
           <route.value.component
             {...(router.router.value.current.nav.value.props || {})}
           />

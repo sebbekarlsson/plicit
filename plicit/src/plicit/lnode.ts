@@ -1,7 +1,7 @@
 import { EventEmitter, EventSubscriber, PlicitEvent } from "./event";
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
-import { getElementsAttributesDiff, patchElements } from "./element";
+import { patchElements } from "./element";
 import { isRef, LProxy, MaybeRef, proxy, ref, Ref, unref } from "./proxy";
 import {
   isHTMLElement,
@@ -26,6 +26,7 @@ export type LNodeRef = Ref<LNode | undefined>;
 export enum ELNodeType {
   ELEMENT = "ELEMENT",
   TEXT_ELEMENT = "TEXT_ELEMENT",
+  FRAGMENT = "FRAGMENT",
 }
 export type LNodeAttributes = {
   text?: any;
@@ -68,7 +69,8 @@ export class LNode {
   >();
 
   didMount: boolean = false;
-
+  unsubs: Array<() => void> = [];
+  
   constructor(name: string, attributes?: LNodeAttributes) {
     this.name = attributes.tag || name;
     this.attributes = proxy<LNodeAttributes>(attributes || {});
@@ -77,8 +79,10 @@ export class LNode {
     this.key = this.attributes.key || "";
     this.type = this.attributes.nodeType || this.type;
 
-    for (const dep of this.attributes.deps || []) {
-      deepSubscribe(
+    const deps = this.attributes.deps || [];
+    for (let i = 0; i < deps.length; i++) {
+      const dep = deps[i];
+      const nextUnsubs = deepSubscribe(
         dep,
         {
           onSet: () => {
@@ -90,16 +94,7 @@ export class LNode {
         1,
       );
 
-      //const d = unwrapReactiveDep(dep);
-
-      //if (isRef(d)) {
-      //  d.subscribe({
-      //    get: () => {},
-      //    set: () => {
-      //      this.invalidate();
-      //    },
-      //  });
-      //}
+      this.unsubs = [...this.unsubs, ...nextUnsubs];
     }
   }
 
@@ -115,6 +110,11 @@ export class LNode {
     }
 
     const nextEl = unreffed.getElement();
+
+    if (isLNode(next)) {
+      next.unsubs.forEach((unsub) => unsub());
+      next.unsubs = [];
+    }
 
     if (isHTMLElement(old) && isHTMLElement(nextEl)) {
       if (isLNode(next)) {
@@ -143,7 +143,9 @@ export class LNode {
         this.patchWith(component);
         return;
       }
-      const next = this.render(true);
+
+      this.el = undefined;
+      const next = this.render();
       this.el.replaceWith(next);
       this.setElement(next);
     }
@@ -185,7 +187,12 @@ export class LNode {
   mountTo(target: NativeElement | null | undefined) {
     if (!target) return;
     const el = this.getElement();
-    target.appendChild(el);
+
+    if (this.attributes.nodeType === ELNodeType.FRAGMENT) {
+      target.append(...Array.from(el.childNodes));
+    } else {
+      target.appendChild(el);
+    }
     this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
   }
 
@@ -200,37 +207,36 @@ export class LNode {
     return document.createElement(this.name);
   }
 
-  private _listenForMutation() {
-    const el = this.el;
-    if (!el) return;
-    if (!isHTMLElement(el)) return;
+  //private _listenForMutation() {
+  //  const el = this.el;
+  //  if (!el) return;
+  //  if (!isHTMLElement(el)) return;
 
-    const observer = new MutationObserver(function (mutations) {
-      if (document.contains(el)) {
-        observer.disconnect();
-      }
-    });
-    observer.observe(el, {
-      childList: true,
-      attributes: true,
-    });
-  }
+  //  const observer = new MutationObserver(function (mutations) {
+  //    if (document.contains(el)) {
+  //      observer.disconnect();
+  //    }
+  //  });
+  //  observer.observe(el, {
+  //    childList: true,
+  //    attributes: true,
+  //  });
+  //}
 
   setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement) {
     this.el = el;
   }
 
-  ensureElement(forceNew: boolean = false) {
-    if (forceNew) return this.createElement();
+  ensureElement() {
     if (this.el) return this.el;
     const el = this.createElement();
     this.setElement(el);
     return el;
   }
 
-  getElement(forceNew: boolean = false) {
-    if (this.el && !forceNew) return this.el;
-    return this.render(forceNew);
+  getElement() {
+    if (this.el) return this.el;
+    return this.render();
   }
 
   private onReceiveChild(child: LNodeChild) {
@@ -253,8 +259,6 @@ export class LNode {
         }
       });
     }
-
-    
   }
 
   appendChild(child: LNodeChild) {
@@ -264,7 +268,6 @@ export class LNode {
         const lnode = sig.node._value;
         const thisEl = this.el;
         if (isLNode(lnode)) {
-          console.log('yes');
           if (thisEl && isHTMLElement(thisEl)) {
             const index = this.children.indexOf(child);
             if (index >= 0) {
@@ -273,7 +276,7 @@ export class LNode {
               const nextEl = lnode.render();
               if (myChild) {
                 if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
-                  patchElements(myChild, nextEl, () => {});
+                  patchElements(myChild, nextEl);
                 } else {
                   myChild.replaceWith(nextEl);
                 }
@@ -306,9 +309,10 @@ export class LNode {
       this.children.push(child);
       this.onReceiveChild(child);
     }
-    if (isText(el)) return;
 
     this.mappedChildren[key] = child;
+    
+    if (isText(el)) return;
 
     if (isLNode(unreffed)) {
       unreffed.parent.value = this;
@@ -341,17 +345,19 @@ export class LNode {
     }
   }
 
-  render(forceNew: boolean = false) {
+  
+
+  render() {
     const _this = this;
-    setTimeout(() => {
+    queueMicrotask(() => {
       this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
       this.emit({ type: ENodeEvent.LOADED, payload: {} });
       if (this.attributes.ref) {
         this.attributes.ref.value = _this;
       }
-    }, 1000);
+    });
 
-    const el = this.ensureElement(forceNew);
+    const el = this.ensureElement();
     if (this.attributes.text) {
       if (isText(el)) {
         el.data = this.attributes.text;
@@ -369,9 +375,13 @@ export class LNode {
         );
       }
     }
-    for (const [key, value] of Object.entries(this.attributes.on || {})) {
-      el.addEventListener(key, value);
-    }
+
+    queueMicrotask(() => {
+      for (const [key, value] of Object.entries(this.attributes.on || {})) {
+        el.addEventListener(key, value);
+      }
+    })
+    
     for (const [key, value] of Object.entries(this.attributes)) {
       if (["text", "children", "on", "style", "nodeType"].includes(key))
         continue;

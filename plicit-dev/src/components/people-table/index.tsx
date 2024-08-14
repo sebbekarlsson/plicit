@@ -36,10 +36,10 @@ export const PeopleTable = () => {
     rows
   }
 
-  return () => <div class="h-[300px] flex flex-col">
+  return () => <div class="flex flex-col overflow-hidden h-full">
     <div class="h-[4rem] flex-none flex items-start">
       <InputField value={query.value} type="text" onChange={(val) => query.value = val} deps={[query]} placeholder="Search..."/>
     </div>
-    <Table table={table}/> 
+    {() => <Table table={table}/>} 
   </div> 
 }

@@ -73,7 +73,7 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
       min: p,
       max: p.add(size),
     };
-  }, [triggerEl, props.triggerRef]);
+  }, [mouseIsOnMenu, mouseIsOnTrigger]);
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -120,7 +120,7 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
             opacity: "0%",
           }),
     };
-  }, [menu, triggerBounds, triggerEl, interp.value, mouseIsOnTrigger, mouseIsOnMenu]);
+  }, [menu, triggerBounds, interp.value]);
 
   let leaveTriggerTimer: Timer | null = null;
   let leaveMenuTimer: Timer | null = null;
