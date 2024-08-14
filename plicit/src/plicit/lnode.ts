@@ -16,10 +16,10 @@ import {
 import { stringGenerator } from "./utils";
 import { ENodeEvent } from "./nodeEvents";
 import { deepSubscribe } from "./subscribe";
-import { isSignal, type Signal } from "./signal";
+import { isSignal, signal, type Signal } from "./signal";
 import { ESignalEvent } from "./signal/event";
 
-export type LNodeChild = MaybeRef<LNode> | Component | Signal<any>;
+export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
 
 export type LNodeRef = Ref<LNode | undefined>;
 
@@ -53,7 +53,7 @@ export class LNode {
   _lnode: "lnode" = "lnode" as "lnode";
   key: string = "";
   el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
-  parent: Ref<LNode | undefined>;
+  parent: Signal<LNode | undefined>;
   attributes: LProxy<LNodeAttributes>;
   name: string;
   children: LNodeChild[] = [];
@@ -74,7 +74,7 @@ export class LNode {
   constructor(name: string, attributes?: LNodeAttributes) {
     this.name = attributes.tag || name;
     this.attributes = proxy<LNodeAttributes>(attributes || {});
-    this.parent = ref<LNode | undefined>(undefined);
+    this.parent = signal<LNode | undefined>(undefined);
     this.component = ref<Component | undefined>(undefined);
     this.key = this.attributes.key || "";
     this.type = this.attributes.nodeType || this.type;
@@ -86,12 +86,13 @@ export class LNode {
         dep,
         {
           onSet: () => {
-            queueMicrotask(() => {
-              this.invalidate();
-            });
+            this.invalidate();
+          },
+          onTrigger: () => {
+            this.invalidate();
           },
         },
-        1,
+        -1,
       );
 
       this.unsubs = [...this.unsubs, ...nextUnsubs];
@@ -114,6 +115,12 @@ export class LNode {
     if (isLNode(next)) {
       next.unsubs.forEach((unsub) => unsub());
       next.unsubs = [];
+      if (next.parent) {
+        next.parent.dispose();
+      }
+      if (next.signal) {
+        next.signal.dispose();
+      }
     }
 
     if (isHTMLElement(old) && isHTMLElement(nextEl)) {
@@ -134,7 +141,7 @@ export class LNode {
   }
 
   invalidate() {
-    if (!this.parent.value) return;
+    if (!this.parent.get()) return;
     const old = this.el;
 
     if (this.el && old) {
@@ -255,6 +262,9 @@ export class LNode {
                 this.appendChild(child);
               }
             },
+            onTrigger: () => {
+              this.appendChild(child);
+            },
           });
         }
       });
@@ -306,7 +316,7 @@ export class LNode {
     }
 
     if (isLNode(child)) {
-      child.parent.value = this;
+      child.parent.set(this);
     }
 
     const key = signalKey || unreffed.key;
@@ -321,7 +331,7 @@ export class LNode {
     
 
     if (isLNode(unreffed)) {
-      unreffed.parent.value = this;
+      unreffed.parent.set(this);
 
       if (!isText(el)) {
         unreffed.mountTo(el);
@@ -385,11 +395,9 @@ export class LNode {
       }
     }
 
-    queueMicrotask(() => {
-      for (const [key, value] of Object.entries(this.attributes.on || {})) {
-        el.addEventListener(key, value);
-      }
-    })
+    for (const [key, value] of Object.entries(this.attributes.on || {})) {
+      el.addEventListener(key, value);
+    }
     
     for (const [key, value] of Object.entries(this.attributes)) {
       if (["text", "children", "on", "style", "nodeType"].includes(key))

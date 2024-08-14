@@ -6,10 +6,11 @@ import {
   LNodeRef,
   Ref,
   ref,
+  signal,
 } from "plicit";
 import { IContextMenu, IContextMenuConfig } from "../types";
 import { AABB, getAABBSize, VEC2 } from "tsmathutil";
-import { useInterpolation } from "../../../hooks/useInterpolation";
+import { useInterpolationSignal } from "../../../hooks/useInterpolationSignal";
 
 const HOVER_TIMEOUT_LEAVE_MENU = 90;
 const HOVER_TIMEOUT_LEAVE_TRIGGER = 100;
@@ -36,13 +37,13 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     open: false,
   });
 
-  const interp = useInterpolation({
+  const interp = useInterpolationSignal({
     duration: 0.15,
     initial: 0,
   });
 
-  const mouseIsOnMenu = ref<boolean>(false);
-  const mouseIsOnTrigger = ref<boolean>(false);
+  const mouseIsOnMenu = signal<boolean>(false);
+  const mouseIsOnTrigger = signal<boolean>(false);
 
   const menuRef: LNodeRef = ref(undefined);
 
@@ -79,12 +80,12 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     if (open) {
       interp.run({
         to: 1.0,
-        from: interp.value.value,
+        from: interp.value.get(),
       });
     } else {
       interp.run({
         to: 0.0,
-        from: interp.value.value,
+        from: interp.value.get(),
       });
     }
     menu.value = {
@@ -101,7 +102,7 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     const p = triggerBounds.value.min.clone();
     p.y = triggerBounds.value.max.y;
     const size = getAABBSize(triggerBounds.value);
-
+    const anim = interp.value.get();
     return {
       position: "fixed",
       left: p.x + "px",
@@ -109,8 +110,8 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
       zIndex: "9999",
       minWidth: size.x + "px",
       background: "white",
-      opacity: interp.value.value * 100 + "%",
-      ...(menu.value.open || interp.value.value > 0.001
+      opacity: anim * 100 + "%",
+      ...(menu.value.open || anim > 0.001
         ? {
             display: "block",
           }
@@ -139,32 +140,31 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
 
   const onMouseEnterTrigger = () => {
     cancelTimers();
-    mouseIsOnTrigger.value = true;
+    mouseIsOnTrigger.set(true);
 
     setOpen(true);
   };
 
   const onMouseLeaveTrigger = () => {
-    mouseIsOnTrigger.value = false;
+    mouseIsOnTrigger.set(false);
 
     leaveTriggerTimer = setTimeout(() => {
-      if (mouseIsOnTrigger.value || mouseIsOnMenu.value) return;
+      if (mouseIsOnTrigger.get() || mouseIsOnMenu.get()) return;
       setOpen(false);
     }, HOVER_TIMEOUT_LEAVE_TRIGGER);
   };
 
   const onMouseEnterMenu = () => {
     cancelTimers();
-    mouseIsOnMenu.value = true;
+    mouseIsOnMenu.set(true);
   };
 
   const onMouseLeaveMenu = () => {
-    mouseIsOnMenu.value = false;
+    mouseIsOnMenu.set(false);
 
-    
 
     leaveMenuTimer = setTimeout(() => {
-      if (mouseIsOnTrigger.value || mouseIsOnMenu.value) return;
+      if (mouseIsOnTrigger.get() || mouseIsOnMenu.get()) return;
       setOpen(false);
     }, HOVER_TIMEOUT_LEAVE_MENU);
   };
@@ -174,8 +174,6 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     if (!el) return;
     el.addEventListener("mouseenter", onMouseEnterTrigger);
     el.addEventListener("mouseleave", onMouseLeaveTrigger);
-    mouseIsOnMenu.value = false;
-    mouseIsOnTrigger.value = false;
   }, [triggerEl]);
 
   effect(() => {
@@ -183,8 +181,6 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     if (!el) return;
     el.addEventListener("mouseenter", onMouseEnterMenu);
     el.addEventListener("mouseleave", onMouseLeaveMenu);
-    mouseIsOnMenu.value = false;
-    mouseIsOnTrigger.value = false;
   }, [menuEl]);
 
   return {

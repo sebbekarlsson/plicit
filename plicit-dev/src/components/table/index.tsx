@@ -2,7 +2,7 @@ import { Component, computed, unique, unref } from "plicit";
 import { ITableProps, ITableRow } from "./types";
 
 const TableRow: Component<{ row: ITableRow, head?: boolean }> = (props) => {
-  return <tr class="h-[3rem]" style={{
+  return <tr class={"h-[3rem]" + ((!props.head) ? " hover:bg-amaranth-200" : "")} style={{
     height: '3rem',
     maxHeight: '3rem',
     minHeight: '3rem'
@@ -43,11 +43,11 @@ export const Table: Component<ITableProps> = (props) => {
       borderCollapse: 'separate',
       borderSpacing: '0'
     }}>
-      <thead class="sticky top-0 left-0 bg-white">
+      {() => <thead class="sticky top-0 left-0 bg-white">
         {headRows.value.map((row) => {
           return <TableRow head row={row}/>
         })}
-      </thead>
+      </thead>}
       { () => <tbody deps={[rows]}>
         {
           rows.value.map((row) => {

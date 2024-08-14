@@ -43,6 +43,7 @@ export type EffectSubscriber<T = any> = {
     next: RawRef<T>[keyof RawRef<T>],
     receiver: any,
   ) => any;
+  onTrigger?: () => any;
   lastValue?: any;
 };
 

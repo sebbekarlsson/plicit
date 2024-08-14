@@ -16,6 +16,9 @@ export const computed = <T = any>(
     deepSubscribe(dep, {
       onSet: () => {
         r.value = fun();
+      },
+      onTrigger: () => {
+        r.value = fun();
       }
     })
   });
@@ -55,7 +58,9 @@ export const computedAsync = <T = any>(
         onSet: () => {
           refresh().catch((e) => console.error(e));
         },
-        onGet: () => {},
+        onTrigger: () => {
+          refresh().catch((e) => console.error(e));
+        }
       });
     }
   });

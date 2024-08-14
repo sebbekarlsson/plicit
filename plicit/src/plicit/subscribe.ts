@@ -1,4 +1,5 @@
 import { EffectSubscriber, isRef } from "./proxy";
+import { isSignal, watchSignal } from "./signal";
 import { ReactiveDep, unwrapReactiveDep } from "./types";
 
 export const deepSubscribe = (dep: ReactiveDep, sub: EffectSubscriber, maxDepth: number = -1) => {
@@ -20,8 +21,15 @@ export const deepSubscribe = (dep: ReactiveDep, sub: EffectSubscriber, maxDepth:
       }));
 
       if (depth < maxDepth) {
+        console.log(`snopp ${depth}, ${maxDepth}`)
         d._deps.forEach((child) => subscribe(child, sub, depth + 1));
       }
+    } else if (isSignal(d)) {
+      unsubs.push(watchSignal(d, () => {
+        if (sub.onTrigger) {
+          sub.onTrigger();
+        }
+      }));
     }
   }
 

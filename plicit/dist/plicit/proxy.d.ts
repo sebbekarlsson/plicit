@@ -11,6 +11,7 @@ type RefState<T = any> = {
 export type EffectSubscriber<T = any> = {
     onGet?: (target: RawRef<T>, key: keyof RawRef<T>, receiver: any) => any;
     onSet?: (target: RawRef<T>, key: keyof RawRef<T>, next: RawRef<T>[keyof RawRef<T>], receiver: any) => any;
+    onTrigger?: () => any;
     lastValue?: any;
 };
 export type RefSubscriber<T = any> = EffectSubscriber<T>;

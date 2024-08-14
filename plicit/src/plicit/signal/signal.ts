@@ -1,39 +1,93 @@
 import { EventEmitter, PlicitEvent } from "../event";
 import { isFunction } from "../is";
 import { proxy } from "../proxy";
-import { stringGenerator } from "../utils";
+import { StringGenerator, stringGenerator } from "../utils";
 import { ESignalState } from "./constants";
 import { ESignalEvent } from "./event";
+import { Trackable } from "./types";
 
-let stack: Signal[] = [];
-const uidGen = stringGenerator();
+export type GlobalSignalState = {
+  stack: Trackable[];
+  lookup: Map<string, Trackable>;
+  tracked: string[];
+  uidGen: StringGenerator;
+};
+
+export const GSignal: GlobalSignalState = {
+  stack: [],
+  lookup: new Map<string, Trackable>(),
+  tracked: [],
+  uidGen: stringGenerator(),
+};
+
+const pushToStack = (item: Trackable) => {
+  GSignal.lookup.set(item.uid, item);
+  GSignal.stack.push(item);
+};
+
+const getTrackables = () => {
+  const trackables: Trackable[] = [];
+  for (const key of GSignal.tracked) {
+    const trackable = GSignal.lookup.get(key);
+    if (!trackable) continue;
+    trackables.push(trackable);
+  }
+  return trackables;
+};
+
+export const publishTrackable = (item: Omit<Trackable, "uid">) => {
+  const next = { ...item, uid: GSignal.uidGen.next(24) };
+  pushToStack(next);
+  return next;
+};
+
+export const notifyTrack = (uid: string) => {
+  if (GSignal.tracked.includes(uid)) return;
+  GSignal.tracked.push(uid);
+};
+
+export const flushSignals = () => {
+  const now = performance.now();
+
+  const signalIsTrash = (trackable: Trackable) => {
+    if (trackable.lastSet < 0 || trackable.lastGet < 0) return;
+    const diffSet = now - trackable.lastSet;
+    const diffGet = now - trackable.lastGet;
+    return (diffSet > 60 && diffGet > 60);
+  }
+
+  const trash = GSignal.stack.filter(it => signalIsTrash(it) === true);
+
+  for (const tr of trash) {
+    GSignal.lookup.delete(tr.uid);
+  }
+
+  GSignal.stack = GSignal.stack.filter(it => signalIsTrash(it) === false)
+}
 
 export type SignalOptions = {
   isEffect?: boolean;
   isComputed?: boolean;
-}
+};
 
 type Fun<T = any> = () => T;
 
-export type SignalEventPayload = {}
+export type SignalEventPayload = {};
 
-export type Signal<T = any> = {
+export type Signal<T = any> = Trackable & {
   uid: string;
   node: SignalNode<T>;
-  set: (fun: (old: T) => T) => void;
+  set: (fun: ((old: T) => T) | T) => void;
   get: () => T;
   peek: () => T;
   trigger: () => void;
   sym: "Signal";
   emitter: EventEmitter<SignalEventPayload, ESignalEvent, Signal<T>>;
+  dispose: () => void;
 };
 
 export type SignalNode<T = any> = {
-  parent?: Signal<any>;
   index: number;
-  children: Signal[];
-  tracked: Signal[];
-  dependants: Signal[];
   state: ESignalState;
   fun?: Fun<T>;
   _value?: T;
@@ -45,134 +99,164 @@ export const isSignal = <T = any>(x: any): x is Signal<T> => {
   return x.sym === "Signal";
 };
 
-let trackedIds: string[] = [];
-
 export type MaybeSignal<T = any> = T | Signal<T>;
 
 export const signal = <T = any>(
   initial: Fun<T> | T,
-  options: SignalOptions = {}
+  options: SignalOptions = {},
 ): Signal<T> => {
-
   const init = isFunction(initial) ? initial : () => initial;
 
   const node: SignalNode<T> = proxy<SignalNode<T>>({
     index: -1,
-    dependants: [],
-    children: [],
-    tracked: [],
     _value: null,
     fun: init,
     state: ESignalState.UNINITIALIZED,
-    parent: undefined,
   });
 
-  const emit = (event: Omit<PlicitEvent<SignalEventPayload, ESignalEvent, Signal>, 'target'>) => {
-    sig.emitter.emit({...event, target: sig});
-  }  
+  const emit = (
+    event: Omit<
+      PlicitEvent<SignalEventPayload, ESignalEvent, Signal>,
+      "target"
+    >,
+  ) => {
+    sig.emitter.emit({ ...event, target: sig });
+  };
 
-  const trigger = () => {
-//    if (![ESignalState.DIRTY, ESignalState.UNINITIALIZED].includes(node.state)) return;
-    
-    emit({ type: ESignalEvent.TRIGGER, payload: {} })
-    if (options.isEffect || options.isComputed) {
-      trackedIds = [];
+  const withUpdateEvents = (fn: () => void) => {
+    emit({ type: ESignalEvent.BEFORE_UPDATE, payload: {} });
+    fn();
+    emit({ type: ESignalEvent.AFTER_UPDATE, payload: {} });
+  }
 
-      emit({ type: ESignalEvent.BEFORE_UPDATE, payload: {} });
-      const next = init();
-      if (options.isComputed) {
-        node._value = next;
-      }
-      emit({ type: ESignalEvent.AFTER_UPDATE, payload: {} });
-      const trackedItems = stack.filter((it) => trackedIds.includes(it.uid));
-
-      for (const tracked of trackedItems) {
-        if (!node.tracked.includes(tracked)) {
-          node.tracked.push(tracked);
-
-          if (!tracked.node.dependants.includes(sig)) {
-            tracked.node.dependants.push(sig);
-          }
-        }
-      }
-
-      trackedIds = [];
-      return;
-    } else {
-      trackedIds = [];
-      emit({ type: ESignalEvent.BEFORE_UPDATE, payload: {} });
-      const next = init();
-      if (options.isComputed) {
-        node._value = next;
-      }
-      emit({ type: ESignalEvent.AFTER_UPDATE, payload: {} });
-      const trackedItems = stack.filter((it) => trackedIds.includes(it.uid));
-
-      for (const tracked of trackedItems) {
-        if (!node.tracked.includes(tracked)) {
-          node.tracked.push(tracked);
-
-          if (!tracked.node.dependants.includes(sig)) {
-            tracked.node.dependants.push(sig);
-          }
+  const registerTracked = () => {
+    const trackedItems = getTrackables();
+    for (const tracked of trackedItems) {
+      if (!sig.tracked.includes(tracked)) {
+        sig.tracked.push(tracked);
+        if (!tracked.dependants.includes(sig)) {
+          tracked.dependants.push(sig);
         }
       }
     }
 
-    node.dependants.forEach((dep) => {
+    GSignal.tracked = [];
+  }
+
+  const triggerMutation = () => {
+    GSignal.tracked = [];
+
+    withUpdateEvents(() => {
+      node._value = init();
+    });
+    
+    registerTracked();
+  };
+
+  const triggerEffect = () => {
+    GSignal.tracked = [];
+
+    withUpdateEvents(() => init());
+    
+    registerTracked();
+  };
+
+  const trigger = () => {
+    emit({ type: ESignalEvent.TRIGGER, payload: {} });
+
+    if (options.isComputed) {
+      triggerMutation();
+    } else {
+      triggerEffect();
+    }
+    
+    sig.watchers.forEach((watcher) => watcher());
+
+    if (options.isEffect || options.isComputed) {
+      return;
+    }
+
+    sig.dependants.forEach((dep) => {
       dep.trigger();
-      dep.node.state = ESignalState.DIRTY;
     });
 
     node.state = ESignalState.CLEAN;
-
   };
 
   const track = () => {
-    trackedIds.push(sig.uid);
-    emit({ type: ESignalEvent.TRACK, payload: {} })
+    GSignal.tracked.push(sig.uid);
+    emit({ type: ESignalEvent.TRACK, payload: {} });
   };
+
+  const uid = GSignal.uidGen.next(24);
 
   const sig: Signal<T> = {
     emitter: new EventEmitter(),
     sym: "Signal",
-    uid: uidGen.next(24),
+    uid: uid,
     node,
     trigger,
     peek: () => node._value || init(),
-    set: (fun: (old: T) => T) => {
-      node._value = fun(node._value);
+    dependants: [],
+    tracked: [],
+    watchers: [],
+    set: (fun: ((old: T) => T) | T) => {
+      node._value = isFunction(fun) ? fun(node._value) : fun;
       node.state = ESignalState.DIRTY;
       trigger();
+
+      queueMicrotask(() => {
+        sig.lastSet = performance.now();
+      })
     },
     get: () => {
-      if (node.state === ESignalState.UNINITIALIZED) {
+      if (node.state === ESignalState.UNINITIALIZED || node._value === null) {
         node._value = init();
         node.state = ESignalState.INITIALIZED;
       }
       track();
+      queueMicrotask(() => {
+        sig.lastGet = performance.now();
+      })
       return node._value;
     },
+    dispose: () => {
+      queueMicrotask(() => {
+        flushSignals();
+        GSignal.stack = GSignal.stack.filter((it) => it.uid !== uid);
+      })
+    },
+    lastSet: -1,
+    lastGet: -1
   };
 
   if (options.isEffect || options.isComputed) {
     trigger();
   }
 
-  stack.push(sig);
-
-  
+  if (!options.isEffect) {
+    pushToStack(sig);
+  }
 
   return sig;
 };
 
-
 export const computedSignal = <T = any>(
   init: Fun<T>,
-  options: SignalOptions = { isComputed: true }
+  options: SignalOptions = { isComputed: true },
 ): Signal<T> => signal<T>(init, options);
 
 export const effectSignal = <T = any>(
   init: Fun<T>,
-  options: SignalOptions = { isEffect: true }
+  options: SignalOptions = { isEffect: true },
 ): Signal<T> => signal<T>(init, options);
+
+export const watchSignal = <T = any>(sig: Signal<T>, fun: () => any) => {
+  if (!sig.watchers.includes(fun)) {
+    sig.watchers.push(fun);
+  }
+
+  return () => {
+    sig.watchers = sig.watchers.filter((it) => it !== fun);
+  };
+};

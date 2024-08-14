@@ -5,7 +5,7 @@ import { LProxy, MaybeRef, Ref } from "./proxy";
 import { NativeElement, NativeElementListeners, ReactiveDep } from "./types";
 import { ENodeEvent } from "./nodeEvents";
 import { type Signal } from "./signal";
-export type LNodeChild = MaybeRef<LNode> | Component | Signal<any>;
+export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
 export type LNodeRef = Ref<LNode | undefined>;
 export declare enum ELNodeType {
     ELEMENT = "ELEMENT",
@@ -32,7 +32,7 @@ export declare class LNode {
     _lnode: "lnode";
     key: string;
     el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
-    parent: Ref<LNode | undefined>;
+    parent: Signal<LNode | undefined>;
     attributes: LProxy<LNodeAttributes>;
     name: string;
     children: LNodeChild[];
