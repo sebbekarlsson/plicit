@@ -77,3 +77,9 @@ const Counter = () => {
 ```
 > Here, we are still explicitly saying the only one of the `<span>` elements should react to changes. 
 > However, the dependencies are __automatically__ tracked.
+
+---
+
+To summarize, we explicitly define an element to be reactive by wrapping it in a function.  
+Dependencies of a `ref` are manually tracked.  
+Dependencies of a `signal` are automatically tracked.
