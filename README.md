@@ -64,7 +64,7 @@ const Counter = () => {
 ### Implicit Example
 ```tsx
 const Counter = () => {
-  const count = signal<number>(() => 0)
+  const count = signal<number>(0)
   
   return (
     <div>
