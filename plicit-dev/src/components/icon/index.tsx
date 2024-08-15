@@ -1,4 +1,4 @@
-import { Component, computed, computedAsync, isHTMLElement, isSVGElement, LNode, ref } from "plicit";
+import { Component, computed, computedAsync, computedSignal, CSSProperties, isHTMLElement, isSVGElement, LNode, pget, ref, signal } from "plicit";
 import { IIconProps } from "./types";
 import { isAsyncFunction } from "plicit/src/plicit/is";
 
@@ -14,7 +14,7 @@ export const Icon: Component<IIconProps> = (props) => {
       if (resp.default) return resp.default;
     }
     return props.icon.src;
-  }, [props.icon]);
+  }, [props.icon], { deep: false });
 
 
   const svgElement = ref<SVGSVGElement | null>(null); 
@@ -61,7 +61,16 @@ export const Icon: Component<IIconProps> = (props) => {
     }
   }
 
-  return <div class={props.class}>
+  const style = computedSignal((): CSSProperties => {
+    const flipH = pget(props.icon.flipH);
+    return {
+      ...(flipH ? {
+        transform: 'scale(-1, 1)'
+      } : {})
+    }
+  })
+
+  return <div class={props.class} style={style}>
     {
       () => <span onLoaded={handleLoaded} deps={[awaitedSource.data]} innerHTML={awaitedSource.data.value || ''}/>
     }

@@ -1,13 +1,19 @@
 import { EventEmitter, PlicitEvent } from "../../event";
 import { isFunction } from "../../is";
 import { proxy } from "../proxy";
-import { debounce, stringGenerator, StringGenerator, throttle } from "../../utils";
+import {
+  debounce,
+  stringGenerator,
+  StringGenerator,
+  throttle,
+} from "../../utils";
 import { ESignalState } from "./constants";
 import { ESignalEvent } from "./event";
 import { Trackable } from "./types";
 
 const FLUSHING_ENABLED: boolean = true as boolean;
 
+const STACK_CAPACITY = 512;
 
 export type GlobalSignalState = {
   stack: Trackable[];
@@ -20,7 +26,10 @@ export type GlobalSignalState = {
   lastFlush: number;
 };
 
-export const GSignal: GlobalSignalState = {
+// @ts-ignore
+const oldG = window.GSignal as GlobalSignalState;
+
+export const GSignal: GlobalSignalState = oldG || {
   stack: [],
   lookup: new Map<string, Trackable>(),
   tracked: [],
@@ -28,18 +37,27 @@ export const GSignal: GlobalSignalState = {
   uidGen: stringGenerator(),
   current: undefined,
   idCounter: 0,
-  lastFlush: -1
+  lastFlush: -1,
 };
-
+// @ts-ignore
+window.GSignal = GSignal;
 const nextId = () => {
   const n = GSignal.idCounter;
   GSignal.idCounter = GSignal.idCounter + 1;
   return `${n}`;
-}
+};
+
+const maybeResetStack = () => {
+  if (GSignal.stack.length >= STACK_CAPACITY) {
+    GSignal.stack = [];
+  }
+};
 
 const pushToStack = (item: Trackable) => {
-  GSignal.lookup.set(item.uid, item);
+  if (GSignal.lookup.has(item.uid) || GSignal.stack.includes(item)) return;
+  maybeResetStack();
   GSignal.stack.push(item);
+  GSignal.lookup.set(item.uid, item);
 };
 
 const getTrackables = () => {
@@ -53,10 +71,13 @@ const getTrackables = () => {
   return trackables;
 };
 
-export const publishTrackable = (item: Omit<Trackable, "uid">) => {
+export const publishTrackable = (
+  item: Omit<Trackable, "uid" | "createdAt" | "refCounter"> & { uid?: string },
+) => {
   const current = GSignal.current;
-  const next: Trackable = { ...item, uid: nextId() };
-  GSignal.stack.push(next);
+  const uid = item.uid || nextId();
+  const now = performance.now();
+  const next: Trackable = { ...item, uid, createdAt: now, refCounter: 0 };
   if (!current) return next;
 
   if (!current.tracked.includes(next) && !next.dependants.includes(current)) {
@@ -64,6 +85,8 @@ export const publishTrackable = (item: Omit<Trackable, "uid">) => {
     current.lastGet = performance.now();
     next.dependants.push(current);
   }
+
+  pushToStack(next);
 
   return next;
 };
@@ -77,15 +100,25 @@ const destroyTrackable = (track: Trackable) => {
   GSignal.lookup.delete(track.uid);
   track.tracked.forEach((it) => {
     if (it.dispose || it.onDispose) {
-      destroyTrackable(it)
+      destroyTrackable(it);
     }
   });
   track.tracked = [];
 
   track.dependants.forEach((dep) => {
-    dep.tracked = dep.tracked.filter(it => it !== track);
-    dep.dependants = dep.dependants.filter(it => it !== track);
-  })
+    dep.tracked = dep.tracked.filter((it) => it !== track);
+    dep.dependants = dep.dependants.filter((it) => it !== track);
+    //dep.tracked.forEach((it) => {
+    //  if (it.isTrash) {
+    //    destroyTrackable(it);
+    //  }
+    //});
+    //dep.dependants.forEach((it) => {
+    //  if (it.isTrash) {
+    //    destroyTrackable(it);
+    //  }
+    //})
+  });
   track.dependants = [];
   if (track.onDispose) {
     track.onDispose();
@@ -94,29 +127,56 @@ const destroyTrackable = (track: Trackable) => {
 
 export const flushSignals = () => {
   if (!FLUSHING_ENABLED) return;
-  if (GSignal.stack.length <= 0) return;
+
+  const all = Array.from(GSignal.lookup.values());
+
+  if (all.length <= 0) return;
   const now = performance.now();
 
   const timeSinceLast = now - GSignal.lastFlush;
 
-  if (timeSinceLast < 60 && GSignal.lastFlush >= 0) return;
+  if (timeSinceLast < 1000 && GSignal.lastFlush >= 0) return;
 
   GSignal.lastFlush = now;
 
   const signalIsTrash = (trackable: Trackable) => {
-    if (trackable.lastSet < 0 || trackable.lastGet < 0) return;
-    const diffSet = now - trackable.lastSet;
-    const diffGet = now - trackable.lastGet;
-    return diffSet > 60 && diffGet > 60;
+    //const diffCreated = now - trackable.createdAt;
+    //const diffSet = now - trackable.lastSet;
+    //const diffGet = now - trackable.lastGet;
+
+    if (trackable.lastGet > 0 && trackable.lastSet > 0) {
+      const d = Math.abs(trackable.lastGet - trackable.lastSet);
+      if (d > 8) return true;
+    }
+    if (
+      trackable.dependants.length === 0 &&
+      trackable.tracked.length === 0 &&
+      trackable.watchers.length === 0
+    )
+      return true;
+    if (trackable.isTrash == true) return true;
+    if (trackable.refCounter > 0) return false;
+    //if (diffCreated > 1000 && trackable.lastGet < 0) return true;
+    //if (trackable.isTrash) return true;
+    //if (trackable.lastSet < 0 || trackable.lastGet < 0) return false;
+
+    //return diffSet > 60 && diffGet > 60;
   };
 
-  const trash = GSignal.stack.filter((it) => signalIsTrash(it) === true);
+  const trash = all.filter((it) => signalIsTrash(it) === true);
 
   for (const tr of trash) {
     destroyTrackable(tr);
   }
 
   GSignal.stack = GSignal.stack.filter((it) => signalIsTrash(it) === false);
+
+  maybeResetStack();
+};
+
+export const disposeAllSignals = () => {
+  GSignal.stack.forEach((it) => (it.isTrash = true));
+  flushSignals();
 };
 
 export type SignalOptions = {
@@ -124,6 +184,7 @@ export type SignalOptions = {
   isComputed?: boolean;
   throttle?: number;
   debounce?: number;
+  uid?: string;
 };
 
 type Fun<T = any> = () => T;
@@ -161,6 +222,7 @@ export const signal = <T = any>(
   initial: Fun<T> | T,
   options: SignalOptions = {},
 ): Signal<T> => {
+  const uid = options.uid || nextId();
   const init = isFunction(initial) ? initial : () => initial;
 
   const node: SignalNode<T> = proxy<SignalNode<T>>({
@@ -195,30 +257,21 @@ export const signal = <T = any>(
     }
   };
 
-  const triggerMutation = () => {
-    withUpdateEvents(() => {
-      node._value = init();
-    });
-
-    registerTracked();
-  };
-
-  const triggerEffect = () => {
-    withUpdateEvents(() => init());
-
-    registerTracked();
-  };
-
   const triggerFun = () => {
+    sig.refCounter += 1;
     emit({ type: ESignalEvent.TRIGGER, payload: {} });
 
     GSignal.tracked = [];
 
     if (options.isComputed) {
-      triggerMutation();
+      withUpdateEvents(() => {
+        node._value = init();
+      });
     } else {
-      triggerEffect();
+      withUpdateEvents(() => init());
     }
+
+    registerTracked();
 
     GSignal.tracked = [];
     GSignal.trackedExternal = [];
@@ -226,7 +279,7 @@ export const signal = <T = any>(
 
     sig.watchers.forEach((watcher) => watcher());
 
-    if (options.isEffect || options.isComputed) {
+    if (options.isEffect) {
       return;
     }
 
@@ -234,27 +287,51 @@ export const signal = <T = any>(
       dep.trigger();
     });
 
-    node.state = ESignalState.CLEAN;
+    // node.state = ESignalState.CLEAN;
   };
 
+  let unsubs: Array<() => void> = [];
+  let watching: string[] = [];
+
   const track = () => {
+    sig.refCounter -= 1;
+    const current = GSignal.current;
+    if (current && current !== sig && current.uid !== uid) {
+      if (!current.tracked.includes(sig)) {
+        current.tracked.push(sig);
+      }
+      if (isSignal(current) && !watching.includes(current.uid)) {
+        watching.push(current.uid);
+        for (const tracked of current.tracked) {
+          if (isSignal(tracked)) {
+            unsubs.push(
+              watchSignal(tracked, () => {
+                current.trigger();
+              }),
+            );
+          }
+        }
+      }
+    }
     GSignal.tracked.push(sig.uid);
     emit({ type: ESignalEvent.TRACK, payload: {} });
   };
 
   let trigger = triggerFun;
-  if (typeof options.debounce === 'number') {
+  if (typeof options.debounce === "number") {
     trigger = debounce(trigger, options.debounce);
   }
 
-  if (typeof options.throttle === 'number') {
+  if (typeof options.throttle === "number") {
     const [fn] = throttle(trigger, options.throttle);
     trigger = fn;
   }
 
-  const uid = nextId();
+  const now = performance.now();
 
   const sig: Signal<T> = {
+    refCounter: 0,
+    createdAt: now,
     isComputed: options.isComputed,
     isEffect: options.isEffect,
     emitter: new EventEmitter(),
@@ -284,6 +361,7 @@ export const signal = <T = any>(
     },
     get: () => {
       if (node.state === ESignalState.UNINITIALIZED || node._value === null) {
+        //        trigger();
         node._value = init();
         node.state = ESignalState.INITIALIZED;
       }
@@ -296,10 +374,14 @@ export const signal = <T = any>(
     dispose: () => {
       if (FLUSHING_ENABLED) {
         queueMicrotask(() => {
+          sig.isTrash = true;
           flushSignals();
-          GSignal.stack = GSignal.stack.filter((it) => it.uid !== uid);
+          unsubs.forEach((unsub) => unsub());
+          unsubs = [];
+          watching = [];
+          sig.emitter.clear();
         });
-      }
+      } //
     },
     lastSet: -1,
     lastGet: -1,
@@ -311,9 +393,8 @@ export const signal = <T = any>(
 
   if (!options.isEffect) {
     pushToStack(sig);
+    GSignal.current = sig;
   }
-
-  GSignal.current = sig;
 
   return sig;
 };
@@ -328,12 +409,40 @@ export const effectSignal = <T = any>(
   options: SignalOptions = { isEffect: true },
 ): Signal<T> => signal<T>(init, { ...options, isEffect: true });
 
-export const watchSignal = <T = any>(sig: Signal<T>, fun: () => any) => {
+export type WatchSignalOptions = {
+  immediate?: boolean;
+  deep?: boolean;
+};
+
+export const watchSignal = <T = any>(
+  sig: Signal<T>,
+  fun: () => any,
+  options: WatchSignalOptions = {},
+) => {
   if (!sig.watchers.includes(fun)) {
     sig.watchers.push(fun);
   }
 
+  if (options.immediate) {
+    fun();
+  }
+
+  const unsubscribeFuns: Array<() => void> = [];
+
+  if (options.deep) {
+    for (const tracked of sig.tracked) {
+      if (isSignal(tracked)) {
+        unsubscribeFuns.push(watchSignal(tracked, fun, options));
+      }
+    }
+  }
+
   return () => {
     sig.watchers = sig.watchers.filter((it) => it !== fun);
+    unsubscribeFuns.forEach((unsub) => unsub());
   };
 };
+
+//setInterval(() => {
+//  console.log(GSignal);
+//}, 1000);

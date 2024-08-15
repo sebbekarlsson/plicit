@@ -1,6 +1,14 @@
 import { Component, isComponent } from "./component";
 import { ELNodeType, isLNode, lnode, LNodeAttributes } from "./lnode";
-import { computedSignal, isRef, isSignal } from "./reactivity";
+import { isRef, isSignal } from "./reactivity";
+
+let implicit_key: number = 0;
+
+const nextKey = () => {
+  const k = implicit_key;
+  implicit_key = (implicit_key + 1) % Number.MAX_SAFE_INTEGER;
+  return k;
+}
 
 export function ljsx(
   tag: string | Component,
@@ -21,5 +29,5 @@ export function ljsx(
     return tag({ ...attribs, children: children });
   }
 
-  return lnode(tag, { ...attribs, children: children });
+  return lnode(tag, { ...attribs, children: children }, nextKey());
 }

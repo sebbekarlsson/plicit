@@ -1,9 +1,9 @@
-import { Ref, ReactiveDep } from '.';
+import { Ref, ReactiveDep, RefOptions } from '.';
 type ComputedFun<T = any> = () => T;
 type ComputedAsyncFun<T = any> = () => Promise<T>;
-export declare const computed: <T = any>(fun: ComputedFun<T>, deps?: ReactiveDep[]) => Ref<T>;
+export declare const computed: <T = any>(fun: ComputedFun<T>, deps?: ReactiveDep[], options?: RefOptions) => Ref<T>;
 type ComputedAsyncStatus = "idle" | "pending" | "error" | "resolved";
-export declare const computedAsync: <T = any>(fun: ComputedAsyncFun<T>, deps?: ReactiveDep[]) => {
+export declare const computedAsync: <T = any>(fun: ComputedAsyncFun<T>, deps?: ReactiveDep[], options?: RefOptions) => {
     data: Ref<T | null>;
     status: Ref<ComputedAsyncStatus>;
     refresh: () => Promise<void>;

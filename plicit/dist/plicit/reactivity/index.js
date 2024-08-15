@@ -21,4 +21,5 @@ __exportStar(require("./subscribe"), exports);
 __exportStar(require("./computed"), exports);
 __exportStar(require("./proxy"), exports);
 __exportStar(require("./macros"), exports);
+__exportStar(require("./utils"), exports);
 //# sourceMappingURL=index.js.map

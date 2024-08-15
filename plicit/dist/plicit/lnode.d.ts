@@ -12,7 +12,10 @@ export declare enum ELNodeType {
     TEXT_ELEMENT = "TEXT_ELEMENT",
     FRAGMENT = "FRAGMENT"
 }
-export type LNodeAttributes = {
+type WithSignals<T> = {
+    [Prop in keyof T]: T[Prop] extends (Ref | Signal | ((...args: any[]) => void)) ? T[Prop] : (T[Prop] | Signal<T[Prop]>);
+};
+export type LNodeAttributesBase = {
     text?: any;
     children?: LNodeChild[];
     on?: Partial<NativeElementListeners>;
@@ -24,12 +27,17 @@ export type LNodeAttributes = {
     onMounted?: (node: LNode) => any;
     onLoaded?: (node: LNode) => any;
     ref?: LNodeRef;
+    class?: string;
     [key: string]: any;
 };
+export type LNodeAttributes = WithSignals<LNodeAttributesBase>;
 export type NodeEventPayload = {};
 export type NodeEvent<Payload> = PlicitEvent<Payload, ENodeEvent, LNode>;
 export declare class LNode {
     _lnode: "lnode";
+    depth: number;
+    implicitKey: number;
+    isTrash: boolean;
     key: string;
     el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
     parent: Signal<LNode | undefined>;
@@ -44,7 +52,8 @@ export declare class LNode {
     events: EventEmitter<NodeEventPayload, ENodeEvent, LNode>;
     didMount: boolean;
     unsubs: Array<() => void>;
-    constructor(name: string, attributes?: LNodeAttributes);
+    constructor(name: string, attributes?: LNodeAttributes, implicitKey?: number, depth?: number);
+    destroy(): void;
     patchWith(other: LNodeChild): void;
     invalidate(): void;
     emit(event: Omit<NodeEvent<any>, "target">): void;
@@ -61,5 +70,6 @@ export declare class LNode {
     setAttribute(key: string, value: string): void;
     render(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
 }
-export declare const lnode: (name: string, attributes?: LNodeAttributes) => LNode;
+export declare const lnode: (name: string, attributes?: LNodeAttributes, implicitKey?: number, depth?: number) => LNode;
 export declare const isLNode: (x: any) => x is LNode;
+export {};

@@ -27,7 +27,7 @@ export const useInterpolationSignal = (
 
   const run = (args: InterpolationSignalRunArgs) => {
     const duration = Math.max(args.duration || props.duration, 0.001);
-    const startValue = (args.from || props.initial) ?? value.get();
+    const startValue = (args.from ?? props.initial) ?? value.get();
     const endValue = args.to;
     let timeStarted: number = -1;
 

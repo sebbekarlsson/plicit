@@ -30,7 +30,7 @@ export const PeopleTable = () => {
         ]
       }
     })
-  }, [db.users, query]);
+  }, [db.users, query], { deep: false });
 
   const table: ITable = {
     rows

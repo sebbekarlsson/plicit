@@ -20,7 +20,6 @@ export const deepSubscribe = (dep: ReactiveDep, sub: EffectSubscriber, maxDepth:
       }));
 
       if (depth < maxDepth) {
-        console.log(`snopp ${depth}, ${maxDepth}`)
         d._deps.forEach((child) => subscribe(child, sub, depth + 1));
       }
     } else if (isSignal(d)) {

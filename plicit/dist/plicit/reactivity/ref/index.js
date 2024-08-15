@@ -64,6 +64,7 @@ const ref = (initial, options = {}) => {
                 // integration with signals
                 if (options.deep !== false && tracked) {
                     tracked.dependants.forEach((it) => it.trigger());
+                    tracked.isTrash = true;
                 }
             },
         },

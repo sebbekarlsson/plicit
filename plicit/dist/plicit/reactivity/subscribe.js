@@ -21,7 +21,6 @@ const deepSubscribe = (dep, sub, maxDepth = -1) => {
                 },
             }));
             if (depth < maxDepth) {
-                console.log(`snopp ${depth}, ${maxDepth}`);
                 d._deps.forEach((child) => subscribe(child, sub, depth + 1));
             }
         }

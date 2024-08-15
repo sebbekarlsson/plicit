@@ -24,6 +24,9 @@ class EventEmitter {
             this.slots[evtype] = this.slots[evtype].filter((it) => it !== sub);
         };
     }
+    clear() {
+        this.slots = {};
+    }
 }
 exports.EventEmitter = EventEmitter;
 //# sourceMappingURL=event.js.map

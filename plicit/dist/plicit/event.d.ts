@@ -8,4 +8,5 @@ export declare class EventEmitter<T = any, K extends string = string, Target = a
     slots: Record<string, Array<EventSubscriber<T, K, Target>>>;
     emit(event: PlicitEvent<T, K, Target>): void;
     addEventListener(evtype: K, sub: EventSubscriber<T, K, Target>): () => void;
+    clear(): void;
 }

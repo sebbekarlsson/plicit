@@ -1,4 +1,5 @@
 import { IconPrimitive } from "../icon/types";
+import { UseSideMenu } from "./hooks/useSideMenu";
 
 export type ISideMenuItem = {
   label: string;
@@ -20,4 +21,5 @@ export type ISideMenuConfig = ISideMenu;
 
 export type ISideMenuProps = {
   menu: ISideMenuConfig;
+  hook: UseSideMenu; 
 }

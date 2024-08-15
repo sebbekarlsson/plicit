@@ -32,4 +32,8 @@ export class EventEmitter<T = any, K extends string = string, Target = any> {
       this.slots[evtype] = this.slots[evtype].filter((it) => it !== sub);
     };
   }
+
+  clear() {
+    this.slots = {};
+  }
 }

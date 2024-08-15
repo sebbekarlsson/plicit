@@ -8,6 +8,9 @@ export type Trackable = {
   watchers: Array<() => any>;
   lastSet: number;
   lastGet: number;
+  createdAt: number;
+  refCounter: number;
   isEffect?: boolean;
   isComputed?: boolean;
+  isTrash?: boolean;
 }

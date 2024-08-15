@@ -16,11 +16,13 @@ import {
   isRef,
   isSignal,
   MaybeRef,
+  pget,
   ref,
   Ref,
   signal,
   Signal,
   unref,
+  watchSignal,
 } from "./reactivity";
 import {
   ESignalEvent,
@@ -40,7 +42,12 @@ export enum ELNodeType {
   TEXT_ELEMENT = "TEXT_ELEMENT",
   FRAGMENT = "FRAGMENT",
 }
-export type LNodeAttributes = {
+
+type WithSignals<T> = {
+  [Prop in keyof T]: T[Prop] extends (Ref | Signal | ((...args: any[]) => void)) ? T[Prop] : (T[Prop] | Signal<T[Prop]>);
+};
+
+export type LNodeAttributesBase = {
   text?: any;
   children?: LNodeChild[];
   on?: Partial<NativeElementListeners>;
@@ -52,8 +59,11 @@ export type LNodeAttributes = {
   onMounted?: (node: LNode) => any;
   onLoaded?: (node: LNode) => any;
   ref?: LNodeRef;
+  class?: string;
   [key: string]: any;
 };
+
+export type LNodeAttributes = WithSignals<LNodeAttributesBase>;
 
 export type NodeEventPayload = {};
 
@@ -62,6 +72,9 @@ export type NodeEvent<Payload> = PlicitEvent<Payload, ENodeEvent, LNode>;
 const stringGen = stringGenerator();
 export class LNode {
   _lnode: "lnode" = "lnode" as "lnode";
+  depth: number = -1;
+  implicitKey: number = -1;
+  isTrash: boolean = false;
   key: string = "";
   el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
   parent: Signal<LNode | undefined>;
@@ -82,15 +95,17 @@ export class LNode {
   didMount: boolean = false;
   unsubs: Array<() => void> = [];
 
-  constructor(name: string, attributes?: LNodeAttributes) {
-    this.name = attributes.tag || name;
+  constructor(name: string, attributes?: LNodeAttributes, implicitKey: number = -1, depth: number = -1) {
+    this.name = pget(attributes.tag || name);
     this.attributes = proxy<LNodeAttributes>(attributes || {});
     this.parent = signal<LNode | undefined>(undefined);
     this.component = ref<Component | undefined>(undefined);
-    this.key = this.attributes.key || "";
-    this.type = this.attributes.nodeType || this.type;
+    this.key = pget(this.attributes.key || "");
+    this.type = pget(this.attributes.nodeType || this.type);
+    this.depth = depth;
+    this.implicitKey = implicitKey;
 
-    const deps = this.attributes.deps || [];
+    const deps = pget(this.attributes.deps || []);
     for (let i = 0; i < deps.length; i++) {
       const dep = deps[i];
       const nextUnsubs = deepSubscribe(
@@ -107,6 +122,26 @@ export class LNode {
       );
 
       this.unsubs = [...this.unsubs, ...nextUnsubs];
+    }
+  }
+
+  destroy() {
+    this.unsubs.forEach((unsub) => unsub());
+    this.unsubs = [];
+    if (this.parent) {
+      this.parent.dispose();
+    }
+    if (this.signal) {
+      this.signal.dispose()
+    }
+    this.isTrash = true;
+
+    const attribs = Object.values(this.attributes);
+
+    for (const attrib of attribs) {
+      if (isSignal(attrib)) {
+        attrib.dispose();
+      }
     }
   }
 
@@ -330,6 +365,14 @@ export class LNode {
 
     if (isLNode(child)) {
       child.parent.set(this);
+      child.depth = this.depth + 1;
+    }
+    if (isLNode(unreffed)) {
+      unreffed.depth = this.depth + 1;
+    }
+
+    if (isLNode(unwrapped)) {
+      unwrapped.depth = this.depth + 1;
     }
 
     const key = signalKey || unreffed.key;
@@ -395,13 +438,35 @@ export class LNode {
         el.innerText = unref(this.attributes.text) + "";
       }
     }
+
+    
     const style = this.attributes.style;
-    if (style) {
-      if (!isText(el)) {
+    if (style && !isText(el)) {
+      if (isSignal(style)) {
+        this.unsubs.push(watchSignal(style, () => {
+          const styleValue = pget(style);
+          this.setAttribute(
+            "style",
+            typeof styleValue === "string" ? styleValue : cssPropsToString(styleValue),
+          );
+        }, { immediate: true }));
+      } else {
         this.setAttribute(
           "style",
           typeof style === "string" ? style : cssPropsToString(style),
         );
+      }
+    }
+
+    const clazz = this.attributes.class;
+    if (clazz && !isText(el)) {
+      if (isSignal(clazz)) {
+        this.unsubs.push(watchSignal(clazz, () => {
+          const classValue = pget(clazz);
+          this.setAttribute("class", classValue);
+        }, { immediate: true }));
+      } else {
+        this.setAttribute("class", clazz);
       }
     }
 
@@ -410,14 +475,14 @@ export class LNode {
     }
 
     for (const [key, value] of Object.entries(this.attributes)) {
-      if (["text", "children", "on", "style", "nodeType"].includes(key))
+      if (["text", "children", "on", "style", "nodeType", "class"].includes(key))
         continue;
       if (typeof value !== "string") continue;
       if (isText(el)) continue;
       this.setAttribute(key, value);
     }
 
-    const attrChildren = this.attributes.children || [];
+    const attrChildren = pget(this.attributes.children || []);
     for (let i = 0; i < attrChildren.length; i++) {
       const child = attrChildren[i];
       this.appendChild(child);
@@ -429,7 +494,7 @@ export class LNode {
   }
 }
 
-export const lnode = (name: string, attributes?: LNodeAttributes) =>
-  new LNode(name, attributes);
+export const lnode = (name: string, attributes?: LNodeAttributes, implicitKey: number = -1, depth: number = -1) =>
+  new LNode(name, attributes, implicitKey, depth);
 export const isLNode = (x: any): x is LNode =>
   x !== null && !!x && typeof x === "object" && x._lnode === "lnode";

@@ -19,6 +19,9 @@ var ELNodeType;
 const stringGen = (0, utils_1.stringGenerator)();
 class LNode {
     _lnode = "lnode";
+    depth = -1;
+    implicitKey = -1;
+    isTrash = false;
     key = "";
     el;
     parent;
@@ -33,14 +36,16 @@ class LNode {
     events = new event_1.EventEmitter();
     didMount = false;
     unsubs = [];
-    constructor(name, attributes) {
-        this.name = attributes.tag || name;
+    constructor(name, attributes, implicitKey = -1, depth = -1) {
+        this.name = (0, reactivity_1.pget)(attributes.tag || name);
         this.attributes = (0, reactivity_2.proxy)(attributes || {});
         this.parent = (0, reactivity_1.signal)(undefined);
         this.component = (0, reactivity_1.ref)(undefined);
-        this.key = this.attributes.key || "";
-        this.type = this.attributes.nodeType || this.type;
-        const deps = this.attributes.deps || [];
+        this.key = (0, reactivity_1.pget)(this.attributes.key || "");
+        this.type = (0, reactivity_1.pget)(this.attributes.nodeType || this.type);
+        this.depth = depth;
+        this.implicitKey = implicitKey;
+        const deps = (0, reactivity_1.pget)(this.attributes.deps || []);
         for (let i = 0; i < deps.length; i++) {
             const dep = deps[i];
             const nextUnsubs = (0, reactivity_2.deepSubscribe)(dep, {
@@ -52,6 +57,23 @@ class LNode {
                 },
             }, -1);
             this.unsubs = [...this.unsubs, ...nextUnsubs];
+        }
+    }
+    destroy() {
+        this.unsubs.forEach((unsub) => unsub());
+        this.unsubs = [];
+        if (this.parent) {
+            this.parent.dispose();
+        }
+        if (this.signal) {
+            this.signal.dispose();
+        }
+        this.isTrash = true;
+        const attribs = Object.values(this.attributes);
+        for (const attrib of attribs) {
+            if ((0, reactivity_1.isSignal)(attrib)) {
+                attrib.dispose();
+            }
         }
     }
     patchWith(other) {
@@ -250,6 +272,13 @@ class LNode {
         }
         if ((0, exports.isLNode)(child)) {
             child.parent.set(this);
+            child.depth = this.depth + 1;
+        }
+        if ((0, exports.isLNode)(unreffed)) {
+            unreffed.depth = this.depth + 1;
+        }
+        if ((0, exports.isLNode)(unwrapped)) {
+            unwrapped.depth = this.depth + 1;
         }
         const key = signalKey || unreffed.key;
         const el = this.ensureElement();
@@ -309,16 +338,34 @@ class LNode {
             }
         }
         const style = this.attributes.style;
-        if (style) {
-            if (!(0, types_1.isText)(el)) {
+        if (style && !(0, types_1.isText)(el)) {
+            if ((0, reactivity_1.isSignal)(style)) {
+                this.unsubs.push((0, reactivity_1.watchSignal)(style, () => {
+                    const styleValue = (0, reactivity_1.pget)(style);
+                    this.setAttribute("style", typeof styleValue === "string" ? styleValue : (0, css_1.cssPropsToString)(styleValue));
+                }, { immediate: true }));
+            }
+            else {
                 this.setAttribute("style", typeof style === "string" ? style : (0, css_1.cssPropsToString)(style));
+            }
+        }
+        const clazz = this.attributes.class;
+        if (clazz && !(0, types_1.isText)(el)) {
+            if ((0, reactivity_1.isSignal)(clazz)) {
+                this.unsubs.push((0, reactivity_1.watchSignal)(clazz, () => {
+                    const classValue = (0, reactivity_1.pget)(clazz);
+                    this.setAttribute("class", classValue);
+                }, { immediate: true }));
+            }
+            else {
+                this.setAttribute("class", clazz);
             }
         }
         for (const [key, value] of Object.entries(this.attributes.on || {})) {
             el.addEventListener(key, value);
         }
         for (const [key, value] of Object.entries(this.attributes)) {
-            if (["text", "children", "on", "style", "nodeType"].includes(key))
+            if (["text", "children", "on", "style", "nodeType", "class"].includes(key))
                 continue;
             if (typeof value !== "string")
                 continue;
@@ -326,7 +373,7 @@ class LNode {
                 continue;
             this.setAttribute(key, value);
         }
-        const attrChildren = this.attributes.children || [];
+        const attrChildren = (0, reactivity_1.pget)(this.attributes.children || []);
         for (let i = 0; i < attrChildren.length; i++) {
             const child = attrChildren[i];
             this.appendChild(child);
@@ -336,7 +383,7 @@ class LNode {
     }
 }
 exports.LNode = LNode;
-const lnode = (name, attributes) => new LNode(name, attributes);
+const lnode = (name, attributes, implicitKey = -1, depth = -1) => new LNode(name, attributes, implicitKey, depth);
 exports.lnode = lnode;
 const isLNode = (x) => x !== null && !!x && typeof x === "object" && x._lnode === "lnode";
 exports.isLNode = isLNode;

@@ -14,14 +14,18 @@ export type GlobalSignalState = {
     lastFlush: number;
 };
 export declare const GSignal: GlobalSignalState;
-export declare const publishTrackable: (item: Omit<Trackable, "uid">) => Trackable;
+export declare const publishTrackable: (item: Omit<Trackable, "uid" | "createdAt" | "refCounter"> & {
+    uid?: string;
+}) => Trackable;
 export declare const notifyTrack: (uid: string) => void;
 export declare const flushSignals: () => void;
+export declare const disposeAllSignals: () => void;
 export type SignalOptions = {
     isEffect?: boolean;
     isComputed?: boolean;
     throttle?: number;
     debounce?: number;
+    uid?: string;
 };
 type Fun<T = any> = () => T;
 export type SignalEventPayload = {};
@@ -47,5 +51,9 @@ export type MaybeSignal<T = any> = T | Signal<T>;
 export declare const signal: <T = any>(initial: Fun<T> | T, options?: SignalOptions) => Signal<T>;
 export declare const computedSignal: <T = any>(init: Fun<T>, options?: SignalOptions) => Signal<T>;
 export declare const effectSignal: <T = any>(init: Fun<T>, options?: SignalOptions) => Signal<T>;
-export declare const watchSignal: <T = any>(sig: Signal<T>, fun: () => any) => () => void;
+export type WatchSignalOptions = {
+    immediate?: boolean;
+    deep?: boolean;
+};
+export declare const watchSignal: <T = any>(sig: Signal<T>, fun: () => any, options?: WatchSignalOptions) => () => void;
 export {};

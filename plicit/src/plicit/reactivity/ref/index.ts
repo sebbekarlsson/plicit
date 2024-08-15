@@ -87,6 +87,7 @@ export const ref = <T = any>(initial: T, options: RefOptions = {}): Ref<T> => {
         // integration with signals
         if (options.deep !== false && tracked) {
           tracked.dependants.forEach((it) => it.trigger());
+          tracked.isTrash = true;
         }
       },
     },

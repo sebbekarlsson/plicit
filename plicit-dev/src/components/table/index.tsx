@@ -16,8 +16,8 @@ const TableRow: Component<{ row: ITableRow, head?: boolean }> = (props) => {
 }
 
 export const Table: Component<ITableProps> = (props) => {
-  const rows = computed(() => unref(props.table.rows), [() => props.table.rows]);
-  const labels = computed(() => unique(rows.value.slice(0, 4).map(row => row.columns.map(col => col.label)).flat()), [rows])
+  const rows = computed(() => unref(props.table.rows), [() => props.table.rows], { deep: false });
+  const labels = computed(() => unique(rows.value.slice(0, 4).map(row => row.columns.map(col => col.label)).flat()), [rows], { deep: false })
 
   const headRows = computed((): ITableRow[] => {
     return [

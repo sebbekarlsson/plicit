@@ -8,6 +8,7 @@ import { ToastContainer } from "./components/toast/container";
 import { SideMenu } from "./components/side-menu";
 import { ISideMenu } from "./components/side-menu/types";
 import { useRouter } from "./components/router/hooks";
+import { useSideMenu } from "./components/side-menu/hooks/useSideMenu";
 
 globalThis.ljsx = ljsx;
 
@@ -78,11 +79,13 @@ const sideMenu: ISideMenu = {
 
 
 const App: Component = () => {
+  const sideMenuHook = useSideMenu();
+  
   return (
     <div class="w-full h-full">
       <NavBar />
-      <div class="h-full w-full grid grid-cols-[300px,1fr]">
-        <SideMenu menu={sideMenu}/>
+      <div class="h-full w-full grid grid-cols-[max-content,1fr]">
+        <SideMenu menu={sideMenu} hook={sideMenuHook}/>
         <div class="overflow-auto pb-8" style={{
           height: 'auto',
           maxHeight: 'calc(100% - 3rem)'
