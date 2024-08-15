@@ -12,11 +12,14 @@ import {
 } from "plicit";
 import { AABB, clamp, getAABBSize, remap, VEC2, Vector } from "tsmathutil";
 import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
+import { useElementBounds } from "../../hooks/useElementBounds";
 
 type RangeSliderProps = {
   value: MaybeRef<number>;
   onChange?: (value: number) => any;
 };
+
+const KNOB_SIZE = 20;
 
 export const RangeSlider: Component<RangeSliderProps> = (props) => {
   const handleChange = (value: number) => {
@@ -31,27 +34,13 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
   const knobPosition = signal<Vector>(VEC2(0, 0));
   const clickPos = signal<Vector>(VEC2(0, 0));
 
-  const wrapperBounds = computed(() => {
-    const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
-    const node = wrapper.value;
-    if (!node) return empty;
-    const el = node.el;
-    if (!el || !isHTMLElement(el)) return empty;
-    const box = el.getBoundingClientRect();
-    const pos = VEC2(box.x, box.y);
-    const size = VEC2(box.width, box.height);
-    return {
-      min: pos,
-      max: pos.add(size),
-    };
-  }, [wrapper]);
-
+  const wrapperBounds = useElementBounds(wrapper);
+  
   const trackRange = computed(() => {
-    const bounds = wrapperBounds.value;
+    const bounds = wrapperBounds.bounds.get();
     const trackLength = bounds.max.x - bounds.min.x;
-    const knobLength = 16;
-    return { min: 0, max: trackLength - knobLength };
-  }, [wrapperBounds]);
+    return { min: 0, max: trackLength - KNOB_SIZE };
+  }, [wrapperBounds.bounds]);
 
   const getComputedValue = () => {
     const pos = knobPosition.get();
@@ -71,7 +60,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   effectSignal(() => {
     const mousePos = mouse.pos.get();
-    const localPos = mousePos.sub(wrapperBounds.value.min).sub(clickPos.get());
+    const localPos = mousePos.sub(wrapperBounds.bounds.get().min).sub(clickPos.get());
     if (dragging.get()) {
       const x = clamp(localPos.x, 0, trackRange.value.max);
       knobPosition.set(VEC2(x, 0));
@@ -141,8 +130,9 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
             dragging.set(() => false);
           },
         }}
-        class="h-[1.25rem] aspect-[1/1] bg-amaranth-500 absolute rounded-full cursor-grab"
+        class="aspect-[1/1] bg-amaranth-500 absolute rounded-full cursor-grab"
         style={{
+          height: KNOB_SIZE + 'px',
           left: knobPosition.get().x + "px",
           top: "0px",
           bottom: "0px",

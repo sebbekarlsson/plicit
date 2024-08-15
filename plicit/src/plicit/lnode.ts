@@ -12,8 +12,24 @@ import {
 } from "./types";
 import { stringGenerator } from "./utils";
 import { ENodeEvent } from "./nodeEvents";
-import { isRef, isSignal, MaybeRef, ref, Ref, signal, Signal, unref } from "./reactivity";
-import { ESignalEvent, ReactiveDep, unwrapReactiveDep, deepSubscribe, LProxy, proxy } from "./reactivity";
+import {
+  isRef,
+  isSignal,
+  MaybeRef,
+  ref,
+  Ref,
+  signal,
+  Signal,
+  unref,
+} from "./reactivity";
+import {
+  ESignalEvent,
+  ReactiveDep,
+  unwrapReactiveDep,
+  deepSubscribe,
+  LProxy,
+  proxy,
+} from "./reactivity";
 
 export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
 
@@ -65,7 +81,7 @@ export class LNode {
 
   didMount: boolean = false;
   unsubs: Array<() => void> = [];
-  
+
   constructor(name: string, attributes?: LNodeAttributes) {
     this.name = attributes.tag || name;
     this.attributes = proxy<LNodeAttributes>(attributes || {});
@@ -138,19 +154,18 @@ export class LNode {
   invalidate() {
     if (!this.parent.get()) return;
     const old = this.el;
+    if (!old) return;
 
-    if (this.el && old) {
-      const component = this.component.value;
-      if (component) {
-        this.patchWith(component);
-        return;
-      }
-
-      this.el = undefined;
-      const next = this.render();
-      this.el.replaceWith(next);
-      this.setElement(next);
+    const component = this.component.value;
+    if (component) {
+      this.patchWith(component);
+      return;
     }
+
+    this.el = undefined;
+    const next = this.render();
+    this.el.replaceWith(next);
+    this.setElement(next);
   }
 
   emit(event: Omit<NodeEvent<any>, "target">) {
@@ -266,36 +281,41 @@ export class LNode {
     }
   }
 
-  appendChild(child: LNodeChild) {
-    const patchChild = () => {
-      if (isSignal(child)) {
-        child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, (event) => {
-          const sig = event.target;
-          const lnode = unwrapComponentTree(sig.node._value);
-          const thisEl = this.el;
-          if (isLNode(lnode)) {
-            if (thisEl && isHTMLElement(thisEl)) {
-              const index = this.children.indexOf(child);
-              if (index >= 0) {
-                const myChild = Array.from(thisEl.children)[index];
-                const nextEl = lnode.render();
-                if (myChild) {
-                  if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
-                    patchElements(myChild, nextEl);
-                  } else {
-                    myChild.replaceWith(nextEl);
-                  }
-                }
-              }
-            }
-          }
-        });
+  patchChildWithNode(index: number, newNode: LNode) {
+    const thisEl = this.el;
+    if (!thisEl || !isHTMLElement(thisEl)) return;
+
+    const myChild = Array.from(thisEl.children)[index];
+    const nextEl = newNode.render();
+    if (myChild) {
+      if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
+        patchElements(myChild, nextEl);
+      } else {
+        myChild.replaceWith(nextEl);
       }
     }
-    
+  }
+
+  patchChildFromSignal(child: LNodeChild, sig: Signal<LNode>) {
+    const lnode = unwrapComponentTree(sig.node._value);
+    if (isLNode(lnode)) {
+      const index = this.children.indexOf(child);
+      if (index >= 0) {
+        this.patchChildWithNode(index, lnode);
+      }
+    }
+  }
+
+  appendChild(child: LNodeChild) {
     if (isSignal(child)) {
-      patchChild();
+      const sig = child;
+      child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, (event) => {
+        this.patchChildFromSignal(child, event.target);
+      });
       child = child.get();
+      if (isLNode(child)) {
+        child.signal = sig;
+      }
     }
     const unwrapped = unwrapComponentTree(child);
 
@@ -321,7 +341,6 @@ export class LNode {
     }
 
     this.mappedChildren[key] = child;
-    
 
     if (isLNode(unreffed)) {
       unreffed.parent.set(this);
@@ -357,8 +376,6 @@ export class LNode {
     }
   }
 
-  
-
   render() {
     const _this = this;
     queueMicrotask(() => {
@@ -391,7 +408,7 @@ export class LNode {
     for (const [key, value] of Object.entries(this.attributes.on || {})) {
       el.addEventListener(key, value);
     }
-    
+
     for (const [key, value] of Object.entries(this.attributes)) {
       if (["text", "children", "on", "style", "nodeType"].includes(key))
         continue;

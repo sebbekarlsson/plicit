@@ -4,7 +4,8 @@ exports.ljsx = ljsx;
 const component_1 = require("./component");
 const lnode_1 = require("./lnode");
 const reactivity_1 = require("./reactivity");
-function ljsx(tag, attribs, ...childs) {
+function ljsx(tag, attribs_, ...childs) {
+    const attribs = attribs_ || {};
     const children = childs
         .map((child) => (typeof child === "string" || typeof child === 'number')
         ? (0, lnode_1.lnode)("span", { text: child + '', nodeType: lnode_1.ELNodeType.TEXT_ELEMENT })

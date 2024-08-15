@@ -4,7 +4,8 @@ exports.watchRef = exports.unref = exports.isRef = exports.ref = void 0;
 const proxy_1 = require("../proxy");
 const types_1 = require("../../types");
 const subscribe_1 = require("../subscribe");
-const ref = (initial) => {
+const signal_1 = require("../signal");
+const ref = (initial, options = {}) => {
     const state = (0, proxy_1.proxy)({
         subscribers: [],
     });
@@ -22,13 +23,29 @@ const ref = (initial) => {
             };
         },
         trigger: (key) => {
-            const onGetters = state.subscribers.map(it => it.onGet).filter(types_1.notNullish);
+            const onGetters = state.subscribers
+                .map((it) => it.onGet)
+                .filter(types_1.notNullish);
             onGetters.forEach((sub) => sub(obj, key, {}));
-        }
+        },
     };
+    let tracked = null;
     return (0, proxy_1.proxy)(obj, [
         {
             get: (target, key, receiver) => {
+                if (options.deep !== false) {
+                    // integration with signals
+                    tracked = (0, signal_1.publishTrackable)({
+                        trigger: () => { },
+                        onDispose: () => { },
+                        dispose: () => { },
+                        dependants: [],
+                        tracked: [],
+                        watchers: [],
+                        lastGet: -1,
+                        lastSet: -1,
+                    });
+                }
                 const next = target[key];
                 state.subscribers.forEach((sub) => {
                     const last = sub.lastValue;
@@ -44,6 +61,10 @@ const ref = (initial) => {
                         sub.onSet(target, key, next, receiver);
                     }
                 });
+                // integration with signals
+                if (options.deep !== false && tracked) {
+                    tracked.dependants.forEach((it) => it.trigger());
+                }
             },
         },
     ]);
@@ -62,7 +83,7 @@ const watchRef = (fun, deps = []) => {
         (0, subscribe_1.deepSubscribe)(dep, {
             onSet: () => {
                 fun();
-            }
+            },
         });
     });
 };

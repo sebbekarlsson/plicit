@@ -12,7 +12,10 @@ export type RawRef<T = any> = {
 };
 export type Ref<T = any> = LProxy<RawRef<T>>;
 export type MaybeRef<T = any> = Ref<T> | T;
-export declare const ref: <T = any>(initial: T) => Ref<T>;
+export type RefOptions = {
+    deep?: boolean;
+};
+export declare const ref: <T = any>(initial: T, options?: RefOptions) => Ref<T>;
 export declare const isRef: <T = any>(x: any) => x is Ref<T>;
 export declare const unref: <T = any>(x: T | Ref<T>) => T;
 type RefState<T = any> = {

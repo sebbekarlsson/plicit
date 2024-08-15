@@ -10,6 +10,8 @@ export type GlobalSignalState = {
     trackedExternal: string[];
     uidGen: StringGenerator;
     current: Signal | undefined;
+    idCounter: number;
+    lastFlush: number;
 };
 export declare const GSignal: GlobalSignalState;
 export declare const publishTrackable: (item: Omit<Trackable, "uid">) => Trackable;
@@ -18,6 +20,8 @@ export declare const flushSignals: () => void;
 export type SignalOptions = {
     isEffect?: boolean;
     isComputed?: boolean;
+    throttle?: number;
+    debounce?: number;
 };
 type Fun<T = any> = () => T;
 export type SignalEventPayload = {};

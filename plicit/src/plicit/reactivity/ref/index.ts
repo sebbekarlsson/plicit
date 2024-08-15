@@ -3,8 +3,9 @@ import { notNullish } from "../../types";
 import { deepSubscribe } from "../subscribe";
 import { ReactiveDep } from "../types";
 import { EffectSubscriber } from "../types";
+import { publishTrackable, Trackable } from "../signal";
 
-export type RefSubscriber<T = any> = EffectSubscriber<T>; 
+export type RefSubscriber<T = any> = EffectSubscriber<T>;
 
 export type RawRef<T = any> = {
   value: T;
@@ -17,8 +18,11 @@ export type RawRef<T = any> = {
 export type Ref<T = any> = LProxy<RawRef<T>>;
 export type MaybeRef<T = any> = Ref<T> | T;
 
+export type RefOptions = {
+  deep?: boolean;
+}
 
-export const ref = <T = any>(initial: T): Ref<T> => {
+export const ref = <T = any>(initial: T, options: RefOptions = {}): Ref<T> => {
   const state = proxy<RefState<T>>({
     subscribers: [],
   });
@@ -37,21 +41,38 @@ export const ref = <T = any>(initial: T): Ref<T> => {
       };
     },
     trigger: (key: string) => {
-      const onGetters = state.subscribers.map(it => it.onGet).filter(notNullish);
+      const onGetters = state.subscribers
+        .map((it) => it.onGet)
+        .filter(notNullish);
       onGetters.forEach((sub) => sub(obj, key as any, {}));
-    }
+    },
   };
 
+  let tracked: Trackable | null = null;
 
   return proxy<RawRef<T>>(obj, [
     {
       get: (target, key, receiver) => {
 
+        if (options.deep !== false) {
+          // integration with signals
+          tracked = publishTrackable({
+            trigger: () => {},
+            onDispose: () => {},
+            dispose: () => {},
+            dependants: [],
+            tracked: [],
+            watchers: [],
+            lastGet: -1,
+            lastSet: -1,
+          });
+        }
+
         const next = target[key];
         state.subscribers.forEach((sub) => {
           const last = sub.lastValue;
           if (last !== next && sub.onGet) {
-            sub.onGet(target, key, receiver)
+            sub.onGet(target, key, receiver);
             sub.lastValue = last;
           }
         });
@@ -63,6 +84,10 @@ export const ref = <T = any>(initial: T): Ref<T> => {
           }
         });
 
+        // integration with signals
+        if (options.deep !== false && tracked) {
+          tracked.dependants.forEach((it) => it.trigger());
+        }
       },
     },
   ]);
@@ -80,9 +105,7 @@ type RefState<T = any> = {
   subscribers: RefSubscriber<T>[];
 };
 
-
 type EffectFun<T = any> = () => T;
-
 
 export const watchRef = <T = any>(
   fun: EffectFun<T>,
@@ -92,7 +115,7 @@ export const watchRef = <T = any>(
     deepSubscribe(dep, {
       onSet: () => {
         fun();
-      } 
-    })
+      },
+    });
   });
 };

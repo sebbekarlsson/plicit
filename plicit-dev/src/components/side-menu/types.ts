@@ -1,7 +1,10 @@
+import { IconPrimitive } from "../icon/types";
+
 export type ISideMenuItem = {
   label: string;
   path?: string;
   action?: () => any;
+  icon?: IconPrimitive;
 }
 
 export type ISideMenuSection = {

@@ -20,4 +20,5 @@ __exportStar(require("./signal"), exports);
 __exportStar(require("./subscribe"), exports);
 __exportStar(require("./computed"), exports);
 __exportStar(require("./proxy"), exports);
+__exportStar(require("./macros"), exports);
 //# sourceMappingURL=index.js.map

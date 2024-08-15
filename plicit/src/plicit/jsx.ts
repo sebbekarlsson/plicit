@@ -1,12 +1,13 @@
 import { Component, isComponent } from "./component";
 import { ELNodeType, isLNode, lnode, LNodeAttributes } from "./lnode";
-import { isRef, isSignal } from "./reactivity";
+import { computedSignal, isRef, isSignal } from "./reactivity";
 
 export function ljsx(
   tag: string | Component,
-  attribs: LNodeAttributes,
+  attribs_: LNodeAttributes,
   ...childs: any[]
 ) {
+  const attribs = attribs_ || {};
   const children = childs
     .map((child) =>
       (typeof child === "string" || typeof child === 'number')

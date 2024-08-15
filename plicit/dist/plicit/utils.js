@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stringGenerator = exports.numberGenerator = exports.hashu32 = exports.toUint32 = exports.smoothstep = exports.fract = exports.clamp = exports.lerp = exports.unique = exports.range = void 0;
+exports.debounce = exports.throttle = exports.stringGenerator = exports.numberGenerator = exports.hashu32 = exports.toUint32 = exports.smoothstep = exports.fract = exports.clamp = exports.lerp = exports.unique = exports.range = void 0;
 const is_1 = require("./is");
 const range = (n) => n <= 0 || typeof n !== "number" || isNaN(n) || !isFinite(n)
     ? []
@@ -66,8 +66,8 @@ const numberGenerator = (initSeed = 4193) => {
 exports.numberGenerator = numberGenerator;
 const stringGenerator = (seed = 4193, numGen = (0, exports.numberGenerator)(seed)) => {
     const alpha = "abcdefghijklmnopqrstuvwxyz";
-    const vowels = Array.from(alpha).filter(it => (0, is_1.isVowel)(it));
-    const consonants = Array.from(alpha).filter(it => (0, is_1.isConsonant)(it));
+    const vowels = Array.from(alpha).filter((it) => (0, is_1.isVowel)(it));
+    const consonants = Array.from(alpha).filter((it) => (0, is_1.isConsonant)(it));
     const nextChar = () => {
         const digit = numGen.nextBool();
         if (digit) {
@@ -88,7 +88,9 @@ const stringGenerator = (seed = 4193, numGen = (0, exports.numberGenerator)(seed
     };
     const nextWord = (min, max) => {
         const length = numGen.nextInt(min, max);
-        return (0, exports.range)(length).map((i) => i % 2 === 0 ? nextConsonant() : nextVowel()).join('');
+        return (0, exports.range)(length)
+            .map((i) => (i % 2 === 0 ? nextConsonant() : nextVowel()))
+            .join("");
     };
     const next = (length) => {
         return (0, exports.range)(length)
@@ -100,8 +102,40 @@ const stringGenerator = (seed = 4193, numGen = (0, exports.numberGenerator)(seed
         nextChar,
         nextVowel,
         nextConsonant,
-        nextWord
+        nextWord,
     };
 };
 exports.stringGenerator = stringGenerator;
+const throttle = (fn, delay) => {
+    let wait = false;
+    let timeout;
+    let cancelled = false;
+    return [
+        (...args) => {
+            if (cancelled)
+                return undefined;
+            if (wait)
+                return undefined;
+            const val = fn(...args);
+            wait = true;
+            timeout = window.setTimeout(() => {
+                wait = false;
+            }, delay);
+            return val;
+        },
+        () => {
+            cancelled = true;
+            clearTimeout(timeout);
+        },
+    ];
+};
+exports.throttle = throttle;
+const debounce = (func, waitFor) => {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), waitFor);
+    };
+};
+exports.debounce = debounce;
 //# sourceMappingURL=utils.js.map

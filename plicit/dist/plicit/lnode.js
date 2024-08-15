@@ -91,17 +91,17 @@ class LNode {
         if (!this.parent.get())
             return;
         const old = this.el;
-        if (this.el && old) {
-            const component = this.component.value;
-            if (component) {
-                this.patchWith(component);
-                return;
-            }
-            this.el = undefined;
-            const next = this.render();
-            this.el.replaceWith(next);
-            this.setElement(next);
+        if (!old)
+            return;
+        const component = this.component.value;
+        if (component) {
+            this.patchWith(component);
+            return;
         }
+        this.el = undefined;
+        const next = this.render();
+        this.el.replaceWith(next);
+        this.setElement(next);
     }
     emit(event) {
         queueMicrotask(() => {
@@ -206,36 +206,40 @@ class LNode {
             });
         }
     }
-    appendChild(child) {
-        const patchChild = () => {
-            if ((0, reactivity_1.isSignal)(child)) {
-                child.emitter.addEventListener(reactivity_2.ESignalEvent.AFTER_UPDATE, (event) => {
-                    const sig = event.target;
-                    const lnode = (0, component_1.unwrapComponentTree)(sig.node._value);
-                    const thisEl = this.el;
-                    if ((0, exports.isLNode)(lnode)) {
-                        if (thisEl && (0, types_1.isHTMLElement)(thisEl)) {
-                            const index = this.children.indexOf(child);
-                            if (index >= 0) {
-                                const myChild = Array.from(thisEl.children)[index];
-                                const nextEl = lnode.render();
-                                if (myChild) {
-                                    if ((0, types_1.isHTMLElement)(myChild) && (0, types_1.isHTMLElement)(nextEl)) {
-                                        (0, element_1.patchElements)(myChild, nextEl);
-                                    }
-                                    else {
-                                        myChild.replaceWith(nextEl);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
+    patchChildWithNode(index, newNode) {
+        const thisEl = this.el;
+        if (!thisEl || !(0, types_1.isHTMLElement)(thisEl))
+            return;
+        const myChild = Array.from(thisEl.children)[index];
+        const nextEl = newNode.render();
+        if (myChild) {
+            if ((0, types_1.isHTMLElement)(myChild) && (0, types_1.isHTMLElement)(nextEl)) {
+                (0, element_1.patchElements)(myChild, nextEl);
             }
-        };
+            else {
+                myChild.replaceWith(nextEl);
+            }
+        }
+    }
+    patchChildFromSignal(child, sig) {
+        const lnode = (0, component_1.unwrapComponentTree)(sig.node._value);
+        if ((0, exports.isLNode)(lnode)) {
+            const index = this.children.indexOf(child);
+            if (index >= 0) {
+                this.patchChildWithNode(index, lnode);
+            }
+        }
+    }
+    appendChild(child) {
         if ((0, reactivity_1.isSignal)(child)) {
-            patchChild();
+            const sig = child;
+            child.emitter.addEventListener(reactivity_2.ESignalEvent.AFTER_UPDATE, (event) => {
+                this.patchChildFromSignal(child, event.target);
+            });
             child = child.get();
+            if ((0, exports.isLNode)(child)) {
+                child.signal = sig;
+            }
         }
         const unwrapped = (0, component_1.unwrapComponentTree)(child);
         let unreffed = (0, reactivity_1.unref)(unwrapped);

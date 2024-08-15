@@ -1,4 +1,4 @@
-import { isConsonant, isFloat, isVowel } from "./is";
+import { isConsonant, isVowel } from "./is";
 
 export const range = (n: number): number[] =>
   n <= 0 || typeof n !== "number" || isNaN(n) || !isFinite(n)
@@ -93,8 +93,8 @@ export const stringGenerator = (
   numGen: NumberGenerator = numberGenerator(seed),
 ): StringGenerator => {
   const alpha = "abcdefghijklmnopqrstuvwxyz";
-  const vowels = Array.from(alpha).filter(it => isVowel(it));
-  const consonants = Array.from(alpha).filter(it => isConsonant(it));
+  const vowels = Array.from(alpha).filter((it) => isVowel(it));
+  const consonants = Array.from(alpha).filter((it) => isConsonant(it));
 
   const nextChar = (): string => {
     const digit = numGen.nextBool();
@@ -110,18 +110,20 @@ export const stringGenerator = (
   const nextVowel = () => {
     const index = numGen.nextInt(0, vowels.length - 1) % vowels.length;
     return vowels[index];
-  }
+  };
 
   const nextConsonant = () => {
     const index = numGen.nextInt(0, consonants.length - 1) % consonants.length;
     return consonants[index];
-  }
+  };
 
-  const nextWord = (min: number, max: number):string => {
+  const nextWord = (min: number, max: number): string => {
     const length = numGen.nextInt(min, max);
-    return range(length).map((i) => i % 2 === 0 ? nextConsonant() : nextVowel()).join('');
-  }
-  
+    return range(length)
+      .map((i) => (i % 2 === 0 ? nextConsonant() : nextVowel()))
+      .join("");
+  };
+
   const next = (length: number): string => {
     return range(length)
       .map(() => nextChar())
@@ -133,6 +135,47 @@ export const stringGenerator = (
     nextChar,
     nextVowel,
     nextConsonant,
-    nextWord
+    nextWord,
+  };
+};
+
+export const throttle = <R, A extends any[]>(
+  fn: (...args: A) => R,
+  delay: number,
+): [(...args: A) => R | undefined, () => void] => {
+  let wait = false;
+  let timeout: undefined | number;
+  let cancelled = false;
+
+  return [
+    (...args: A) => {
+      if (cancelled) return undefined;
+      if (wait) return undefined;
+
+      const val = fn(...args);
+
+      wait = true;
+
+      timeout = window.setTimeout(() => {
+        wait = false;
+      }, delay);
+
+      return val;
+    },
+    () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    },
+  ];
+};
+
+export const debounce = <F extends (...args: Parameters<F>) => ReturnType<F>>(
+  func: F,
+  waitFor: number,
+): ((...args: Parameters<F>) => void) => {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<F>): void => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), waitFor);
   };
 };

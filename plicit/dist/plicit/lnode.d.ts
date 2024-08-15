@@ -55,6 +55,8 @@ export declare class LNode {
     ensureElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
     getElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
     private onReceiveChild;
+    patchChildWithNode(index: number, newNode: LNode): void;
+    patchChildFromSignal(child: LNodeChild, sig: Signal<LNode>): void;
     appendChild(child: LNodeChild): void;
     setAttribute(key: string, value: string): void;
     render(): HTMLElement | Text | SVGSVGElement | SVGPathElement;

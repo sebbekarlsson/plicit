@@ -1,6 +1,8 @@
 export type Trackable = {
   uid: string;
   trigger: () => any;
+  dispose?: () => any;
+  onDispose?: () => any;
   dependants: Trackable[];
   tracked: Trackable[];
   watchers: Array<() => any>;

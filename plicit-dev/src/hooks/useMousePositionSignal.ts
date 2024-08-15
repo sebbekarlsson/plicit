@@ -2,7 +2,7 @@ import { ref, signal } from "plicit"
 import { VEC2, Vector } from "tsmathutil"
 
 export const useMousePositionSignal = () => {
-  const pos = signal<Vector>(() => VEC2(0, 0));
+  const pos = signal<Vector>(VEC2(0, 0));
 
   const onMouseMove = (event: MouseEvent) => {
     const x = event.x;

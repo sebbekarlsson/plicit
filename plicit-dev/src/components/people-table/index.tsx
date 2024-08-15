@@ -1,18 +1,18 @@
-import { computed, ref } from "plicit";
+import { computed, computedSignal, ref, signal } from "plicit";
 import { useFakeDatabase } from "../../hooks/useFakeDatabase";
 import { ITable, ITableRow } from "../table/types";
 import { InputField } from "../input-field";
 import { Table } from "../table";
 
 export const PeopleTable = () => {
-  const query = ref<string>('');
+  const query = signal<string>('', { debounce: 60 });
   const db = useFakeDatabase({
     query,
     count: 256
   });
 
   const rows = computed((): ITableRow[] => {
-    return db.users.value.map((user) => {
+    return db.users.get().map((user) => {
       return {
         columns: [
           {
@@ -38,7 +38,7 @@ export const PeopleTable = () => {
 
   return () => <div class="flex flex-col overflow-hidden h-full">
     <div class="h-[4rem] flex-none flex items-start">
-      <InputField value={query.value} type="text" onChange={(val) => query.value = val} deps={[query]} placeholder="Search..."/>
+      <InputField value="" type="text" onChange={(val) => query.set(val)} placeholder="Search..."/>
     </div>
     {() => <Table table={table}/>} 
   </div> 

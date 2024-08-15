@@ -1,4 +1,4 @@
-import { computed, numberGenerator, range, Ref, ref, stringGenerator } from "plicit";
+import { computed, computedSignal, numberGenerator, range, Ref, ref, Signal, stringGenerator } from "plicit";
 
 export type User = {
   firstname: string;
@@ -9,7 +9,7 @@ export type User = {
 const NUM_PEOPLE = 100;
 
 export const useFakeDatabase = (props: {
-  query: Ref<string>,
+  query: Signal<string>,
   count?: number
 }) => {
 
@@ -26,13 +26,14 @@ export const useFakeDatabase = (props: {
     }
   });
 
-  const users = computed(() => {
-    if (!props.query.value || props.query.value.length <= 1) return initialUsers;
-    const q = props.query.value.toLowerCase();
+  const users = computedSignal(() => {
+    const qv = props.query.get();
+    if (!qv || qv.length <= 1) return initialUsers;
+    const q = qv.toLowerCase();
     return initialUsers.filter((user) => {
       return user.firstname.toLowerCase().includes(q) || user.lastname.toLowerCase().includes(q); 
     })
-  } ,[props.query])
+  })
 
   return {
     users

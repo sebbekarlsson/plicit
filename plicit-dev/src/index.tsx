@@ -18,17 +18,59 @@ const sideMenu: ISideMenu = {
     {
       label: 'Admin',
       items: [
-        { label: 'Dashboard', path: '/', action: () => router.push('/') },
-        { label: 'People', path: '/people', action: () => router.push('/people') },
-        { label: 'Files', path: '/files', action: () => router.push('/files') }
+        {
+          label: 'Dashboard', path: '/', action: () => router.push('/'),
+          icon: {
+            src: async () => import('./assets/icons/dashboard.svg'),
+            fill: 'currentColor',
+            size: '1rem'
+          }
+        },
+        {
+          label: 'People', path: '/people', action: () => router.push('/people'),
+          icon: {
+            src: async () => import('./assets/icons/people.svg'),
+            fill: 'currentColor',
+            size: '1rem'
+          }
+        },
+        {
+          label: 'Files', path: '/files', action: () => router.push('/files'),
+          icon: {
+            src: async () => import('./assets/icons/files.svg'),
+            fill: 'currentColor',
+            size: '1rem'
+          }
+        }
       ]
     },
     {
       label: 'Settings',
       items: [
-        { label: 'Account' },
-        { label: 'Appearance' },
-        { label: 'Security' }
+        {
+          label: 'Account',
+          icon: {
+            src: async () => import('./assets/icons/account.svg'),
+            fill: 'currentColor',
+            size: '1rem'
+          }
+        },
+        {
+          label: 'Appearance',
+          icon: {
+            src: async () => import('./assets/icons/brush.svg'),
+            fill: 'currentColor',
+            size: '1rem'
+          }
+        },
+        {
+          label: 'Security',
+          icon: {
+            src: async () => import('./assets/icons/security.svg'),
+            fill: 'currentColor',
+            size: '1rem'
+          }
+        }
       ]
     }
   ]
@@ -41,11 +83,13 @@ const App: Component = () => {
       <NavBar />
       <div class="h-full w-full grid grid-cols-[300px,1fr]">
         <SideMenu menu={sideMenu}/>
-        <div class="overflow-auto" style={{
-          height: '100%',
+        <div class="overflow-auto pb-8" style={{
+          height: 'auto',
           maxHeight: 'calc(100% - 3rem)'
         }}>
-          <RouterView />
+          <div>
+            <RouterView />
+          </div>
         </div>
       </div>
       {() => <ModalContainer />}

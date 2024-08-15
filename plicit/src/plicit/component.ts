@@ -1,4 +1,4 @@
-import { LNode, LNodeAttributes } from "./lnode";
+import { isLNode, LNode, LNodeAttributes } from "./lnode";
 import { isRef, isSignal, MaybeRef, MaybeSignal, Signal } from "./reactivity";
 import { Dict } from "./types";
 
@@ -11,6 +11,9 @@ export const unwrapComponentTree = (component: Component | MaybeRef<LNode> | Sig
   if (isRef(component)) return component;//unwrapComponentTree(component.value);
   if (isComponent(component)) {
     const next = component(attribs);
+    if (isLNode(next)) {
+      next.component.value = component;
+    }
     return unwrapComponentTree(next, attribs);
   }
   return component;

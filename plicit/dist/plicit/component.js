@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.unwrapComponentTree = exports.isComponent = void 0;
+const lnode_1 = require("./lnode");
 const reactivity_1 = require("./reactivity");
 const isComponent = (x) => !!x && typeof x === 'function';
 exports.isComponent = isComponent;
@@ -11,6 +12,9 @@ const unwrapComponentTree = (component, attribs) => {
         return component; //unwrapComponentTree(component.value);
     if ((0, exports.isComponent)(component)) {
         const next = component(attribs);
+        if ((0, lnode_1.isLNode)(next)) {
+            next.component.value = component;
+        }
         return (0, exports.unwrapComponentTree)(next, attribs);
     }
     return component;

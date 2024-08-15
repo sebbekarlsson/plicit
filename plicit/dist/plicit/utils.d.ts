@@ -21,3 +21,5 @@ export type StringGenerator = {
     nextWord: (min: number, max: number) => string;
 };
 export declare const stringGenerator: (seed?: number, numGen?: NumberGenerator) => StringGenerator;
+export declare const throttle: <R, A extends any[]>(fn: (...args: A) => R, delay: number) => [(...args: A) => R | undefined, () => void];
+export declare const debounce: <F extends (...args: Parameters<F>) => ReturnType<F>>(func: F, waitFor: number) => ((...args: Parameters<F>) => void);

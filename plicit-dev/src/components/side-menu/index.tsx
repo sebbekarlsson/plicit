@@ -1,6 +1,7 @@
 import { Component, computed } from "plicit";
 import { ISideMenuProps } from "./types";
 import { useRoute } from "../router/hooks";
+import { Icon } from "../icon";
 
 export const SideMenu: Component<ISideMenuProps> = (props) => {
   const route = useRoute();
@@ -16,11 +17,20 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
                 
                 return (
                   () => <div
-                    class={"w-full h-[2.7rem] px-4 flex items-center hover:bg-amaranth-500 cursor-pointer transition-all" + (isActive.value ? ` bg-amaranth-500` : ``)}
+                          class={"w-full h-[2.7rem] px-4 hover:bg-amaranth-500 cursor-pointer transition-all" + (isActive.value ? ` bg-amaranth-500` : ``)}
+                          style={{
+                            display: 'grid',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            ...(it.icon ? {
+                              gridTemplateColumns: '1rem 1fr'
+                            } : {})
+                          }}
                           on={{ click: it.action }}
                           deps={[isActive]}
                   >
-                    {it.label}
+                    { it.icon && <Icon icon={it.icon}/> }
+                    <span>{it.label}</span>
                   </div>
                 );
               })}

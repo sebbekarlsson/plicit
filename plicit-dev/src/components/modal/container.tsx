@@ -28,7 +28,7 @@ export const ModalContainer = () => {
 
   return () => (
     <div
-      deps={[modals.modals, opacity]}
+      deps={[modals.modals]}
       style={{
         width: "100vw",
         height: "100vh",

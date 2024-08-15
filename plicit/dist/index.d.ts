@@ -1,6 +1,6 @@
 export * from './plicit/component';
 export * from './plicit/lnode';
-export * from './plicit/reactivity/index';
+export * from './plicit/reactivity';
 export * from './plicit/types';
 export * from './plicit/jsx';
 export * from './plicit/utils';

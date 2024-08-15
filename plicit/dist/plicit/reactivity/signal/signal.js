@@ -14,7 +14,14 @@ exports.GSignal = {
     tracked: [],
     trackedExternal: [],
     uidGen: (0, utils_1.stringGenerator)(),
-    current: undefined
+    current: undefined,
+    idCounter: 0,
+    lastFlush: -1
+};
+const nextId = () => {
+    const n = exports.GSignal.idCounter;
+    exports.GSignal.idCounter = exports.GSignal.idCounter + 1;
+    return `${n}`;
 };
 const pushToStack = (item) => {
     exports.GSignal.lookup.set(item.uid, item);
@@ -33,7 +40,7 @@ const getTrackables = () => {
 };
 const publishTrackable = (item) => {
     const current = exports.GSignal.current;
-    const next = { ...item, uid: exports.GSignal.uidGen.next(24) };
+    const next = { ...item, uid: nextId() };
     exports.GSignal.stack.push(next);
     if (!current)
         return next;
@@ -51,23 +58,45 @@ const notifyTrack = (uid) => {
     exports.GSignal.trackedExternal.push(uid);
 };
 exports.notifyTrack = notifyTrack;
+const destroyTrackable = (track) => {
+    exports.GSignal.lookup.delete(track.uid);
+    track.tracked.forEach((it) => {
+        if (it.dispose || it.onDispose) {
+            destroyTrackable(it);
+        }
+    });
+    track.tracked = [];
+    track.dependants.forEach((dep) => {
+        dep.tracked = dep.tracked.filter(it => it !== track);
+        dep.dependants = dep.dependants.filter(it => it !== track);
+    });
+    track.dependants = [];
+    if (track.onDispose) {
+        track.onDispose();
+    }
+};
 const flushSignals = () => {
     if (!FLUSHING_ENABLED)
         return;
+    if (exports.GSignal.stack.length <= 0)
+        return;
     const now = performance.now();
+    const timeSinceLast = now - exports.GSignal.lastFlush;
+    if (timeSinceLast < 60 && exports.GSignal.lastFlush >= 0)
+        return;
+    exports.GSignal.lastFlush = now;
     const signalIsTrash = (trackable) => {
         if (trackable.lastSet < 0 || trackable.lastGet < 0)
             return;
         const diffSet = now - trackable.lastSet;
         const diffGet = now - trackable.lastGet;
-        return (diffSet > 60 && diffGet > 60);
+        return diffSet > 60 && diffGet > 60;
     };
-    const trash = exports.GSignal.stack.filter(it => signalIsTrash(it) === true);
+    const trash = exports.GSignal.stack.filter((it) => signalIsTrash(it) === true);
     for (const tr of trash) {
-        exports.GSignal.lookup.delete(tr.uid);
-        tr.tracked = [];
+        destroyTrackable(tr);
     }
-    exports.GSignal.stack = exports.GSignal.stack.filter(it => signalIsTrash(it) === false);
+    exports.GSignal.stack = exports.GSignal.stack.filter((it) => signalIsTrash(it) === false);
 };
 exports.flushSignals = flushSignals;
 const isSignal = (x) => {
@@ -113,7 +142,7 @@ const signal = (initial, options = {}) => {
         withUpdateEvents(() => init());
         registerTracked();
     };
-    const trigger = () => {
+    const triggerFun = () => {
         emit({ type: event_2.ESignalEvent.TRIGGER, payload: {} });
         exports.GSignal.tracked = [];
         if (options.isComputed) {
@@ -138,7 +167,15 @@ const signal = (initial, options = {}) => {
         exports.GSignal.tracked.push(sig.uid);
         emit({ type: event_2.ESignalEvent.TRACK, payload: {} });
     };
-    const uid = exports.GSignal.uidGen.next(24);
+    let trigger = triggerFun;
+    if (typeof options.debounce === 'number') {
+        trigger = (0, utils_1.debounce)(trigger, options.debounce);
+    }
+    if (typeof options.throttle === 'number') {
+        const [fn] = (0, utils_1.throttle)(trigger, options.throttle);
+        trigger = fn;
+    }
+    const uid = nextId();
     const sig = {
         isComputed: options.isComputed,
         isEffect: options.isEffect,
@@ -152,7 +189,13 @@ const signal = (initial, options = {}) => {
         tracked: [],
         watchers: [],
         set: (fun) => {
-            node._value = (0, is_1.isFunction)(fun) ? fun(node._value) : fun;
+            //const oldValue = node._value;
+            const nextValue = (0, is_1.isFunction)(fun) ? fun(node._value) : fun;
+            //if (nextValue === oldValue) {
+            //  return;
+            //}
+            //
+            node._value = nextValue;
             node.state = constants_1.ESignalState.DIRTY;
             trigger();
             queueMicrotask(() => {
@@ -179,7 +222,7 @@ const signal = (initial, options = {}) => {
             }
         },
         lastSet: -1,
-        lastGet: -1
+        lastGet: -1,
     };
     if (options.isEffect || options.isComputed) {
         trigger();
