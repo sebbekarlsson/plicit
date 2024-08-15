@@ -272,19 +272,17 @@ export class LNode {
   }
 
   appendChild(child: LNodeChild) {
-
     const patchChild = () => {
       if (isSignal(child)) {
         child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, (event) => {
           const sig = event.target;
-          const lnode = sig.node._value;
+          const lnode = unwrapComponentTree(sig.node._value);
           const thisEl = this.el;
           if (isLNode(lnode)) {
             if (thisEl && isHTMLElement(thisEl)) {
               const index = this.children.indexOf(child);
               if (index >= 0) {
                 const myChild = Array.from(thisEl.children)[index];
-
                 const nextEl = lnode.render();
                 if (myChild) {
                   if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {

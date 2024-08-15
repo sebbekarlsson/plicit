@@ -52,17 +52,14 @@ export const computedAsync = <T = any>(
   };
 
   deps.forEach((dep) => {
-    const d = unwrapReactiveDep(dep);
-    if (isRef(d)) {
-      d.subscribe({
-        onSet: () => {
-          refresh().catch((e) => console.error(e));
-        },
-        onTrigger: () => {
-          refresh().catch((e) => console.error(e));
-        }
-      });
-    }
+    deepSubscribe(dep, {
+      onSet: () => {
+        refresh().catch((e) => console.error(e));
+      },
+      onTrigger: () => {
+        refresh().catch((e) => console.error(e));
+      }
+    })
   });
 
   queueMicrotask(async () => {

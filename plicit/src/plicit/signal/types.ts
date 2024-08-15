@@ -6,4 +6,6 @@ export type Trackable = {
   watchers: Array<() => any>;
   lastSet: number;
   lastGet: number;
+  isEffect?: boolean;
+  isComputed?: boolean;
 }

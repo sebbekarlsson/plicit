@@ -9,12 +9,10 @@ export const isComponent = (x: any): x is Component => !!x && typeof x === 'func
 
 export const unwrapComponentTree = (component: Component | MaybeRef<LNode> | Signal<LNode> | MaybeSignal<LNode>, attribs?: LNodeAttributes): MaybeRef<LNode> | MaybeSignal<LNode> => {
   if (isSignal(component)) return component;
-  if (isRef(component)) return unwrapComponentTree(component.value);
-  if (!isComponent(component)) return component;
-  const next = component(attribs);
-  if (isComponent(next)) return unwrapComponentTree(next, attribs);
-  if (isSignal(next)) {
-    return next;
-  };
-  return next;
+  if (isRef(component)) return component;//unwrapComponentTree(component.value);
+  if (isComponent(component)) {
+    const next = component(attribs);
+    return unwrapComponentTree(next, attribs);
+  }
+  return component;
 }

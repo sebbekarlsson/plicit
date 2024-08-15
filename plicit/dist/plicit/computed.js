@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.computedAsync = exports.computed = void 0;
 const proxy_1 = require("./proxy");
 const subscribe_1 = require("./subscribe");
-const types_1 = require("./types");
 const computed = (fun, deps = []) => {
     const r = (0, proxy_1.ref)(fun());
     r._deps = deps;
@@ -36,17 +35,14 @@ const computedAsync = (fun, deps = []) => {
         }
     };
     deps.forEach((dep) => {
-        const d = (0, types_1.unwrapReactiveDep)(dep);
-        if ((0, proxy_1.isRef)(d)) {
-            d.subscribe({
-                onSet: () => {
-                    refresh().catch((e) => console.error(e));
-                },
-                onTrigger: () => {
-                    refresh().catch((e) => console.error(e));
-                }
-            });
-        }
+        (0, subscribe_1.deepSubscribe)(dep, {
+            onSet: () => {
+                refresh().catch((e) => console.error(e));
+            },
+            onTrigger: () => {
+                refresh().catch((e) => console.error(e));
+            }
+        });
     });
     queueMicrotask(async () => {
         await refresh();

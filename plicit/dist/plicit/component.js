@@ -9,17 +9,12 @@ const unwrapComponentTree = (component, attribs) => {
     if ((0, signal_1.isSignal)(component))
         return component;
     if ((0, proxy_1.isRef)(component))
-        return (0, exports.unwrapComponentTree)(component.value);
-    if (!(0, exports.isComponent)(component))
-        return component;
-    const next = component(attribs);
-    if ((0, exports.isComponent)(next))
+        return component; //unwrapComponentTree(component.value);
+    if ((0, exports.isComponent)(component)) {
+        const next = component(attribs);
         return (0, exports.unwrapComponentTree)(next, attribs);
-    if ((0, signal_1.isSignal)(next)) {
-        return next;
     }
-    ;
-    return next;
+    return component;
 };
 exports.unwrapComponentTree = unwrapComponentTree;
 //# sourceMappingURL=component.js.map

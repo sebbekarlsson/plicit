@@ -103,10 +103,12 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     return remap(pos.x, trackRange.value, { min: 0, max: 1 });
   });
 
-  const Rail = (props: { width: number }) => {
-    return (
-      <div
+  const Rail = () => {
+    return computedSignal(() => {
+      const f = fraction.get();
+      return <div
         class="bg-amaranth-300 h-full absolute rounded-full shadow-inner"
+        id="RAIL"
         style={{
           left: "0px",
           top: "0px",
@@ -114,10 +116,10 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
           marginTop: "auto",
           marginBottom: "auto",
           zIndex: 2,
-          width: props.width + "%",
+          width: (f * 100) + "%",
         }}
       />
-    );
+    });
   };
 
   const Knob = () => {
@@ -171,11 +173,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
         zIndex: 1,
       }}
     >
-      {computedSignal(() => (
-        <div style={{ display: "contents" }}>
-          <Rail width={fraction.get() * 100} />
-        </div>
-      ))}
+      <Rail />
       <Track />
       <Knob />
     </div>

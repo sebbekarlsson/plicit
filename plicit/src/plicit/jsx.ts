@@ -18,7 +18,7 @@ export function ljsx(
     .filter((it) => isLNode(it) || isComponent(it) || isRef(it) || isSignal(it));
 
   if (isComponent(tag)) {
-    return () => tag({ ...attribs, children: children });
+    return tag({ ...attribs, children: children });
   }
 
   return lnode(tag, { ...attribs, children: children });

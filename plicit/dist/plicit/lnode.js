@@ -213,7 +213,7 @@ class LNode {
             if ((0, signal_1.isSignal)(child)) {
                 child.emitter.addEventListener(event_2.ESignalEvent.AFTER_UPDATE, (event) => {
                     const sig = event.target;
-                    const lnode = sig.node._value;
+                    const lnode = (0, component_1.unwrapComponentTree)(sig.node._value);
                     const thisEl = this.el;
                     if ((0, exports.isLNode)(lnode)) {
                         if (thisEl && (0, types_1.isHTMLElement)(thisEl)) {

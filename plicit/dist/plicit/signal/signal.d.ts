@@ -7,18 +7,12 @@ export type GlobalSignalState = {
     stack: Trackable[];
     lookup: Map<string, Trackable>;
     tracked: string[];
+    trackedExternal: string[];
     uidGen: StringGenerator;
+    current: Signal | undefined;
 };
 export declare const GSignal: GlobalSignalState;
-export declare const publishTrackable: (item: Omit<Trackable, "uid">) => {
-    uid: string;
-    trigger: () => any;
-    dependants: Trackable[];
-    tracked: Trackable[];
-    watchers: Array<() => any>;
-    lastSet: number;
-    lastGet: number;
-};
+export declare const publishTrackable: (item: Omit<Trackable, "uid">) => Trackable;
 export declare const notifyTrack: (uid: string) => void;
 export declare const flushSignals: () => void;
 export type SignalOptions = {

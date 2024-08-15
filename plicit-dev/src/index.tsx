@@ -48,7 +48,7 @@ const App: Component = () => {
           <RouterView />
         </div>
       </div>
-      <ModalContainer />
+      {() => <ModalContainer />}
       <ToastContainer />
     </div>
   );

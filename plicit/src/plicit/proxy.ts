@@ -60,6 +60,7 @@ export type RawRef<T = any> = {
 export type Ref<T = any> = LProxy<RawRef<T>>;
 export type MaybeRef<T = any> = Ref<T> | T;
 
+
 export const ref = <T = any>(initial: T): Ref<T> => {
   const state = proxy<RefState<T>>({
     subscribers: [],
@@ -83,9 +84,12 @@ export const ref = <T = any>(initial: T): Ref<T> => {
       onGetters.forEach((sub) => sub(obj, key as any, {}));
     }
   };
+
+
   return proxy<RawRef<T>>(obj, [
     {
       get: (target, key, receiver) => {
+
         const next = target[key];
         state.subscribers.forEach((sub) => {
           const last = sub.lastValue;
@@ -101,6 +105,7 @@ export const ref = <T = any>(initial: T): Ref<T> => {
             sub.onSet(target, key, next, receiver);
           }
         });
+
       },
     },
   ]);

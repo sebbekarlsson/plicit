@@ -13,7 +13,7 @@ function ljsx(tag, attribs, ...childs) {
         .flat()
         .filter((it) => (0, lnode_1.isLNode)(it) || (0, component_1.isComponent)(it) || (0, proxy_1.isRef)(it) || (0, signal_1.isSignal)(it));
     if ((0, component_1.isComponent)(tag)) {
-        return () => tag({ ...attribs, children: children });
+        return tag({ ...attribs, children: children });
     }
     return (0, lnode_1.lnode)(tag, { ...attribs, children: children });
 }

@@ -6,18 +6,24 @@ import { ESignalState } from "./constants";
 import { ESignalEvent } from "./event";
 import { Trackable } from "./types";
 
+const FLUSHING_ENABLED: boolean = true as boolean;
+
 export type GlobalSignalState = {
   stack: Trackable[];
   lookup: Map<string, Trackable>;
   tracked: string[];
+  trackedExternal: string[];
   uidGen: StringGenerator;
+  current: Signal | undefined;
 };
 
 export const GSignal: GlobalSignalState = {
   stack: [],
   lookup: new Map<string, Trackable>(),
   tracked: [],
+  trackedExternal: [],
   uidGen: stringGenerator(),
+  current: undefined
 };
 
 const pushToStack = (item: Trackable) => {
@@ -27,7 +33,8 @@ const pushToStack = (item: Trackable) => {
 
 const getTrackables = () => {
   const trackables: Trackable[] = [];
-  for (const key of GSignal.tracked) {
+  const keys = [...GSignal.tracked, ...GSignal.trackedExternal];
+  for (const key of keys) {
     const trackable = GSignal.lookup.get(key);
     if (!trackable) continue;
     trackables.push(trackable);
@@ -36,17 +43,28 @@ const getTrackables = () => {
 };
 
 export const publishTrackable = (item: Omit<Trackable, "uid">) => {
-  const next = { ...item, uid: GSignal.uidGen.next(24) };
-  pushToStack(next);
+  const current = GSignal.current;
+  const next: Trackable = {...item, uid: GSignal.uidGen.next(24)}
+  GSignal.stack.push(next);
+  if (!current) return next;
+
+
+  if (!current.tracked.includes(next) && !next.dependants.includes(current)) {
+    current.tracked.push(next);
+    current.lastGet = performance.now();
+    next.dependants.push(current);
+  }
+
   return next;
 };
 
 export const notifyTrack = (uid: string) => {
-  if (GSignal.tracked.includes(uid)) return;
-  GSignal.tracked.push(uid);
+  if (GSignal.trackedExternal.includes(uid)) return;
+  GSignal.trackedExternal.push(uid);
 };
 
 export const flushSignals = () => {
+  if (!FLUSHING_ENABLED) return;
   const now = performance.now();
 
   const signalIsTrash = (trackable: Trackable) => {
@@ -60,6 +78,7 @@ export const flushSignals = () => {
 
   for (const tr of trash) {
     GSignal.lookup.delete(tr.uid);
+    tr.tracked = [];
   }
 
   GSignal.stack = GSignal.stack.filter(it => signalIsTrash(it) === false)
@@ -132,20 +151,14 @@ export const signal = <T = any>(
   const registerTracked = () => {
     const trackedItems = getTrackables();
     for (const tracked of trackedItems) {
-      if (!sig.tracked.includes(tracked)) {
+      if (!sig.tracked.includes(tracked) && !tracked.dependants.includes(sig)) {
         sig.tracked.push(tracked);
-        if (!tracked.dependants.includes(sig)) {
-          tracked.dependants.push(sig);
-        }
+        tracked.dependants.push(sig);
       }
-    }
-
-    GSignal.tracked = [];
+    } 
   }
 
   const triggerMutation = () => {
-    GSignal.tracked = [];
-
     withUpdateEvents(() => {
       node._value = init();
     });
@@ -154,8 +167,6 @@ export const signal = <T = any>(
   };
 
   const triggerEffect = () => {
-    GSignal.tracked = [];
-
     withUpdateEvents(() => init());
     
     registerTracked();
@@ -164,11 +175,18 @@ export const signal = <T = any>(
   const trigger = () => {
     emit({ type: ESignalEvent.TRIGGER, payload: {} });
 
+    GSignal.tracked = [];
+
     if (options.isComputed) {
       triggerMutation();
     } else {
       triggerEffect();
     }
+
+    GSignal.tracked = [];
+    GSignal.trackedExternal = [];
+    GSignal.current = undefined;
+
     
     sig.watchers.forEach((watcher) => watcher());
 
@@ -191,6 +209,8 @@ export const signal = <T = any>(
   const uid = GSignal.uidGen.next(24);
 
   const sig: Signal<T> = {
+    isComputed: options.isComputed,
+    isEffect: options.isEffect,
     emitter: new EventEmitter(),
     sym: "Signal",
     uid: uid,
@@ -221,10 +241,12 @@ export const signal = <T = any>(
       return node._value;
     },
     dispose: () => {
-      queueMicrotask(() => {
-        flushSignals();
-        GSignal.stack = GSignal.stack.filter((it) => it.uid !== uid);
-      })
+      if (FLUSHING_ENABLED) {
+        queueMicrotask(() => {
+          flushSignals();
+          GSignal.stack = GSignal.stack.filter((it) => it.uid !== uid);
+        })
+      }
     },
     lastSet: -1,
     lastGet: -1
@@ -238,18 +260,20 @@ export const signal = <T = any>(
     pushToStack(sig);
   }
 
+  GSignal.current = sig;
+
   return sig;
 };
 
 export const computedSignal = <T = any>(
   init: Fun<T>,
   options: SignalOptions = { isComputed: true },
-): Signal<T> => signal<T>(init, options);
+): Signal<T> => signal<T>(init, {...options, isComputed: true});
 
 export const effectSignal = <T = any>(
   init: Fun<T>,
   options: SignalOptions = { isEffect: true },
-): Signal<T> => signal<T>(init, options);
+): Signal<T> => signal<T>(init, {...options, isEffect: true});
 
 export const watchSignal = <T = any>(sig: Signal<T>, fun: () => any) => {
   if (!sig.watchers.includes(fun)) {
