@@ -21,7 +21,7 @@ const config = {
     static: {
       directory: path.resolve(__dirname, 'public'),
     },
-    open: true,
+    open: false,
     host: "localhost",
     hot: true,
     compress: true,

@@ -1,13 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.computedAsync = exports.computed = void 0;
-const proxy_1 = require("./proxy");
-const subscribe_1 = require("./subscribe");
+const reactivity_1 = require("./reactivity");
 const computed = (fun, deps = []) => {
-    const r = (0, proxy_1.ref)(fun());
+    const r = (0, reactivity_1.ref)(fun());
     r._deps = deps;
     deps.forEach((dep) => {
-        (0, subscribe_1.deepSubscribe)(dep, {
+        (0, reactivity_1.deepSubscribe)(dep, {
             onSet: () => {
                 r.value = fun();
             },
@@ -20,8 +19,8 @@ const computed = (fun, deps = []) => {
 };
 exports.computed = computed;
 const computedAsync = (fun, deps = []) => {
-    const r = (0, proxy_1.ref)(null);
-    const status = (0, proxy_1.ref)("idle");
+    const r = (0, reactivity_1.ref)(null);
+    const status = (0, reactivity_1.ref)("idle");
     r._deps = deps;
     const refresh = async () => {
         status.value = "pending";
@@ -35,7 +34,7 @@ const computedAsync = (fun, deps = []) => {
         }
     };
     deps.forEach((dep) => {
-        (0, subscribe_1.deepSubscribe)(dep, {
+        (0, reactivity_1.deepSubscribe)(dep, {
             onSet: () => {
                 refresh().catch((e) => console.error(e));
             },

@@ -1,12 +1,12 @@
 import {
   computed,
   CSSProperties,
-  effect,
   isHTMLElement,
   LNodeRef,
   Ref,
   ref,
   signal,
+  watchRef,
 } from "plicit";
 import { IContextMenu, IContextMenuConfig } from "../types";
 import { AABB, getAABBSize, VEC2 } from "tsmathutil";
@@ -169,14 +169,14 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     }, HOVER_TIMEOUT_LEAVE_MENU);
   };
 
-  effect(() => {
+  watchRef(() => {
     const el = triggerEl.value;
     if (!el) return;
     el.addEventListener("mouseenter", onMouseEnterTrigger);
     el.addEventListener("mouseleave", onMouseLeaveTrigger);
   }, [triggerEl]);
 
-  effect(() => {
+  watchRef(() => {
     const el = menuEl.value;
     if (!el) return;
     el.addEventListener("mouseenter", onMouseEnterMenu);

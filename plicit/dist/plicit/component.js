@@ -1,14 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.unwrapComponentTree = exports.isComponent = void 0;
-const proxy_1 = require("./proxy");
-const signal_1 = require("./signal");
+const reactivity_1 = require("./reactivity");
 const isComponent = (x) => !!x && typeof x === 'function';
 exports.isComponent = isComponent;
 const unwrapComponentTree = (component, attribs) => {
-    if ((0, signal_1.isSignal)(component))
+    if ((0, reactivity_1.isSignal)(component))
         return component;
-    if ((0, proxy_1.isRef)(component))
+    if ((0, reactivity_1.isRef)(component))
         return component; //unwrapComponentTree(component.value);
     if ((0, exports.isComponent)(component)) {
         const next = component(attribs);

@@ -1,7 +1,3 @@
-import { isFunction } from "./is";
-import { isRef, MaybeRef, Ref } from "./proxy";
-import { MaybeSignal } from "./signal";
-
 export type Dict<T = any> = {[key: string]: T};
 
 export type Indexable<T = any> = Dict<T> | Array<T>;
@@ -11,17 +7,7 @@ export type NativeListener<K extends keyof HTMLElementEventMap> = (this: HTMLBut
 export type UnknownNativeListener = (this: HTMLButtonElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any;
 export type NativeElementListeners = Record<keyof HTMLElementEventMap, UnknownNativeListener>;
 
-export type ReactiveDep<T = any> = Ref<T> | MaybeRef<T> | MaybeSignal<T> | (() => T) | (() => any);
 export const notNullish = <T = any>(val?: T | null | undefined): val is T => val != null
-
-export const unwrapReactiveDep = <T = any>(dep: ReactiveDep<T>): MaybeRef<T> | MaybeSignal<T> => {
-  if (isRef<T>(dep)) return dep;
-  if (isFunction(dep)) {
-    return unwrapReactiveDep<T>(dep());
-  };
-  return dep;
-}
-
 
 export const isText = (x: any): x is Text => {
   if (typeof x !== 'object') return false;

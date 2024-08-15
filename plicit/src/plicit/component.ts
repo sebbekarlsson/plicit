@@ -1,6 +1,5 @@
 import { LNode, LNodeAttributes } from "./lnode";
-import { isRef, MaybeRef } from "./proxy";
-import { isSignal, MaybeSignal, Signal } from "./signal";
+import { isRef, isSignal, MaybeRef, MaybeSignal, Signal } from "./reactivity";
 import { Dict } from "./types";
 
 export type Component<T extends Dict = Dict> = (props?: (T & LNodeAttributes)) => (MaybeRef<LNode> | Component | Signal<LNode> | MaybeSignal<LNode>);

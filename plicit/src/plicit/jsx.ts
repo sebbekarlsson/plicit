@@ -1,7 +1,6 @@
 import { Component, isComponent } from "./component";
 import { ELNodeType, isLNode, lnode, LNodeAttributes } from "./lnode";
-import { isRef } from "./proxy";
-import { isSignal } from "./signal";
+import { isRef, isSignal } from "./reactivity";
 
 export function ljsx(
   tag: string | Component,

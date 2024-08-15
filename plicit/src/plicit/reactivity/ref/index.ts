@@ -1,51 +1,8 @@
-import { Indexable, notNullish, ReactiveDep } from "./types";
-
-export type LProxy<T extends Indexable> = T;
-
-type ProxySubscriber<T extends Indexable> = {
-  get: (target: T, key: keyof T, receiver: any) => any;
-  set: (target: T, key: keyof T, next: T[keyof T], receiver: any) => any;
-};
-
-export const proxy = <T extends Indexable>(
-  initial: T,
-  subscribers: ProxySubscriber<T>[] = [],
-): LProxy<T> => {
-  return new Proxy<T>(initial, {
-    get: (target, p, _receiver) => {
-      const key = p as keyof T;
-      subscribers.forEach((sub) => sub.get(target, key, _receiver));
-      return target[key];
-    },
-    set: (target, p, next, receiver) => {
-      const key = p as keyof T;
-      const prev = Reflect.get(target, key, receiver);
-      if (prev === next) return true;
-      target[p] = next;
-      //const result = Reflect.set(target,p, next, receiver);
-      subscribers.forEach((sub) => sub.set(target, key, next, receiver));
-      return true;
-    },
-  });
-};
-
-type RefState<T = any> = {
-  subscribers: RefSubscriber<T>[];
-};
-
-
-
-export type EffectSubscriber<T = any> = {
-  onGet?: (target: RawRef<T>, key: keyof RawRef<T>, receiver: any) => any;
-  onSet?: (
-    target: RawRef<T>,
-    key: keyof RawRef<T>,
-    next: RawRef<T>[keyof RawRef<T>],
-    receiver: any,
-  ) => any;
-  onTrigger?: () => any;
-  lastValue?: any;
-};
+import { LProxy, proxy } from "../proxy";
+import { notNullish } from "../../types";
+import { deepSubscribe } from "../subscribe";
+import { ReactiveDep } from "../types";
+import { EffectSubscriber } from "../types";
 
 export type RefSubscriber<T = any> = EffectSubscriber<T>; 
 
@@ -117,4 +74,25 @@ export const isRef = <T = any>(x: any): x is Ref<T> =>
 export const unref = <T = any>(x: T | Ref<T>): T => {
   if (isRef<T>(x)) return x.value;
   return x;
+};
+
+type RefState<T = any> = {
+  subscribers: RefSubscriber<T>[];
+};
+
+
+type EffectFun<T = any> = () => T;
+
+
+export const watchRef = <T = any>(
+  fun: EffectFun<T>,
+  deps: ReactiveDep[] = [],
+) => {
+  deps.forEach((dep) => {
+    deepSubscribe(dep, {
+      onSet: () => {
+        fun();
+      } 
+    })
+  });
 };

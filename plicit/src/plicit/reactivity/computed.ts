@@ -1,6 +1,4 @@
-import { isRef, Ref, ref } from "./proxy";
-import { deepSubscribe } from "./subscribe";
-import { ReactiveDep, unwrapReactiveDep } from "./types";
+import { Ref, ref, deepSubscribe, ReactiveDep } from '.';
 
 type ComputedFun<T = any> = () => T;
 type ComputedAsyncFun<T = any> = () => Promise<T>;

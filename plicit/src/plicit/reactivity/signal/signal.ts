@@ -1,7 +1,7 @@
-import { EventEmitter, PlicitEvent } from "../event";
-import { isFunction } from "../is";
+import { EventEmitter, PlicitEvent } from "../../event";
+import { isFunction } from "../../is";
 import { proxy } from "../proxy";
-import { StringGenerator, stringGenerator } from "../utils";
+import { stringGenerator, StringGenerator } from "../../utils";
 import { ESignalState } from "./constants";
 import { ESignalEvent } from "./event";
 import { Trackable } from "./types";

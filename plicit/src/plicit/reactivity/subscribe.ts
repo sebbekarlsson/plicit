@@ -1,5 +1,4 @@
-import { EffectSubscriber, isRef } from "./proxy";
-import { isSignal, watchSignal } from "./signal";
+import { EffectSubscriber, isRef, isSignal, watchSignal } from ".";
 import { ReactiveDep, unwrapReactiveDep } from "./types";
 
 export const deepSubscribe = (dep: ReactiveDep, sub: EffectSubscriber, maxDepth: number = -1) => {

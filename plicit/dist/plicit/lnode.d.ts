@@ -1,10 +1,10 @@
 import { EventEmitter, EventSubscriber, PlicitEvent } from "./event";
 import { Component } from "./component";
 import { CSSProperties } from "./css";
-import { LProxy, MaybeRef, Ref } from "./proxy";
-import { NativeElement, NativeElementListeners, ReactiveDep } from "./types";
+import { NativeElement, NativeElementListeners } from "./types";
 import { ENodeEvent } from "./nodeEvents";
-import { type Signal } from "./signal";
+import { MaybeRef, Ref, Signal } from "./reactivity";
+import { ReactiveDep, LProxy } from "./reactivity";
 export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
 export type LNodeRef = Ref<LNode | undefined>;
 export declare enum ELNodeType {

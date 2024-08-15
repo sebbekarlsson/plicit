@@ -15,13 +15,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./plicit/component"), exports);
-__exportStar(require("./plicit/literal"), exports);
 __exportStar(require("./plicit/lnode"), exports);
-__exportStar(require("./plicit/proxy"), exports);
-__exportStar(require("./plicit/computed"), exports);
-__exportStar(require("./plicit/effect"), exports);
-__exportStar(require("./plicit/signal/index"), exports);
-__exportStar(require("./plicit/subscribe"), exports);
+__exportStar(require("./plicit/reactivity/index"), exports);
 __exportStar(require("./plicit/types"), exports);
 __exportStar(require("./plicit/jsx"), exports);
 __exportStar(require("./plicit/utils"), exports);

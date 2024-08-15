@@ -2,7 +2,6 @@ import { EventEmitter, EventSubscriber, PlicitEvent } from "./event";
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
 import { patchElements } from "./element";
-import { isRef, LProxy, MaybeRef, proxy, ref, Ref, unref } from "./proxy";
 import {
   isHTMLElement,
   isSVGElement,
@@ -10,14 +9,11 @@ import {
   isText,
   NativeElement,
   NativeElementListeners,
-  ReactiveDep,
-  unwrapReactiveDep,
 } from "./types";
 import { stringGenerator } from "./utils";
 import { ENodeEvent } from "./nodeEvents";
-import { deepSubscribe } from "./subscribe";
-import { isSignal, signal, type Signal } from "./signal";
-import { ESignalEvent } from "./signal/event";
+import { isRef, isSignal, MaybeRef, ref, Ref, signal, Signal, unref } from "./reactivity";
+import { ESignalEvent, ReactiveDep, unwrapReactiveDep, deepSubscribe, LProxy, proxy } from "./reactivity";
 
 export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
 
@@ -48,7 +44,6 @@ export type NodeEventPayload = {};
 export type NodeEvent<Payload> = PlicitEvent<Payload, ENodeEvent, LNode>;
 
 const stringGen = stringGenerator();
-
 export class LNode {
   _lnode: "lnode" = "lnode" as "lnode";
   key: string = "";

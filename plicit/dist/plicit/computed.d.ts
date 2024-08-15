@@ -1,5 +1,4 @@
-import { Ref } from "./proxy";
-import { ReactiveDep } from "./types";
+import { Ref, ReactiveDep } from './reactivity';
 type ComputedFun<T = any> = () => T;
 type ComputedAsyncFun<T = any> = () => Promise<T>;
 export declare const computed: <T = any>(fun: ComputedFun<T>, deps?: ReactiveDep[]) => Ref<T>;

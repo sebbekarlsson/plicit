@@ -1,20 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isSVGPathElement = exports.isSVGElement = exports.isInputElement = exports.isHTMLElement = exports.isText = exports.unwrapReactiveDep = exports.notNullish = void 0;
-const is_1 = require("./is");
-const proxy_1 = require("./proxy");
+exports.isSVGPathElement = exports.isSVGElement = exports.isInputElement = exports.isHTMLElement = exports.isText = exports.notNullish = void 0;
 const notNullish = (val) => val != null;
 exports.notNullish = notNullish;
-const unwrapReactiveDep = (dep) => {
-    if ((0, proxy_1.isRef)(dep))
-        return dep;
-    if ((0, is_1.isFunction)(dep)) {
-        return (0, exports.unwrapReactiveDep)(dep());
-    }
-    ;
-    return dep;
-};
-exports.unwrapReactiveDep = unwrapReactiveDep;
 const isText = (x) => {
     if (typeof x !== 'object')
         return false;

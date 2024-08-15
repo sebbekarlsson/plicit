@@ -5,13 +5,11 @@ const event_1 = require("./event");
 const component_1 = require("./component");
 const css_1 = require("./css");
 const element_1 = require("./element");
-const proxy_1 = require("./proxy");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
 const nodeEvents_1 = require("./nodeEvents");
-const subscribe_1 = require("./subscribe");
-const signal_1 = require("./signal");
-const event_2 = require("./signal/event");
+const reactivity_1 = require("./reactivity");
+const reactivity_2 = require("./reactivity");
 var ELNodeType;
 (function (ELNodeType) {
     ELNodeType["ELEMENT"] = "ELEMENT";
@@ -37,15 +35,15 @@ class LNode {
     unsubs = [];
     constructor(name, attributes) {
         this.name = attributes.tag || name;
-        this.attributes = (0, proxy_1.proxy)(attributes || {});
-        this.parent = (0, signal_1.signal)(undefined);
-        this.component = (0, proxy_1.ref)(undefined);
+        this.attributes = (0, reactivity_2.proxy)(attributes || {});
+        this.parent = (0, reactivity_1.signal)(undefined);
+        this.component = (0, reactivity_1.ref)(undefined);
         this.key = this.attributes.key || "";
         this.type = this.attributes.nodeType || this.type;
         const deps = this.attributes.deps || [];
         for (let i = 0; i < deps.length; i++) {
             const dep = deps[i];
-            const nextUnsubs = (0, subscribe_1.deepSubscribe)(dep, {
+            const nextUnsubs = (0, reactivity_2.deepSubscribe)(dep, {
                 onSet: () => {
                     this.invalidate();
                 },
@@ -61,8 +59,8 @@ class LNode {
         if (!old)
             return;
         const next = (0, component_1.unwrapComponentTree)(other);
-        let unreffed = (0, proxy_1.unref)(next);
-        if ((0, signal_1.isSignal)(unreffed)) {
+        let unreffed = (0, reactivity_1.unref)(next);
+        if ((0, reactivity_1.isSignal)(unreffed)) {
             unreffed = unreffed.get();
         }
         const nextEl = unreffed.getElement();
@@ -185,14 +183,14 @@ class LNode {
         return this.render();
     }
     onReceiveChild(child) {
-        if ((0, proxy_1.isRef)(child)) {
+        if ((0, reactivity_1.isRef)(child)) {
             child._deps.forEach((d) => {
-                const un = (0, types_1.unwrapReactiveDep)(d);
-                if ((0, proxy_1.isRef)(un)) {
+                const un = (0, reactivity_2.unwrapReactiveDep)(d);
+                if ((0, reactivity_1.isRef)(un)) {
                     un.subscribe({
                         onGet: (_target, key) => {
                             if (key === "value") {
-                                (0, proxy_1.unref)(child).invalidate();
+                                (0, reactivity_1.unref)(child).invalidate();
                             }
                         },
                         onSet: (_target, key) => {
@@ -210,8 +208,8 @@ class LNode {
     }
     appendChild(child) {
         const patchChild = () => {
-            if ((0, signal_1.isSignal)(child)) {
-                child.emitter.addEventListener(event_2.ESignalEvent.AFTER_UPDATE, (event) => {
+            if ((0, reactivity_1.isSignal)(child)) {
+                child.emitter.addEventListener(reactivity_2.ESignalEvent.AFTER_UPDATE, (event) => {
                     const sig = event.target;
                     const lnode = (0, component_1.unwrapComponentTree)(sig.node._value);
                     const thisEl = this.el;
@@ -235,14 +233,14 @@ class LNode {
                 });
             }
         };
-        if ((0, signal_1.isSignal)(child)) {
+        if ((0, reactivity_1.isSignal)(child)) {
             patchChild();
             child = child.get();
         }
         const unwrapped = (0, component_1.unwrapComponentTree)(child);
-        let unreffed = (0, proxy_1.unref)(unwrapped);
+        let unreffed = (0, reactivity_1.unref)(unwrapped);
         let signalKey = undefined;
-        if ((0, signal_1.isSignal)(unreffed)) {
+        if ((0, reactivity_1.isSignal)(unreffed)) {
             unreffed = unreffed.get();
             signalKey = unreffed.uid;
         }
@@ -264,10 +262,10 @@ class LNode {
             if ((0, component_1.isComponent)(child)) {
                 unreffed.component.value = child;
             }
-            if ((0, signal_1.isSignal)(unwrapped)) {
+            if ((0, reactivity_1.isSignal)(unwrapped)) {
                 unreffed.signal = unwrapped;
             }
-            else if ((0, signal_1.isSignal)(child)) {
+            else if ((0, reactivity_1.isSignal)(child)) {
                 unreffed.signal = child;
             }
         }
@@ -303,7 +301,7 @@ class LNode {
             }
             else if (!(0, types_1.isSVGElement)(el) && !(0, types_1.isSVGPathElement)(el)) {
                 el.innerHTML = "";
-                el.innerText = (0, proxy_1.unref)(this.attributes.text) + "";
+                el.innerText = (0, reactivity_1.unref)(this.attributes.text) + "";
             }
         }
         const style = this.attributes.style;
