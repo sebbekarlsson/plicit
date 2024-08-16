@@ -10,10 +10,12 @@ export type LNodeRef = Ref<LNode | undefined>;
 export declare enum ELNodeType {
     ELEMENT = "ELEMENT",
     TEXT_ELEMENT = "TEXT_ELEMENT",
-    FRAGMENT = "FRAGMENT"
+    FRAGMENT = "FRAGMENT",
+    EMPTY = "EMPTY",
+    COMMENT = "COMMENT"
 }
 type WithSignals<T> = {
-    [Prop in keyof T]: T[Prop] extends (Ref | Signal | ((...args: any[]) => void)) ? T[Prop] : (T[Prop] | Signal<T[Prop]>);
+    [Prop in keyof T]: T[Prop] extends Ref | Signal | ((...args: any[]) => void) ? T[Prop] : T[Prop] | Signal<T[Prop]>;
 };
 export type LNodeAttributesBase = {
     text?: any;
@@ -39,7 +41,7 @@ export declare class LNode {
     implicitKey: number;
     isTrash: boolean;
     key: string;
-    el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    el?: HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment;
     elRef: LNodeRef;
     parent: Signal<LNode | undefined>;
     attributes: LProxy<LNodeAttributes>;
@@ -55,24 +57,26 @@ export declare class LNode {
     unsubs: Array<() => void>;
     constructor(name: string, attributes?: LNodeAttributes, implicitKey?: number, depth?: number);
     destroy(): void;
+    toObject(): any;
     patchWith(other: LNodeChild): void;
     invalidate(): void;
     updateRef(): void;
     emit(event: Omit<NodeEvent<any>, "target">): void;
     addEventListener(evtype: ENodeEvent, sub: EventSubscriber<NodeEventPayload, ENodeEvent, LNode>): () => void;
     mountTo(target: NativeElement | null | undefined): void;
-    createElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    createElement(): HTMLElement | SVGSVGElement | SVGPathElement | Comment;
     listenForMutation(callback: (disconnect: () => void) => void): void;
-    setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement): void;
-    ensureElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
-    getElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment): void;
+    ensureElement(): HTMLElement | SVGSVGElement | SVGPathElement | Comment;
+    getElement(): HTMLElement | SVGSVGElement | SVGPathElement | Comment;
     private onReceiveChild;
     patchChildWithNode(index: number, newNode: LNode): void;
-    patchChildFromSignal(child: LNodeChild, sig: Signal<LNode>): void;
+    patchChildFromSignal(child: LNodeChild, sig: Signal<LNode>, _childIndex: number): void;
     appendChild(child: LNodeChild, childIndex: number): void;
     setAttribute(key: string, value: string): void;
-    render(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    render(): HTMLElement | SVGSVGElement | SVGPathElement | Comment;
 }
 export declare const lnode: (name: string, attributes?: LNodeAttributes, implicitKey?: number, depth?: number) => LNode;
+export declare const none: () => LNode;
 export declare const isLNode: (x: any) => x is LNode;
 export {};

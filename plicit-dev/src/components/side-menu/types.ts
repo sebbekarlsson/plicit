@@ -6,15 +6,11 @@ export type ISideMenuItem = {
   path?: string;
   action?: () => any;
   icon?: IconPrimitive;
-}
-
-export type ISideMenuSection = {
-  label?: string;
-  items: ISideMenuItem[];
+  items?: ISideMenuItem[];
 }
 
 export type ISideMenu = {
-  sections: ISideMenuSection[];
+  items: ISideMenuItem[];
 }
 
 export type ISideMenuConfig = ISideMenu;

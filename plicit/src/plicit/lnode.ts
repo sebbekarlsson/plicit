@@ -3,7 +3,10 @@ import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
 import { patchElements } from "./element";
 import {
+  isComment,
+  isElementWithChildren,
   isHTMLElement,
+  isReplaceableElement,
   isSVGElement,
   isSVGPathElement,
   isText,
@@ -42,10 +45,14 @@ export enum ELNodeType {
   ELEMENT = "ELEMENT",
   TEXT_ELEMENT = "TEXT_ELEMENT",
   FRAGMENT = "FRAGMENT",
+  EMPTY = "EMPTY",
+  COMMENT = "COMMENT",
 }
 
 type WithSignals<T> = {
-  [Prop in keyof T]: T[Prop] extends (Ref | Signal | ((...args: any[]) => void)) ? T[Prop] : (T[Prop] | Signal<T[Prop]>);
+  [Prop in keyof T]: T[Prop] extends Ref | Signal | ((...args: any[]) => void)
+    ? T[Prop]
+    : T[Prop] | Signal<T[Prop]>;
 };
 
 export type LNodeAttributesBase = {
@@ -77,7 +84,7 @@ export class LNode {
   implicitKey: number = -1;
   isTrash: boolean = false;
   key: string = "";
-  el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
+  el?: HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment;
   elRef: LNodeRef;
   parent: Signal<LNode | undefined>;
   attributes: LProxy<LNodeAttributes>;
@@ -97,7 +104,12 @@ export class LNode {
   didMount: boolean = false;
   unsubs: Array<() => void> = [];
 
-  constructor(name: string, attributes?: LNodeAttributes, implicitKey: number = -1, depth: number = -1) {
+  constructor(
+    name: string,
+    attributes?: LNodeAttributes,
+    implicitKey: number = -1,
+    depth: number = -1,
+  ) {
     this.name = pget(attributes.tag || name);
     this.attributes = proxy<LNodeAttributes>(attributes || {});
     this.parent = signal<LNode | undefined>(undefined);
@@ -135,7 +147,7 @@ export class LNode {
       this.parent.dispose();
     }
     if (this.signal) {
-      this.signal.dispose()
+      this.signal.dispose();
     }
     this.isTrash = true;
 
@@ -146,6 +158,20 @@ export class LNode {
         attrib.dispose();
       }
     }
+  }
+
+  toObject() {
+    return {
+      name: this.name,
+      el: this.el,
+      type: this.type,
+      children: pget(this.attributes.children || []).map((child) => {
+        const unwrapped = unwrapComponentTree(child);
+        const unreffed = pget(unwrapped);
+        if (isLNode(unreffed)) return unreffed.toObject();
+        return unreffed;
+      }),
+    };
   }
 
   patchWith(other: LNodeChild) {
@@ -183,9 +209,11 @@ export class LNode {
         }
       }
 
-      this.setElement(patchElements(old, nextEl, ([key, value]) => {
-        this.attributes[key] = value;
-      }));
+      this.setElement(
+        patchElements(old, nextEl, ([key, value]) => {
+          this.attributes[key] = value;
+        }),
+      );
     }
   }
 
@@ -209,7 +237,7 @@ export class LNode {
   updateRef() {
     if (this.attributes.ref) {
       this.attributes.ref.value = this;
-    } 
+    }
   }
 
   emit(event: Omit<NodeEvent<any>, "target">) {
@@ -246,15 +274,21 @@ export class LNode {
     if (!target) return;
     const el = this.getElement();
 
-    if (this.attributes.nodeType === ELNodeType.FRAGMENT) {
+    if (
+      this.attributes.nodeType === ELNodeType.FRAGMENT &&
+      !isComment(target)
+    ) {
       target.append(...Array.from(el.childNodes));
     } else {
       target.appendChild(el);
     }
-    this.emit({ type: ENodeEvent.MOUNTED, payload: {} }); 
+    this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
   }
 
   createElement() {
+    if (this.type === ELNodeType.COMMENT) {
+      return document.createComment(`${this.implicitKey}`);
+    }
     if (this.name === "svg") {
       return document.createElementNS("http://www.w3.org/2000/svg", "svg");
     } else if (this.name === "path") {
@@ -281,7 +315,9 @@ export class LNode {
     });
   }
 
-  setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement) {
+  setElement(
+    el: HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment,
+  ) {
     this.el = el;
     this.updateRef();
   }
@@ -325,10 +361,13 @@ export class LNode {
 
   patchChildWithNode(index: number, newNode: LNode) {
     const thisEl = this.el;
-    if (!thisEl || !isHTMLElement(thisEl)) return;
+    if (!thisEl) return;
 
-    const myChild = Array.from(thisEl.children)[index];
+    const myChild = isElementWithChildren(thisEl)
+      ? Array.from(thisEl.children)[index]
+      : null;
     const nextEl = newNode.render();
+
     if (myChild) {
       if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
         const patchedEl = patchElements(myChild, nextEl);
@@ -336,18 +375,33 @@ export class LNode {
           myChild.replaceWith(patchedEl);
         }
       } else {
-        myChild.replaceWith(nextEl);
+        if (isReplaceableElement(myChild)) {
+          myChild.replaceWith(nextEl);
+        }
+      }
+    } else {
+      if (isElementWithChildren(thisEl)) {
+        const childs = Array.from(thisEl.children);
+        if (childs.length <= 0) {
+          thisEl.appendChild(nextEl);
+        }
       }
     }
   }
 
-  patchChildFromSignal(child: LNodeChild, sig: Signal<LNode>) {
-    const lnode = unwrapComponentTree(sig.node._value);
-    if (isLNode(lnode)) {
+  patchChildFromSignal(
+    child: LNodeChild,
+    sig: Signal<LNode>,
+    _childIndex: number,
+  ) {
+    const node = unwrapComponentTree(sig.node._value);
+    if (isLNode(node)) {
       const index = this.children.indexOf(child);
       if (index >= 0) {
-        this.patchChildWithNode(index, lnode);
+        this.patchChildWithNode(index, node);
       }
+    } else if (node === null) {
+      // TODO: allow null children to indicate that nothing will be rendered
     }
   }
 
@@ -355,13 +409,14 @@ export class LNode {
     if (isSignal(child)) {
       const sig = child;
       child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, (event) => {
-        this.patchChildFromSignal(child, event.target);
+        this.patchChildFromSignal(child, event.target, childIndex);
       });
       child = child.get();
       if (isLNode(child)) {
         child.signal = sig;
       }
     }
+
     const unwrapped = unwrapComponentTree(child);
 
     let unreffed = pget(unwrapped);
@@ -380,7 +435,6 @@ export class LNode {
     if (isLNode(unreffed)) {
       unreffed.depth = this.depth + 1;
     }
-
 
     if (isLNode(unwrapped)) {
       unwrapped.depth = this.depth + 1;
@@ -417,7 +471,7 @@ export class LNode {
 
   setAttribute(key: string, value: string) {
     if (!this.el) return;
-    if (isText(this.el)) return;
+    if (isText(this.el) || isComment(this.el)) return;
 
     if (!["innerHTML"].includes(key)) {
       this.el.setAttribute(key, value);
@@ -437,9 +491,9 @@ export class LNode {
       this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
       this.emit({ type: ENodeEvent.LOADED, payload: {} });
     });
-    
+
     if (this.attributes.text) {
-      if (isText(el)) {
+      if (isText(el) || isComment(el)) {
         el.data = this.attributes.text;
       } else if (!isSVGElement(el) && !isSVGPathElement(el)) {
         el.innerHTML = "";
@@ -447,17 +501,24 @@ export class LNode {
       }
     }
 
-    
     const style = this.attributes.style;
     if (style && !isText(el)) {
       if (isSignal(style)) {
-        this.unsubs.push(watchSignal(style, () => {
-          const styleValue = pget(style);
-          this.setAttribute(
-            "style",
-            typeof styleValue === "string" ? styleValue : cssPropsToString(styleValue),
-          );
-        }, { immediate: true }));
+        this.unsubs.push(
+          watchSignal(
+            style,
+            () => {
+              const styleValue = pget(style);
+              this.setAttribute(
+                "style",
+                typeof styleValue === "string"
+                  ? styleValue
+                  : cssPropsToString(styleValue),
+              );
+            },
+            { immediate: true },
+          ),
+        );
       } else {
         this.setAttribute(
           "style",
@@ -469,10 +530,16 @@ export class LNode {
     const clazz = this.attributes.class;
     if (clazz && !isText(el)) {
       if (isSignal(clazz)) {
-        this.unsubs.push(watchSignal(clazz, () => {
-          const classValue = pget(clazz);
-          this.setAttribute("class", classValue);
-        }, { immediate: true }));
+        this.unsubs.push(
+          watchSignal(
+            clazz,
+            () => {
+              const classValue = pget(clazz);
+              this.setAttribute("class", classValue);
+            },
+            { immediate: true },
+          ),
+        );
       } else {
         this.setAttribute("class", clazz);
       }
@@ -483,7 +550,9 @@ export class LNode {
     }
 
     for (const [key, value] of Object.entries(this.attributes)) {
-      if (["text", "children", "on", "style", "nodeType", "class"].includes(key))
+      if (
+        ["text", "children", "on", "style", "nodeType", "class"].includes(key)
+      )
         continue;
       if (typeof value !== "string") continue;
       if (isText(el)) continue;
@@ -502,7 +571,27 @@ export class LNode {
   }
 }
 
-export const lnode = (name: string, attributes?: LNodeAttributes, implicitKey: number = -1, depth: number = -1) =>
-  new LNode(name, attributes, implicitKey, depth);
+export const lnode = (
+  name: string,
+  attributes?: LNodeAttributes,
+  implicitKey: number = -1,
+  depth: number = -1,
+) => new LNode(name, attributes, implicitKey, depth);
+
+// TODO: remove this and allow `null` as children to indicate that nothing should render
+export const none = () =>
+  lnode("span", {
+    nodeType: ELNodeType.EMPTY,
+    style: {
+      display: "none",
+      position: "fixed",
+      top: "0",
+      left: "0",
+      opacity: "0%",
+      width: "0px",
+      height: "0px",
+      pointerEvents: "none",
+    },
+  });
 export const isLNode = (x: any): x is LNode =>
   x !== null && !!x && typeof x === "object" && x._lnode === "lnode";

@@ -10,6 +10,13 @@ const nextKey = () => {
   return k;
 }
 
+const remapChild = (child: any) => {
+  if (typeof child === "string" || typeof child === 'number')
+    return lnode("span", { text: child + '', nodeType: ELNodeType.TEXT_ELEMENT });
+  //if (child === null) return lnode('span', { nodeType: ELNodeType.COMMENT });
+  return child;
+}
+
 export function ljsx(
   tag: string | Component,
   attribs_: LNodeAttributes,
@@ -17,11 +24,7 @@ export function ljsx(
 ) {
   const attribs = attribs_ || {};
   const children = childs
-    .map((child) =>
-      (typeof child === "string" || typeof child === 'number')
-        ? lnode("span", { text: child + '', nodeType: ELNodeType.TEXT_ELEMENT })
-        : child,
-    )
+    .map((child) => remapChild(child))
     .flat()
     .filter((it) => isLNode(it) || isComponent(it) || isRef(it) || isSignal(it));
 

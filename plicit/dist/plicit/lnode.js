@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isLNode = exports.lnode = exports.LNode = exports.ELNodeType = void 0;
+exports.isLNode = exports.none = exports.lnode = exports.LNode = exports.ELNodeType = void 0;
 const event_1 = require("./event");
 const component_1 = require("./component");
 const css_1 = require("./css");
@@ -15,6 +15,8 @@ var ELNodeType;
     ELNodeType["ELEMENT"] = "ELEMENT";
     ELNodeType["TEXT_ELEMENT"] = "TEXT_ELEMENT";
     ELNodeType["FRAGMENT"] = "FRAGMENT";
+    ELNodeType["EMPTY"] = "EMPTY";
+    ELNodeType["COMMENT"] = "COMMENT";
 })(ELNodeType || (exports.ELNodeType = ELNodeType = {}));
 const stringGen = (0, utils_1.stringGenerator)();
 class LNode {
@@ -77,6 +79,20 @@ class LNode {
                 attrib.dispose();
             }
         }
+    }
+    toObject() {
+        return {
+            name: this.name,
+            el: this.el,
+            type: this.type,
+            children: (0, reactivity_1.pget)(this.attributes.children || []).map((child) => {
+                const unwrapped = (0, component_1.unwrapComponentTree)(child);
+                const unreffed = (0, reactivity_1.pget)(unwrapped);
+                if ((0, exports.isLNode)(unreffed))
+                    return unreffed.toObject();
+                return unreffed;
+            }),
+        };
     }
     patchWith(other) {
         const old = this.el;
@@ -160,7 +176,8 @@ class LNode {
         if (!target)
             return;
         const el = this.getElement();
-        if (this.attributes.nodeType === ELNodeType.FRAGMENT) {
+        if (this.attributes.nodeType === ELNodeType.FRAGMENT &&
+            !(0, types_1.isComment)(target)) {
             target.append(...Array.from(el.childNodes));
         }
         else {
@@ -169,6 +186,9 @@ class LNode {
         this.emit({ type: nodeEvents_1.ENodeEvent.MOUNTED, payload: {} });
     }
     createElement() {
+        if (this.type === ELNodeType.COMMENT) {
+            return document.createComment(`${this.implicitKey}`);
+        }
         if (this.name === "svg") {
             return document.createElementNS("http://www.w3.org/2000/svg", "svg");
         }
@@ -237,9 +257,11 @@ class LNode {
     }
     patchChildWithNode(index, newNode) {
         const thisEl = this.el;
-        if (!thisEl || !(0, types_1.isHTMLElement)(thisEl))
+        if (!thisEl)
             return;
-        const myChild = Array.from(thisEl.children)[index];
+        const myChild = (0, types_1.isElementWithChildren)(thisEl)
+            ? Array.from(thisEl.children)[index]
+            : null;
         const nextEl = newNode.render();
         if (myChild) {
             if ((0, types_1.isHTMLElement)(myChild) && (0, types_1.isHTMLElement)(nextEl)) {
@@ -249,24 +271,37 @@ class LNode {
                 }
             }
             else {
-                myChild.replaceWith(nextEl);
+                if ((0, types_1.isReplaceableElement)(myChild)) {
+                    myChild.replaceWith(nextEl);
+                }
+            }
+        }
+        else {
+            if ((0, types_1.isElementWithChildren)(thisEl)) {
+                const childs = Array.from(thisEl.children);
+                if (childs.length <= 0) {
+                    thisEl.appendChild(nextEl);
+                }
             }
         }
     }
-    patchChildFromSignal(child, sig) {
-        const lnode = (0, component_1.unwrapComponentTree)(sig.node._value);
-        if ((0, exports.isLNode)(lnode)) {
+    patchChildFromSignal(child, sig, _childIndex) {
+        const node = (0, component_1.unwrapComponentTree)(sig.node._value);
+        if ((0, exports.isLNode)(node)) {
             const index = this.children.indexOf(child);
             if (index >= 0) {
-                this.patchChildWithNode(index, lnode);
+                this.patchChildWithNode(index, node);
             }
+        }
+        else if (node === null) {
+            // TODO: allow null children to indicate that nothing will be rendered
         }
     }
     appendChild(child, childIndex) {
         if ((0, reactivity_1.isSignal)(child)) {
             const sig = child;
             child.emitter.addEventListener(reactivity_2.ESignalEvent.AFTER_UPDATE, (event) => {
-                this.patchChildFromSignal(child, event.target);
+                this.patchChildFromSignal(child, event.target, childIndex);
             });
             child = child.get();
             if ((0, exports.isLNode)(child)) {
@@ -316,7 +351,7 @@ class LNode {
     setAttribute(key, value) {
         if (!this.el)
             return;
-        if ((0, types_1.isText)(this.el))
+        if ((0, types_1.isText)(this.el) || (0, types_1.isComment)(this.el))
             return;
         if (!["innerHTML"].includes(key)) {
             this.el.setAttribute(key, value);
@@ -335,7 +370,7 @@ class LNode {
             this.emit({ type: nodeEvents_1.ENodeEvent.LOADED, payload: {} });
         });
         if (this.attributes.text) {
-            if ((0, types_1.isText)(el)) {
+            if ((0, types_1.isText)(el) || (0, types_1.isComment)(el)) {
                 el.data = this.attributes.text;
             }
             else if (!(0, types_1.isSVGElement)(el) && !(0, types_1.isSVGPathElement)(el)) {
@@ -348,7 +383,9 @@ class LNode {
             if ((0, reactivity_1.isSignal)(style)) {
                 this.unsubs.push((0, reactivity_1.watchSignal)(style, () => {
                     const styleValue = (0, reactivity_1.pget)(style);
-                    this.setAttribute("style", typeof styleValue === "string" ? styleValue : (0, css_1.cssPropsToString)(styleValue));
+                    this.setAttribute("style", typeof styleValue === "string"
+                        ? styleValue
+                        : (0, css_1.cssPropsToString)(styleValue));
                 }, { immediate: true }));
             }
             else {
@@ -391,6 +428,21 @@ class LNode {
 exports.LNode = LNode;
 const lnode = (name, attributes, implicitKey = -1, depth = -1) => new LNode(name, attributes, implicitKey, depth);
 exports.lnode = lnode;
+// TODO: remove this and allow `null` as children to indicate that nothing should render
+const none = () => (0, exports.lnode)("span", {
+    nodeType: ELNodeType.EMPTY,
+    style: {
+        display: "none",
+        position: "fixed",
+        top: "0",
+        left: "0",
+        opacity: "0%",
+        width: "0px",
+        height: "0px",
+        pointerEvents: "none",
+    },
+});
+exports.none = none;
 const isLNode = (x) => x !== null && !!x && typeof x === "object" && x._lnode === "lnode";
 exports.isLNode = isLNode;
 //# sourceMappingURL=lnode.js.map

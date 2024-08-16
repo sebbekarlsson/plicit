@@ -2,13 +2,46 @@ export type Dict<T = any> = {[key: string]: T};
 
 export type Indexable<T = any> = Dict<T> | Array<T>;
 
-export type NativeElement = Element | HTMLElement | SVGElement;
+export type NativeElement = Element | HTMLElement | SVGElement | Comment;
 export type WebElement = NativeElement | Text;
 export type NativeListener<K extends keyof HTMLElementEventMap> = (this: HTMLButtonElement, ev: HTMLElementEventMap[K]) => any;
 export type UnknownNativeListener = (this: HTMLButtonElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any;
 export type NativeElementListeners = Record<keyof HTMLElementEventMap, UnknownNativeListener>;
 
 export const notNullish = <T = any>(val?: T | null | undefined): val is T => val != null
+
+export type ReplaceableElement = {
+  replaceWith: (...nodes: (Node | string)[]) => void;
+}
+
+export type ElementWithAttributes = {
+  setAttribute: (qualifiedName: string, value: string) => void;
+  attributes: NamedNodeMap;
+  getAttribute: (qualifiedName: string) => string | null
+}
+
+export type ElementWithChildren = {
+  children: HTMLCollection;
+}
+
+
+export const isElementWithChildren = (x: any): x is ElementWithChildren => {
+  if (!x) return false;
+  if (typeof x !== 'object') return false;
+  return typeof x.children === 'object';
+}
+
+export const isElementWithAttributes = (x: any): x is ElementWithAttributes => {
+  if (!x) return false;
+  if (typeof x !== 'object') return false;
+  return typeof x.setAttribute === 'function' && typeof x.attributes === 'object' && typeof x.getAttribute === 'function';
+}
+
+export const isReplaceableElement = (x: any): x is ReplaceableElement => {
+  if (!x) return false;
+  if (typeof x !== 'object') return false;
+  return typeof x.replaceWith === 'function';
+}
 
 export const isText = (x: any): x is Text => {
   if (typeof x !== 'object') return false;
@@ -35,4 +68,10 @@ export const isSVGElement = (x: any): x is SVGSVGElement => {
 export const isSVGPathElement = (x: any): x is SVGPathElement => {
   if (typeof x !== 'object') return false;
   return isHTMLElement(x) && (x.tagName || '').toLowerCase() === 'path';
+}
+
+export const isComment = (x: any): x is Comment => {
+  if (!x) return false;
+  if (typeof x !== 'object') return false;
+  return typeof x.appendData === 'function';
 }

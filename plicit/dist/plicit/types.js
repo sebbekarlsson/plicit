@@ -1,8 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isSVGPathElement = exports.isSVGElement = exports.isInputElement = exports.isHTMLElement = exports.isText = exports.notNullish = void 0;
+exports.isComment = exports.isSVGPathElement = exports.isSVGElement = exports.isInputElement = exports.isHTMLElement = exports.isText = exports.isReplaceableElement = exports.isElementWithAttributes = exports.isElementWithChildren = exports.notNullish = void 0;
 const notNullish = (val) => val != null;
 exports.notNullish = notNullish;
+const isElementWithChildren = (x) => {
+    if (!x)
+        return false;
+    if (typeof x !== 'object')
+        return false;
+    return typeof x.children === 'object';
+};
+exports.isElementWithChildren = isElementWithChildren;
+const isElementWithAttributes = (x) => {
+    if (!x)
+        return false;
+    if (typeof x !== 'object')
+        return false;
+    return typeof x.setAttribute === 'function' && typeof x.attributes === 'object' && typeof x.getAttribute === 'function';
+};
+exports.isElementWithAttributes = isElementWithAttributes;
+const isReplaceableElement = (x) => {
+    if (!x)
+        return false;
+    if (typeof x !== 'object')
+        return false;
+    return typeof x.replaceWith === 'function';
+};
+exports.isReplaceableElement = isReplaceableElement;
 const isText = (x) => {
     if (typeof x !== 'object')
         return false;
@@ -37,4 +61,12 @@ const isSVGPathElement = (x) => {
     return (0, exports.isHTMLElement)(x) && (x.tagName || '').toLowerCase() === 'path';
 };
 exports.isSVGPathElement = isSVGPathElement;
+const isComment = (x) => {
+    if (!x)
+        return false;
+    if (typeof x !== 'object')
+        return false;
+    return typeof x.appendData === 'function';
+};
+exports.isComment = isComment;
 //# sourceMappingURL=types.js.map

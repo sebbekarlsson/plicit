@@ -1,12 +1,14 @@
-export const getElementAttributes = (a: HTMLElement): Attr[] => {
+import { ElementWithAttributes } from "./types";
+
+export const getElementAttributes = (a: ElementWithAttributes): Attr[] => {
   return Array.from(a.attributes);
 };
 
 type KeyPair = [string, string];
 
 export const getElementsAttributesDiff = (
-  a: HTMLElement,
-  b: HTMLElement,
+  a: ElementWithAttributes,
+  b: ElementWithAttributes,
 ): Array<KeyPair> => {
   const attributesB = getElementAttributes(b).map(
     (attr): KeyPair => [attr.name, attr.value],
@@ -14,7 +16,7 @@ export const getElementsAttributesDiff = (
   return attributesB.filter(([key, value]) => a.getAttribute(key) !== value);
 };
 
-export const getElementsDiff = (a: HTMLElement, b: HTMLElement) => {
+export const getElementsDiff = (a: ElementWithAttributes, b: ElementWithAttributes) => {
   return getElementsAttributesDiff(a, b);
 };
 

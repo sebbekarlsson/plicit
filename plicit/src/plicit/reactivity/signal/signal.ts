@@ -76,7 +76,7 @@ export const signal = <T = any>(
 
   const node: SignalNode<T> = proxy<SignalNode<T>>({
     index: -1,
-    _value: null,
+    _value: isFunction(initial) ? null : initial,
     fun: init,
     state: ESignalState.UNINITIALIZED,
   });

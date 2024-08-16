@@ -34,7 +34,7 @@ const signal = (initial, options = {}) => {
     const init = (0, is_1.isFunction)(initial) ? initial : () => initial;
     const node = (0, proxy_1.proxy)({
         index: -1,
-        _value: null,
+        _value: (0, is_1.isFunction)(initial) ? null : initial,
         fun: init,
         state: constants_1.ESignalState.UNINITIALIZED,
     });

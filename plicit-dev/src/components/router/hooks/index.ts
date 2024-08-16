@@ -46,6 +46,8 @@ export const createRouter = (props: IRouterConfig) => {
 export const useRouter = () => {
   const push = (navig: RouterNavigationAction | string) => {
     const nav = typeof navig === 'string' ? { path: navig, props: {} } : navig;
+    if (router.value.current.nav.value.path === nav.path) return;
+    
     router.value.history.push(nav);
     router.value.current.nav.value = nav;
     sessionStorage.setItem(cacheKey, nav.path);
