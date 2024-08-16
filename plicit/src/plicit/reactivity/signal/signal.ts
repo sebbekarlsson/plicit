@@ -109,7 +109,7 @@ export const signal = <T = any>(
 
     GSignal.current = undefined;
 
-    sig.watchers.forEach((watcher) => watcher());
+    sig.watchers.forEach((watcher) => watcher(sig.node._value));
 
     if (options.isEffect) {
       return;
@@ -233,7 +233,7 @@ export type WatchSignalOptions = {
 
 export const watchSignal = <T = any>(
   sig: Signal<T>,
-  fun: () => any,
+  fun: (nextValue: T) => any,
   options: WatchSignalOptions = {},
 ) => {
   if (!sig.watchers.includes(fun)) {
@@ -241,7 +241,7 @@ export const watchSignal = <T = any>(
   }
 
   if (options.immediate) {
-    fun();
+    fun(sig.node._value);
   }
 
   const unsubscribeFuns: Array<() => void> = [];

@@ -40,6 +40,7 @@ export declare class LNode {
     isTrash: boolean;
     key: string;
     el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    elRef: LNodeRef;
     parent: Signal<LNode | undefined>;
     attributes: LProxy<LNodeAttributes>;
     name: string;
@@ -56,17 +57,19 @@ export declare class LNode {
     destroy(): void;
     patchWith(other: LNodeChild): void;
     invalidate(): void;
+    updateRef(): void;
     emit(event: Omit<NodeEvent<any>, "target">): void;
     addEventListener(evtype: ENodeEvent, sub: EventSubscriber<NodeEventPayload, ENodeEvent, LNode>): () => void;
     mountTo(target: NativeElement | null | undefined): void;
     createElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
+    listenForMutation(callback: (disconnect: () => void) => void): void;
     setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement): void;
     ensureElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
     getElement(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
     private onReceiveChild;
     patchChildWithNode(index: number, newNode: LNode): void;
     patchChildFromSignal(child: LNodeChild, sig: Signal<LNode>): void;
-    appendChild(child: LNodeChild): void;
+    appendChild(child: LNodeChild, childIndex: number): void;
     setAttribute(key: string, value: string): void;
     render(): HTMLElement | Text | SVGSVGElement | SVGPathElement;
 }

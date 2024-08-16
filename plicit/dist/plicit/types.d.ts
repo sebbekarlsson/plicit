@@ -3,6 +3,7 @@ export type Dict<T = any> = {
 };
 export type Indexable<T = any> = Dict<T> | Array<T>;
 export type NativeElement = Element | HTMLElement | SVGElement;
+export type WebElement = NativeElement | Text;
 export type NativeListener<K extends keyof HTMLElementEventMap> = (this: HTMLButtonElement, ev: HTMLElementEventMap[K]) => any;
 export type UnknownNativeListener = (this: HTMLButtonElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any;
 export type NativeElementListeners = Record<keyof HTMLElementEventMap, UnknownNativeListener>;

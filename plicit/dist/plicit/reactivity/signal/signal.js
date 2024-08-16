@@ -57,7 +57,7 @@ const signal = (initial, options = {}) => {
             withUpdateEvents(() => init());
         }
         exports.GSignal.current = undefined;
-        sig.watchers.forEach((watcher) => watcher());
+        sig.watchers.forEach((watcher) => watcher(sig.node._value));
         if (options.isEffect) {
             return;
         }
@@ -156,7 +156,7 @@ const watchSignal = (sig, fun, options = {}) => {
         sig.watchers.push(fun);
     }
     if (options.immediate) {
-        fun();
+        fun(sig.node._value);
     }
     const unsubscribeFuns = [];
     if (options.deep) {

@@ -5,7 +5,7 @@ export type Trackable = {
     onDispose?: () => any;
     tracked: Trackable[];
     trackedEffects: Array<() => any>;
-    watchers: Array<() => any>;
+    watchers: Array<(x: any) => any>;
     lastSet: number;
     lastGet: number;
     createdAt: number;

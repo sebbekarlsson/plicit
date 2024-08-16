@@ -24,6 +24,7 @@ class LNode {
     isTrash = false;
     key = "";
     el;
+    elRef;
     parent;
     attributes;
     name;
@@ -45,6 +46,7 @@ class LNode {
         this.type = (0, reactivity_1.pget)(this.attributes.nodeType || this.type);
         this.depth = depth;
         this.implicitKey = implicitKey;
+        this.elRef = (0, reactivity_1.ref)(undefined);
         const deps = (0, reactivity_1.pget)(this.attributes.deps || []);
         for (let i = 0; i < deps.length; i++) {
             const dep = deps[i];
@@ -104,9 +106,9 @@ class LNode {
                     return;
                 }
             }
-            this.el = (0, element_1.patchElements)(old, nextEl, ([key, value]) => {
+            this.setElement((0, element_1.patchElements)(old, nextEl, ([key, value]) => {
                 this.attributes[key] = value;
-            });
+            }));
         }
     }
     invalidate() {
@@ -125,6 +127,11 @@ class LNode {
         this.el.replaceWith(next);
         this.setElement(next);
     }
+    updateRef() {
+        if (this.attributes.ref) {
+            this.attributes.ref.value = this;
+        }
+    }
     emit(event) {
         queueMicrotask(() => {
             this.events.emit({ ...event, target: this });
@@ -133,9 +140,6 @@ class LNode {
                     {
                         if (this.attributes.onMounted) {
                             this.attributes.onMounted(this);
-                        }
-                        if (this.attributes.ref) {
-                            this.attributes.ref.value = this;
                         }
                     }
                     break;
@@ -175,22 +179,25 @@ class LNode {
             return document.createTextNode(this.attributes.text || "");
         return document.createElement(this.name);
     }
-    //private _listenForMutation() {
-    //  const el = this.el;
-    //  if (!el) return;
-    //  if (!isHTMLElement(el)) return;
-    //  const observer = new MutationObserver(function (mutations) {
-    //    if (document.contains(el)) {
-    //      observer.disconnect();
-    //    }
-    //  });
-    //  observer.observe(el, {
-    //    childList: true,
-    //    attributes: true,
-    //  });
-    //}
+    listenForMutation(callback) {
+        const el = this.el;
+        if (!el)
+            return;
+        if (!(0, types_1.isHTMLElement)(el))
+            return;
+        const observer = new MutationObserver((_mutations) => {
+            if (document.contains(el)) {
+                callback(() => observer.disconnect());
+            }
+        });
+        observer.observe(el, {
+            childList: true,
+            attributes: true,
+        });
+    }
     setElement(el) {
         this.el = el;
+        this.updateRef();
     }
     ensureElement() {
         if (this.el)
@@ -204,7 +211,7 @@ class LNode {
             return this.el;
         return this.render();
     }
-    onReceiveChild(child) {
+    onReceiveChild(child, childIndex) {
         if ((0, reactivity_1.isRef)(child)) {
             child._deps.forEach((d) => {
                 const un = (0, reactivity_2.unwrapReactiveDep)(d);
@@ -217,11 +224,11 @@ class LNode {
                         },
                         onSet: (_target, key) => {
                             if (key === "value") {
-                                this.appendChild(child);
+                                this.appendChild(child, childIndex);
                             }
                         },
                         onTrigger: () => {
-                            this.appendChild(child);
+                            this.appendChild(child, childIndex);
                         },
                     });
                 }
@@ -236,7 +243,10 @@ class LNode {
         const nextEl = newNode.render();
         if (myChild) {
             if ((0, types_1.isHTMLElement)(myChild) && (0, types_1.isHTMLElement)(nextEl)) {
-                (0, element_1.patchElements)(myChild, nextEl);
+                const patchedEl = (0, element_1.patchElements)(myChild, nextEl);
+                if (patchedEl !== myChild) {
+                    myChild.replaceWith(patchedEl);
+                }
             }
             else {
                 myChild.replaceWith(nextEl);
@@ -252,7 +262,7 @@ class LNode {
             }
         }
     }
-    appendChild(child) {
+    appendChild(child, childIndex) {
         if ((0, reactivity_1.isSignal)(child)) {
             const sig = child;
             child.emitter.addEventListener(reactivity_2.ESignalEvent.AFTER_UPDATE, (event) => {
@@ -264,7 +274,7 @@ class LNode {
             }
         }
         const unwrapped = (0, component_1.unwrapComponentTree)(child);
-        let unreffed = (0, reactivity_1.unref)(unwrapped);
+        let unreffed = (0, reactivity_1.pget)(unwrapped);
         let signalKey = undefined;
         if ((0, reactivity_1.isSignal)(unreffed)) {
             unreffed = unreffed.get();
@@ -284,7 +294,7 @@ class LNode {
         const el = this.ensureElement();
         if (!this.children.includes(child)) {
             this.children.push(child);
-            this.onReceiveChild(child);
+            this.onReceiveChild(child, childIndex);
         }
         this.mappedChildren[key] = child;
         if ((0, exports.isLNode)(unreffed)) {
@@ -319,15 +329,11 @@ class LNode {
         }
     }
     render() {
-        const _this = this;
+        const el = this.ensureElement();
         queueMicrotask(() => {
             this.emit({ type: nodeEvents_1.ENodeEvent.MOUNTED, payload: {} });
             this.emit({ type: nodeEvents_1.ENodeEvent.LOADED, payload: {} });
-            if (this.attributes.ref) {
-                this.attributes.ref.value = _this;
-            }
         });
-        const el = this.ensureElement();
         if (this.attributes.text) {
             if ((0, types_1.isText)(el)) {
                 el.data = this.attributes.text;
@@ -376,7 +382,7 @@ class LNode {
         const attrChildren = (0, reactivity_1.pget)(this.attributes.children || []);
         for (let i = 0; i < attrChildren.length; i++) {
             const child = attrChildren[i];
-            this.appendChild(child);
+            this.appendChild(child, i);
         }
         this.emit({ type: nodeEvents_1.ENodeEvent.LOADED, payload: {} });
         return el;

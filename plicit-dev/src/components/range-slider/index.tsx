@@ -13,6 +13,8 @@ import {
 import { AABB, clamp, getAABBSize, remap, VEC2, Vector } from "tsmathutil";
 import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
 import { useElementBounds } from "../../hooks/useElementBounds";
+import { useTooltip } from "../tooltip/hooks/useTooltip";
+import { Tooltip } from "../tooltip";
 
 type RangeSliderProps = {
   value: MaybeRef<number>;
@@ -28,6 +30,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     }
   };
 
+  const knobRef: LNodeRef = ref(undefined);
   const wrapper: LNodeRef = ref(undefined);
   const mouse = useMousePositionSignal();
   const dragging = signal<boolean>(false);
@@ -48,6 +51,8 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     const v = remap(pos.x, trackRange.value, { min: 0, max: 100 });
     return v;
   };
+
+  const outputValue = computedSignal(() => getComputedValue());
 
   const getInverseComputedValue = (value: number) => {
     return remap(value, { min: 0, max: 100 }, trackRange.value);
@@ -90,6 +95,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   const fraction = computedSignal(() => {
     const pos = knobPosition.get();
+    wrapperBounds.bounds.get()
     return remap(pos.x, trackRange.value, { min: 0, max: 1 });
   });
 
@@ -115,6 +121,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
   const Knob = () => {
     return () => (
       <div
+        ref={knobRef}
         on={{
           mousedown: (ev: MouseEvent) => {
             ev.preventDefault();
@@ -156,6 +163,19 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     );
   };
 
+  const tooltipHook = useTooltip({
+    triggerRef: knobRef,
+    text: 'Hello!',
+    body: () => {
+      return <div class="w-full">
+        <div class="h-[2rem] w-full bg-amaranth-500 text-white flex items-center px-4 text-sm font-medium">Slider</div>
+        <div class="p-4 w-full">
+          { computedSignal(() => <div class="font-semibold">{outputValue.get().toFixed(1)}</div>) }
+        </div>
+      </div>;
+    } 
+  })
+
   return (
     <div
       class="h-[0.65rem] relative"
@@ -167,6 +187,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
       <Rail />
       <Track />
       <Knob />
+      <Tooltip hook={tooltipHook}/>
     </div>
   );
 };

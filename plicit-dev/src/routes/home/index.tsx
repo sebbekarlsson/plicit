@@ -1,4 +1,4 @@
-import { Component, ljsx, CS, S, GSignal, ref } from "plicit";
+import { Component, ljsx, CS, S } from "plicit";
 import { Card } from "../../components/card";
 import { Counter } from "../../components/counter";
 import { ItemList } from "../../components/item-list";
@@ -7,9 +7,6 @@ import { FileTree } from "../../components/file-tree";
 import { TextReverser } from "../../components/text-reverser";
 import { Hero } from "../../components/hero";
 import { PageContent } from "../../layouts/page-content";
-import { Button } from "../../components/button";
-import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
-import { CodeBlock } from "../../components/code-block";
 
 const RangeItem: Component<{ label: string; value: number }> = (props) => {
   const state = S<number>(props.value);
@@ -30,22 +27,6 @@ const RangeItem: Component<{ label: string; value: number }> = (props) => {
   );
 };
 
- 
-
-const MouseData: Component = () => {
-  const mouse = useMousePositionSignal();
-  const mouseText = CS(() => {
-    const p = mouse.pos.get();
-    return JSON.stringify({
-      x: p.x,
-      y: p.y
-    })
-  });
-  return <div>
-    <CodeBlock title="mouse.json" value={mouseText}/> 
-  </div>;
-}
-
 export const HomeRoute: Component = () => {
   return (
     <div class="w-full h-full">
@@ -59,14 +40,8 @@ export const HomeRoute: Component = () => {
             gap: "1rem",
           }}
         >
-          <Card title="Mouse" subtitle="Reactive Mouse Position">
-            <MouseData/>
-          </Card>
           <Card class="min-w-[300px]" title="Counter" subtitle="Classic Counter">
             <Counter />
-          </Card>
-          <Card title="Item List" subtitle="Reactive Item List">
-            <ItemList />
           </Card>
           <Card title="Range Slider" subtitle="Reactive Range Slider">
             <div class="space-y-4">
@@ -75,6 +50,10 @@ export const HomeRoute: Component = () => {
               <RangeItem value={75} label="C" />
             </div>
           </Card>
+          <Card title="Item List" subtitle="Reactive Item List">
+            <ItemList />
+          </Card>
+          
           <Card title="File Tree" subtitle="A virtual filesystem">
             <FileTree />
           </Card>

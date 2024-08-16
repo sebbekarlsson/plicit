@@ -9,6 +9,7 @@ import {
   isText,
   NativeElement,
   NativeElementListeners,
+  WebElement,
 } from "./types";
 import { stringGenerator } from "./utils";
 import { ENodeEvent } from "./nodeEvents";
@@ -77,6 +78,7 @@ export class LNode {
   isTrash: boolean = false;
   key: string = "";
   el?: HTMLElement | Text | SVGSVGElement | SVGPathElement;
+  elRef: LNodeRef;
   parent: Signal<LNode | undefined>;
   attributes: LProxy<LNodeAttributes>;
   name: string;
@@ -104,6 +106,7 @@ export class LNode {
     this.type = pget(this.attributes.nodeType || this.type);
     this.depth = depth;
     this.implicitKey = implicitKey;
+    this.elRef = ref(undefined);
 
     const deps = pget(this.attributes.deps || []);
     for (let i = 0; i < deps.length; i++) {
@@ -180,9 +183,9 @@ export class LNode {
         }
       }
 
-      this.el = patchElements(old, nextEl, ([key, value]) => {
+      this.setElement(patchElements(old, nextEl, ([key, value]) => {
         this.attributes[key] = value;
-      });
+      }));
     }
   }
 
@@ -203,6 +206,12 @@ export class LNode {
     this.setElement(next);
   }
 
+  updateRef() {
+    if (this.attributes.ref) {
+      this.attributes.ref.value = this;
+    } 
+  }
+
   emit(event: Omit<NodeEvent<any>, "target">) {
     queueMicrotask(() => {
       this.events.emit({ ...event, target: this });
@@ -212,9 +221,6 @@ export class LNode {
           {
             if (this.attributes.onMounted) {
               this.attributes.onMounted(this);
-            }
-            if (this.attributes.ref) {
-              this.attributes.ref.value = this;
             }
           }
           break;
@@ -245,7 +251,7 @@ export class LNode {
     } else {
       target.appendChild(el);
     }
-    this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
+    this.emit({ type: ENodeEvent.MOUNTED, payload: {} }); 
   }
 
   createElement() {
@@ -259,24 +265,25 @@ export class LNode {
     return document.createElement(this.name);
   }
 
-  //private _listenForMutation() {
-  //  const el = this.el;
-  //  if (!el) return;
-  //  if (!isHTMLElement(el)) return;
+  listenForMutation(callback: (disconnect: () => void) => void) {
+    const el = this.el;
+    if (!el) return;
+    if (!isHTMLElement(el)) return;
 
-  //  const observer = new MutationObserver(function (mutations) {
-  //    if (document.contains(el)) {
-  //      observer.disconnect();
-  //    }
-  //  });
-  //  observer.observe(el, {
-  //    childList: true,
-  //    attributes: true,
-  //  });
-  //}
+    const observer = new MutationObserver((_mutations) => {
+      if (document.contains(el)) {
+        callback(() => observer.disconnect());
+      }
+    });
+    observer.observe(el, {
+      childList: true,
+      attributes: true,
+    });
+  }
 
   setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement) {
     this.el = el;
+    this.updateRef();
   }
 
   ensureElement() {
@@ -291,7 +298,7 @@ export class LNode {
     return this.render();
   }
 
-  private onReceiveChild(child: LNodeChild) {
+  private onReceiveChild(child: LNodeChild, childIndex: number) {
     if (isRef(child)) {
       child._deps.forEach((d) => {
         const un = unwrapReactiveDep(d);
@@ -304,11 +311,11 @@ export class LNode {
             },
             onSet: (_target, key) => {
               if (key === "value") {
-                this.appendChild(child);
+                this.appendChild(child, childIndex);
               }
             },
             onTrigger: () => {
-              this.appendChild(child);
+              this.appendChild(child, childIndex);
             },
           });
         }
@@ -324,7 +331,10 @@ export class LNode {
     const nextEl = newNode.render();
     if (myChild) {
       if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
-        patchElements(myChild, nextEl);
+        const patchedEl = patchElements(myChild, nextEl);
+        if (patchedEl !== myChild) {
+          myChild.replaceWith(patchedEl);
+        }
       } else {
         myChild.replaceWith(nextEl);
       }
@@ -341,7 +351,7 @@ export class LNode {
     }
   }
 
-  appendChild(child: LNodeChild) {
+  appendChild(child: LNodeChild, childIndex: number) {
     if (isSignal(child)) {
       const sig = child;
       child.emitter.addEventListener(ESignalEvent.AFTER_UPDATE, (event) => {
@@ -354,7 +364,7 @@ export class LNode {
     }
     const unwrapped = unwrapComponentTree(child);
 
-    let unreffed = unref(unwrapped);
+    let unreffed = pget(unwrapped);
 
     let signalKey: string | undefined = undefined;
 
@@ -371,6 +381,7 @@ export class LNode {
       unreffed.depth = this.depth + 1;
     }
 
+
     if (isLNode(unwrapped)) {
       unwrapped.depth = this.depth + 1;
     }
@@ -380,7 +391,7 @@ export class LNode {
     const el = this.ensureElement();
     if (!this.children.includes(child)) {
       this.children.push(child);
-      this.onReceiveChild(child);
+      this.onReceiveChild(child, childIndex);
     }
 
     this.mappedChildren[key] = child;
@@ -420,16 +431,13 @@ export class LNode {
   }
 
   render() {
-    const _this = this;
+    const el = this.ensureElement();
+
     queueMicrotask(() => {
       this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
       this.emit({ type: ENodeEvent.LOADED, payload: {} });
-      if (this.attributes.ref) {
-        this.attributes.ref.value = _this;
-      }
     });
-
-    const el = this.ensureElement();
+    
     if (this.attributes.text) {
       if (isText(el)) {
         el.data = this.attributes.text;
@@ -485,7 +493,7 @@ export class LNode {
     const attrChildren = pget(this.attributes.children || []);
     for (let i = 0; i < attrChildren.length; i++) {
       const child = attrChildren[i];
-      this.appendChild(child);
+      this.appendChild(child, i);
     }
 
     this.emit({ type: ENodeEvent.LOADED, payload: {} });
