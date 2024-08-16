@@ -1,10 +1,12 @@
-import { computedSignal, CSSProperties, isHTMLElement, LNodeChild, LNodeRef, ref, signal, Signal, smoothstep, watchRef, watchSignal } from "plicit"
+import { computedSignal, CSSProperties, isHTMLElement, LNodeChild, LNodeRef, pget, ref, signal, Signal, smoothstep, watchRef, watchSignal } from "plicit"
 import { ITooltipConfig } from "../types"
 import { useElementBounds } from "../../../hooks/useElementBounds";
 import { useInterpolationSignal } from "../../../hooks/useInterpolationSignal";
 import { getAABBSize } from "tsmathutil";
 
-export type UseTooltipProps = ITooltipConfig;
+export type UseTooltipProps = ITooltipConfig & {
+  active?: Signal<boolean>;
+};
 
 export type UseTooltip = {
   style: Signal<CSSProperties>;
@@ -34,7 +36,11 @@ export const useTooltip = (props: UseTooltipProps): UseTooltip => {
     mouseIsOnTrigger.set(false);
   }
 
-  watchSignal(mouseIsOnTrigger, (isOnTrigger) => {
+  const shouldBeVisible = computedSignal(() => {
+    return pget(mouseIsOnTrigger) || pget(props.active) || false;
+  })
+
+  watchSignal(shouldBeVisible, (isOnTrigger) => {
     if (isOnTrigger) {
       interp.run({
         to: 1.0,

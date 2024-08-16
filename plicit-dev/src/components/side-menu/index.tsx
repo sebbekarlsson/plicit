@@ -1,4 +1,4 @@
-import { Component, computed, computedSignal, signal } from "plicit";
+import { Component, computed, computedSignal, CSSProperties, signal } from "plicit";
 import { ISideMenuProps } from "./types";
 import { useRoute } from "../router/hooks";
 import { Icon } from "../icon";
@@ -9,9 +9,9 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
   const xxx = computedSignal(
     () => {
       if (isClosed.get()) {
-        return "flex justify-center flex-1 cursor-pointer TEST";
+        return "flex h-full items-center justify-center flex-1 cursor-pointer TEST";
       }
-      return "flex justify-end flex-1 cursor-pointer";
+      return "flex h-full items-center justify-end flex-1 cursor-pointer";
     }
   );
 
@@ -21,7 +21,7 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
       style={props.hook.style}
     >
       {() => (
-        <div class="w-full h-[2rem] flex items-center px-4">
+        <div class="w-full h-[2rem] flex items-center px-4 hover:text-amaranth-300">
           {() => (
             <div
               on={{
@@ -47,11 +47,17 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
       {props.menu.sections.map((sec) => {
         return (
           <div class="w-full">
-            {sec.label && (
-              <div class="w-full h-[4rem] flex items-center px-4 text-lg bg-amaranth-700 font-semibold uppercase">
-                {sec.label}
-              </div>
-            )}
+            {
+              computedSignal(() => {
+                const closed = isClosed.get();
+                if (closed || !sec.label) return <span class="fixed left-0 top-0"/>;
+                 return (
+                 <div class="w-full h-[4rem] flex items-center px-4 text-lg bg-amaranth-700 font-semibold uppercase">
+                  {sec.label}
+                 </div>
+                )
+              })
+            }
             <div class="w-full">
               {sec.items.map((it) => {
                 const isActive = computed(
@@ -59,27 +65,36 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
                   [route],
                 );
 
+                const style = computedSignal((): CSSProperties => {
+                  const closed = isClosed.get();
+                  const layout = closed ? "max-content" : it.icon ? "1rem 1fr" : "auto";
+                  return {
+                    display: "grid",
+                    alignItems: "center",
+                    gap: "1rem",
+                    gridTemplateColumns: layout,
+                    ...(closed ? {
+                      justifyContent: 'center'
+                    } : {})
+                  }
+                })
+
                 return () => (
                   <div
                     class={
                       "w-full h-[2.7rem] px-4 hover:bg-amaranth-500 cursor-pointer transition-all" +
                       (isActive.value ? ` bg-amaranth-500` : ``)
                     }
-                    style={{
-                      display: "grid",
-                      alignItems: "center",
-                      gap: "1rem",
-                      ...(it.icon
-                        ? {
-                            gridTemplateColumns: "1rem 1fr",
-                          }
-                        : {}),
-                    }}
+                    style={style}
                     on={{ click: it.action }}
                     deps={[isActive]}
                   >
                     {it.icon && <Icon icon={it.icon} />}
-                    <span>{it.label}</span>
+
+                    {
+                      computedSignal(() => isClosed.get() ? <span class="fixed top-0 left-0"/>: <span>{it.label}</span>)
+                    }
+                    
                   </div>
                 );
               })}

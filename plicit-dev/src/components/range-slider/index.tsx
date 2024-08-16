@@ -165,6 +165,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   const tooltipHook = useTooltip({
     triggerRef: knobRef,
+    active: dragging,
     text: 'Hello!',
     body: () => {
       return <div class="w-full">

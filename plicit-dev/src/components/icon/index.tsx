@@ -64,6 +64,7 @@ export const Icon: Component<IIconProps> = (props) => {
   const style = computedSignal((): CSSProperties => {
     const flipH = pget(props.icon.flipH);
     return {
+      pointerEvents: 'none',
       ...(flipH ? {
         transform: 'scale(-1, 1)'
       } : {})
