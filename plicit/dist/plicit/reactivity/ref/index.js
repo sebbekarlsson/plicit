@@ -29,43 +29,37 @@ const ref = (initial, options = {}) => {
             onGetters.forEach((sub) => sub(obj, key, {}));
         },
     };
-    let tracked = null;
+    let fx = null;
     return (0, proxy_1.proxy)(obj, [
         {
             get: (target, key, receiver) => {
-                if (options.deep !== false) {
-                    // integration with signals
-                    tracked = (0, signal_1.publishTrackable)({
-                        trigger: () => { },
-                        onDispose: () => { },
-                        dispose: () => { },
-                        dependants: [],
-                        tracked: [],
-                        watchers: [],
-                        lastGet: -1,
-                        lastSet: -1,
+                const report = () => {
+                    const next = target[key];
+                    state.subscribers.forEach((sub) => {
+                        const last = sub.lastValue;
+                        if (last !== next && sub.onGet) {
+                            sub.onGet(target, key, receiver);
+                            sub.lastValue = last;
+                        }
                     });
+                };
+                if (signal_1.GSignal.current && !signal_1.GSignal.current.trackedEffects.includes(report)) {
+                    signal_1.GSignal.current.trackedEffects.push(report);
+                    fx = signal_1.GSignal.current;
                 }
-                const next = target[key];
-                state.subscribers.forEach((sub) => {
-                    const last = sub.lastValue;
-                    if (last !== next && sub.onGet) {
-                        sub.onGet(target, key, receiver);
-                        sub.lastValue = last;
-                    }
-                });
+                signal_1.GSignal.currentEffect = report;
+                report();
+                signal_1.GSignal.currentEffect = undefined;
             },
             set: (target, key, next, receiver) => {
+                if (fx) {
+                    fx.trigger();
+                }
                 state.subscribers.forEach((sub) => {
                     if (sub.onSet) {
                         sub.onSet(target, key, next, receiver);
                     }
                 });
-                // integration with signals
-                if (options.deep !== false && tracked) {
-                    tracked.dependants.forEach((it) => it.trigger());
-                    tracked.isTrash = true;
-                }
             },
         },
     ]);

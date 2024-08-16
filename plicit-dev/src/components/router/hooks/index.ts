@@ -1,4 +1,4 @@
-import { computed, flushSignals, ref } from "plicit";
+import { computed, ref } from "plicit";
 import {
   IRoute,
   IRouteConfig,
@@ -49,7 +49,6 @@ export const useRouter = () => {
     router.value.history.push(nav);
     router.value.current.nav.value = nav;
     sessionStorage.setItem(cacheKey, nav.path);
-    flushSignals();
   };
 
   const back = () => {
@@ -57,7 +56,6 @@ export const useRouter = () => {
     const last = router.value.history[router.value.history.length - 1];
     router.value.current.nav.value = last;
     router.value.history = router.value.history.slice(0, -1);
-    flushSignals();
   };
 
   return { router, push, back };

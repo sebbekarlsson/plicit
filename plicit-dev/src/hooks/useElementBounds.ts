@@ -1,13 +1,21 @@
-import { computedSignal, isHTMLElement, LNodeRef } from "plicit";
+import { computedSignal, isHTMLElement, LNodeRef, watchRef } from "plicit";
 import { AABB, VEC2 } from "tsmathutil";
 
 export const useElementBounds = (elRef: LNodeRef) => {
-  const bounds = computedSignal<AABB>(() => {
-    const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
-    const node = elRef.value;
-    if (!node) return empty;
-    const el = node.el;
-    if (!el || !isHTMLElement(el)) return empty;
+
+
+  
+  
+  //const observe = computedSignal(() => {
+  //  const node = elRef.value;
+  //  if (!node) return null;
+  //  const el = node.el;
+  //  if (!el) return null;
+  // 
+  //})
+
+
+  const calcAABB = (el: HTMLElement): AABB => {
     const box = el.getBoundingClientRect();
     const pos = VEC2(box.x, box.y);
     const size = VEC2(box.width, box.height);
@@ -15,11 +23,33 @@ export const useElementBounds = (elRef: LNodeRef) => {
       min: pos,
       max: pos.add(size),
     };
+  }
+  
+  const bounds = computedSignal<AABB>(() => {
+    const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
+    const node = elRef.value;
+    if (!node) return empty;
+    const el = node.el;
+    if (!el || !isHTMLElement(el)) return empty;
+    return calcAABB(el);
   });
 
   const update = () => {
     bounds.trigger();
   }
+
+  //watchRef(() => {
+  //  const node = elRef.value;
+  //  if (!node) return;
+  //  const el = node.el;
+  //  if (!el || !isHTMLElement(el)) return;
+
+  //  const obs = new ResizeObserver(() => {
+  //    update();
+  //  });
+
+  //  obs.observe(el);
+  //}, [elRef]);
 
   const onWindowResize = () => {
     update();

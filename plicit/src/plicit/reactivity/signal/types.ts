@@ -3,13 +3,12 @@ export type Trackable = {
   trigger: () => any;
   dispose?: () => any;
   onDispose?: () => any;
-  dependants: Trackable[];
   tracked: Trackable[];
+  trackedEffects: Array<() => any>;
   watchers: Array<() => any>;
   lastSet: number;
   lastGet: number;
   createdAt: number;
-  refCounter: number;
   isEffect?: boolean;
   isComputed?: boolean;
   isTrash?: boolean;

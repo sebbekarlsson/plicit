@@ -1,25 +1,13 @@
 import { EventEmitter } from "../../event";
-import { StringGenerator } from "../../utils";
 import { ESignalState } from "./constants";
 import { ESignalEvent } from "./event";
 import { Trackable } from "./types";
 export type GlobalSignalState = {
-    stack: Trackable[];
-    lookup: Map<string, Trackable>;
-    tracked: string[];
-    trackedExternal: string[];
-    uidGen: StringGenerator;
     current: Signal | undefined;
+    currentEffect: (() => any) | undefined;
     idCounter: number;
-    lastFlush: number;
 };
 export declare const GSignal: GlobalSignalState;
-export declare const publishTrackable: (item: Omit<Trackable, "uid" | "createdAt" | "refCounter"> & {
-    uid?: string;
-}) => Trackable;
-export declare const notifyTrack: (uid: string) => void;
-export declare const flushSignals: () => void;
-export declare const disposeAllSignals: () => void;
 export type SignalOptions = {
     isEffect?: boolean;
     isComputed?: boolean;

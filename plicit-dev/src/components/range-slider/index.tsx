@@ -35,6 +35,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
   const clickPos = signal<Vector>(VEC2(0, 0));
 
   const wrapperBounds = useElementBounds(wrapper);
+
   
   const trackRange = computed(() => {
     const bounds = wrapperBounds.bounds.get();
