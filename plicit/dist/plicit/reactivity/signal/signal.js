@@ -172,7 +172,4 @@ const watchSignal = (sig, fun, options = {}) => {
     };
 };
 exports.watchSignal = watchSignal;
-//setInterval(() => {
-//  console.log(GSignal);
-//}, 1000);
 //# sourceMappingURL=signal.js.map

@@ -130,7 +130,7 @@ const MenuItem: Component<{
         <div
           on={{ click: () => handleClick(props.item) }}
           class={
-            "w-full h-[2.7rem] hover:bg-amaranth-500" +
+            "w-full h-[2.7rem] hover:bg-amaranth-500 transition-colors" +
             (isActive.value ? ` bg-amaranth-500` : ``)
           }
           style={style}

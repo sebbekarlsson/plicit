@@ -240,6 +240,7 @@ export const watchSignal = <T = any>(
     sig.watchers.push(fun);
   }
 
+
   if (options.immediate) {
     fun(sig.node._value);
   }
@@ -259,7 +260,3 @@ export const watchSignal = <T = any>(
     unsubscribeFuns.forEach((unsub) => unsub());
   };
 };
-
-//setInterval(() => {
-//  console.log(GSignal);
-//}, 1000);
