@@ -36,7 +36,7 @@ export const Table: Component<ITableProps> = (props) => {
     overflow: 'auto',
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
+    flex: '1',
   }}>
     <table class="w-full" style={{
       textAlign: 'left',

@@ -82,15 +82,15 @@ const App: Component = () => {
   const sideMenuHook = useSideMenu();
   
   return (
-    <div class="w-full h-full">
+    <div class="w-full h-full flex flex-col">
       <NavBar />
       <div class="h-full w-full grid grid-cols-[max-content,1fr]">
         <SideMenu menu={sideMenu} hook={sideMenuHook}/>
-        <div class="overflow-auto pb-8" style={{
+        <div class="overflow-auto" style={{
           height: 'auto',
-          maxHeight: 'calc(100% - 3rem)'
+          maxHeight: 'calc(100% - 4rem)',
         }}>
-          <div>
+          <div class="w-full h-full">
             <RouterView />
           </div>
         </div>

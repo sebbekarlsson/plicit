@@ -8,7 +8,7 @@ export const RouterView: Component = (props) => {
   return (
     <div class="w-full h-full" nodeType={ELNodeType.FRAGMENT}>
       {() => (
-        <div class="w-full h-full"  deps={[router.router.value.current.nav]}>
+        <div class="w-full h-auto" style={{ display: 'contents' }} deps={[router.router.value.current.nav]}>
           <route.value.component
             {...(router.router.value.current.nav.value.props || {})}
           />
