@@ -1,6 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.patchElements = exports.getElementsDiff = exports.getElementsAttributesDiff = exports.getElementAttributes = void 0;
+exports.patchElements = exports.getElementsDiff = exports.getElementsAttributesDiff = exports.getElementAttributes = exports.setElementAttribute = void 0;
+const setElementAttribute = (el, key, value) => {
+    try {
+        el.setAttribute(key, value);
+    }
+    catch (e) {
+        // @ts-ignore
+    }
+    try {
+        el[key] = value;
+    }
+    catch (e) {
+        // @ts-ignore
+    }
+};
+exports.setElementAttribute = setElementAttribute;
 const getElementAttributes = (a) => {
     return Array.from(a.attributes);
 };
@@ -25,8 +40,7 @@ const patchElements = (old, nextEl, attributeCallback) => {
             if (attributeCallback) {
                 attributeCallback([key, value]);
             }
-            old.setAttribute(key, value);
-            old[key] = value;
+            (0, exports.setElementAttribute)(old, key, value);
         });
         return old;
     }

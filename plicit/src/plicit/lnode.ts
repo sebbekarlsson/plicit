@@ -1,7 +1,7 @@
 import { EventEmitter, EventSubscriber, PlicitEvent } from "./event";
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
-import { patchElements } from "./element";
+import { patchElements, setElementAttribute } from "./element";
 import {
   isComment,
   isElementWithChildren,
@@ -9,9 +9,13 @@ import {
   isReplaceableElement,
   isSVGElement,
   isSVGPathElement,
+  isSVGPolylineElement,
+  isSVGSVGElement,
   isText,
   NativeElement,
   NativeElementListeners,
+  SVG_NAMES,
+  SVG_NAMESPACE,
   WebElement,
 } from "./types";
 import { stringGenerator } from "./utils";
@@ -78,6 +82,8 @@ export type NodeEventPayload = {};
 
 export type NodeEvent<Payload> = PlicitEvent<Payload, ENodeEvent, LNode>;
 
+
+export type LNodeNativeElement = HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment | SVGElement | Element;
 const stringGen = stringGenerator();
 export class LNode {
   _lnode: "lnode" = "lnode" as "lnode";
@@ -85,7 +91,7 @@ export class LNode {
   implicitKey: number = -1;
   isTrash: boolean = false;
   key: string = "";
-  el?: HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment;
+  el?: LNodeNativeElement;
   elRef: LNodeRef;
   parent: Signal<LNode | undefined>;
   attributes: LProxy<LNodeAttributes>;
@@ -291,6 +297,12 @@ export class LNode {
     if (this.type === ELNodeType.COMMENT) {
       return document.createComment(`${this.implicitKey}`);
     }
+
+
+    if (SVG_NAMES.includes(this.name)) {
+      return document.createElementNS(`http://www.w3.org/2000/svg`, this.name);
+    }
+    
     if (this.name === "svg") {
       return document.createElementNS("http://www.w3.org/2000/svg", "svg");
     } else if (this.name === "path") {
@@ -318,7 +330,7 @@ export class LNode {
   }
 
   setElement(
-    el: HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment,
+    el: LNodeNativeElement,
   ) {
     this.el = el;
     this.updateRef();
@@ -494,8 +506,9 @@ export class LNode {
     if (!this.el) return;
     if (isText(this.el) || isComment(this.el)) return;
 
+
     if (!["innerHTML"].includes(key)) {
-      this.el.setAttribute(key, value);
+      setElementAttribute(this.el, key, value);
     }
 
     if (key === "value") {
@@ -516,8 +529,9 @@ export class LNode {
     if (this.attributes.text) {
       if (isText(el) || isComment(el)) {
         el.data = this.attributes.text;
-      } else if (!isSVGElement(el) && !isSVGPathElement(el)) {
+      } else if (!isSVGElement(el) && !isSVGPathElement(el) && !isSVGSVGElement(el)) {
         el.innerHTML = "";
+        // @ts-ignore
         el.innerText = unref(this.attributes.text) + "";
       }
     }

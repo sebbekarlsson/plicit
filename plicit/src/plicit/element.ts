@@ -1,5 +1,19 @@
 import { ElementWithAttributes } from "./types";
 
+export const setElementAttribute = (el: ElementWithAttributes, key: string, value: any) => {
+  try {
+    el.setAttribute(key, value);
+  } catch (e) {
+    // @ts-ignore
+  }
+
+  try {
+    (el as any)[key] = value;
+  } catch (e) {
+    // @ts-ignore
+  }
+}
+
 export const getElementAttributes = (a: ElementWithAttributes): Attr[] => {
   return Array.from(a.attributes);
 };
@@ -35,8 +49,7 @@ export const patchElements = (
       if (attributeCallback) {
         attributeCallback([key, value]);
       }
-      old.setAttribute(key, value);
-      (old as any)[key] = value;
+      setElementAttribute(old, key, value);
     });
 
     return old;

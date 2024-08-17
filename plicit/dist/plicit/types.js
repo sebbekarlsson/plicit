@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isComment = exports.isSVGPathElement = exports.isSVGElement = exports.isInputElement = exports.isHTMLElement = exports.isText = exports.isReplaceableElement = exports.isElementWithAttributes = exports.isElementWithChildren = exports.notNullish = void 0;
+exports.isComment = exports.isAnySVGElement = exports.isSVGPolylineElement = exports.isSVGPathElement = exports.isSVGElement = exports.isSVGSVGElement = exports.SVG_NAMESPACE = exports.SVG_NAMES = exports.isInputElement = exports.isHTMLElement = exports.isText = exports.isReplaceableElement = exports.isElementWithAttributes = exports.isElementWithChildren = exports.notNullish = void 0;
 const notNullish = (val) => val != null;
 exports.notNullish = notNullish;
 const isElementWithChildren = (x) => {
@@ -47,6 +47,16 @@ const isInputElement = (x) => {
     return (0, exports.isHTMLElement)(x) && x.tagName === 'INPUT';
 };
 exports.isInputElement = isInputElement;
+exports.SVG_NAMES = ['svg', 'path', 'polyline', 'circle', 'line', 'g'];
+exports.SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+const isSVGSVGElement = (x) => {
+    if (!x)
+        return false;
+    if (typeof x !== 'object')
+        return false;
+    return (0, exports.isHTMLElement)(x) && (x.tagName || '').toLowerCase() === 'svg';
+};
+exports.isSVGSVGElement = isSVGSVGElement;
 const isSVGElement = (x) => {
     if (!x)
         return false;
@@ -61,6 +71,18 @@ const isSVGPathElement = (x) => {
     return (0, exports.isHTMLElement)(x) && (x.tagName || '').toLowerCase() === 'path';
 };
 exports.isSVGPathElement = isSVGPathElement;
+const isSVGPolylineElement = (x) => {
+    if (typeof x !== 'object')
+        return false;
+    return (0, exports.isHTMLElement)(x) && (x.tagName || '').toLowerCase() === 'polyline';
+};
+exports.isSVGPolylineElement = isSVGPolylineElement;
+const isAnySVGElement = (x) => {
+    if (typeof x !== 'object')
+        return false;
+    return (0, exports.isHTMLElement)(x) && exports.SVG_NAMES.includes((x.tagName || '').toLowerCase());
+};
+exports.isAnySVGElement = isAnySVGElement;
 const isComment = (x) => {
     if (!x)
         return false;

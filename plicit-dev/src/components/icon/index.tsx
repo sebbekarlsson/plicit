@@ -17,7 +17,7 @@ export const Icon: Component<IIconProps> = (props) => {
   }, [props.icon], { deep: false });
 
 
-  const svgElement = ref<SVGSVGElement | null>(null); 
+  const svgElement = ref<SVGSVGElement | SVGElement | null>(null); 
 
   computed(() => {
     const svg = svgElement.value;

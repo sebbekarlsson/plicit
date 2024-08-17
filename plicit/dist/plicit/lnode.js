@@ -191,6 +191,9 @@ class LNode {
         if (this.type === ELNodeType.COMMENT) {
             return document.createComment(`${this.implicitKey}`);
         }
+        if (types_1.SVG_NAMES.includes(this.name)) {
+            return document.createElementNS(`http://www.w3.org/2000/svg`, this.name);
+        }
         if (this.name === "svg") {
             return document.createElementNS("http://www.w3.org/2000/svg", "svg");
         }
@@ -372,7 +375,7 @@ class LNode {
         if ((0, types_1.isText)(this.el) || (0, types_1.isComment)(this.el))
             return;
         if (!["innerHTML"].includes(key)) {
-            this.el.setAttribute(key, value);
+            (0, element_1.setElementAttribute)(this.el, key, value);
         }
         if (key === "value") {
             this.el.value = value;
@@ -391,8 +394,9 @@ class LNode {
             if ((0, types_1.isText)(el) || (0, types_1.isComment)(el)) {
                 el.data = this.attributes.text;
             }
-            else if (!(0, types_1.isSVGElement)(el) && !(0, types_1.isSVGPathElement)(el)) {
+            else if (!(0, types_1.isSVGElement)(el) && !(0, types_1.isSVGPathElement)(el) && !(0, types_1.isSVGSVGElement)(el)) {
                 el.innerHTML = "";
+                // @ts-ignore
                 el.innerText = (0, reactivity_1.unref)(this.attributes.text) + "";
             }
         }

@@ -1,8 +1,11 @@
 import { Component } from "plicit";
 import { PageContent } from "../../../layouts/page-content";
+import { LineGraph } from "../../../components/line-graph";
 
 const view: Component = () => {
-  return <PageContent>Here we go!</PageContent>;
+  return <PageContent>
+    <LineGraph/>
+  </PageContent>;
 };
 
 export default view;

@@ -36,13 +36,14 @@ export type LNodeAttributesBase = {
 export type LNodeAttributes = WithSignals<LNodeAttributesBase>;
 export type NodeEventPayload = {};
 export type NodeEvent<Payload> = PlicitEvent<Payload, ENodeEvent, LNode>;
+export type LNodeNativeElement = HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment | SVGElement | Element;
 export declare class LNode {
     _lnode: "lnode";
     depth: number;
     implicitKey: number;
     isTrash: boolean;
     key: string;
-    el?: HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment;
+    el?: LNodeNativeElement;
     elRef: LNodeRef;
     parent: Signal<LNode | undefined>;
     attributes: LProxy<LNodeAttributes>;
@@ -66,11 +67,11 @@ export declare class LNode {
     emit(event: Omit<NodeEvent<any>, "target">): void;
     addEventListener(evtype: ENodeEvent, sub: EventSubscriber<NodeEventPayload, ENodeEvent, LNode>): () => void;
     mountTo(target: NativeElement | null | undefined): void;
-    createElement(): HTMLElement | SVGSVGElement | SVGPathElement | Comment;
+    createElement(): HTMLElement | SVGElement | Comment;
     listenForMutation(callback: (disconnect: () => void) => void): void;
-    setElement(el: HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment): void;
-    ensureElement(): HTMLElement | SVGSVGElement | SVGPathElement | Comment;
-    getElement(): HTMLElement | SVGSVGElement | SVGPathElement | Comment;
+    setElement(el: LNodeNativeElement): void;
+    ensureElement(): LNodeNativeElement;
+    getElement(): LNodeNativeElement;
     getSlot(name: string): LNodeRef;
     setSlot(name: string, node: LNode): void;
     private onReceiveChild;
@@ -78,7 +79,7 @@ export declare class LNode {
     patchChildFromSignal(child: LNodeChild, sig: Signal<LNode>, _childIndex: number): void;
     appendChild(child: LNodeChild, childIndex: number): void;
     setAttribute(key: string, value: string): void;
-    render(): HTMLElement | SVGSVGElement | SVGPathElement | Comment;
+    render(): LNodeNativeElement;
 }
 export declare const lnode: (name: string, attributes?: LNodeAttributes, implicitKey?: number, depth?: number) => LNode;
 export declare const none: () => LNode;

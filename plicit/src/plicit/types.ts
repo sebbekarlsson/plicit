@@ -59,7 +59,17 @@ export const isInputElement = (x: any): x is HTMLInputElement => {
   return isHTMLElement(x) && x.tagName === 'INPUT';
 }
 
-export const isSVGElement = (x: any): x is SVGSVGElement => {
+
+export const SVG_NAMES = ['svg', 'path', 'polyline', 'circle', 'line', 'g'];
+export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
+export const isSVGSVGElement = (x: any): x is SVGSVGElement => {
+  if (!x) return false;
+  if (typeof x !== 'object') return false;
+  return isHTMLElement(x) && (x.tagName || '').toLowerCase() === 'svg';
+}
+
+export const isSVGElement = (x: any): x is SVGElement => {
   if (!x) return false;
   if (typeof x !== 'object') return false;
   return isHTMLElement(x) && (x.tagName || '').toLowerCase() === 'svg';
@@ -68,6 +78,16 @@ export const isSVGElement = (x: any): x is SVGSVGElement => {
 export const isSVGPathElement = (x: any): x is SVGPathElement => {
   if (typeof x !== 'object') return false;
   return isHTMLElement(x) && (x.tagName || '').toLowerCase() === 'path';
+}
+
+export const isSVGPolylineElement = (x: any): x is SVGPolylineElement => {
+  if (typeof x !== 'object') return false;
+  return isHTMLElement(x) && (x.tagName || '').toLowerCase() === 'polyline';
+}
+
+export const isAnySVGElement = (x: any): boolean => {
+  if (typeof x !== 'object') return false;
+  return isHTMLElement(x) && SVG_NAMES.includes((x.tagName || '').toLowerCase());
 }
 
 export const isComment = (x: any): x is Comment => {
