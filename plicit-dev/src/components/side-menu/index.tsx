@@ -79,8 +79,10 @@ const MenuItem: Component<{
   };
 
   const isActive = computed(
-    () => route.value.path === props.item.path,
-    [route],
+    () => {
+      return route.current.value?.path === props.item.path;
+    },
+    [router, router.router.value.current.nav, route.current],
   );
 
   const style = computedSignal((): CSSProperties => {

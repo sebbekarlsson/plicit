@@ -47,6 +47,7 @@ export enum ELNodeType {
   FRAGMENT = "FRAGMENT",
   EMPTY = "EMPTY",
   COMMENT = "COMMENT",
+  SLOT = "SLOT"
 }
 
 type WithSignals<T> = {
@@ -95,6 +96,7 @@ export class LNode {
   signal: Signal<LNode> | undefined;
   type: ELNodeType = ELNodeType.ELEMENT;
   uid: string = stringGen.next(16);
+  slots: Record<string, LNodeRef> = {};
   events: EventEmitter<NodeEventPayload, ENodeEvent, LNode> = new EventEmitter<
     NodeEventPayload,
     ENodeEvent,
@@ -111,7 +113,7 @@ export class LNode {
     depth: number = -1,
   ) {
     this.name = pget(attributes.tag || name);
-    this.attributes = proxy<LNodeAttributes>(attributes || {});
+    this.attributes = (attributes || {});
     this.parent = signal<LNode | undefined>(undefined);
     this.component = ref<Component | undefined>(undefined);
     this.key = pget(this.attributes.key || "");
@@ -334,7 +336,26 @@ export class LNode {
     return this.render();
   }
 
+  getSlot(name: string) {
+    this.slots[name] ??= ref(undefined);
+    return this.slots[name];
+  }
+  
+  setSlot(name: string, node: LNode) {
+    const slot = this.getSlot(name);
+    slot.value = node;
+  }
+
   private onReceiveChild(child: LNodeChild, childIndex: number) {
+    if (isLNode(child) && child.type === ELNodeType.SLOT) {
+      const name = child.attributes.name
+      if (typeof name !== 'string') {
+        console.warn(`Invalid slot name: ${name}`);
+        return;
+      }
+      this.setSlot(name, child);
+    }
+    
     if (isRef(child)) {
       child._deps.forEach((d) => {
         const un = unwrapReactiveDep(d);

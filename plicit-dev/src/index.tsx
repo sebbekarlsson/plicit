@@ -9,6 +9,7 @@ import { SideMenu } from "./components/side-menu";
 import { ISideMenu, ISideMenuItem } from "./components/side-menu/types";
 import { useRouter } from "./components/router/hooks";
 import { useSideMenu } from "./components/side-menu/hooks/useSideMenu";
+import { MainRouter } from "./components/router/components/main-router";
 
 globalThis.ljsx = ljsx;
 
@@ -29,6 +30,10 @@ const componentRoutes: ISideMenuItem[] = [
   },
   {
     label: 'Tooltip'
+  },
+  {
+    label: 'Line Graph',
+    path: '/components/linegraph'
   }
 ];
 
@@ -73,6 +78,7 @@ const sideMenu: ISideMenu = {
           },
           items: componentRoutes.map((it) => {
             return {
+              ...it,
               label: it.label,
               icon: {
                 src: async () => import("./assets/icons/cube.svg"),
@@ -132,7 +138,7 @@ const App: Component = () => {
           }}
         >
           <div class="w-full h-full">
-            <RouterView />
+            <MainRouter />
           </div>
         </div>
       </div>

@@ -14,7 +14,12 @@ const setup = (component, el) => {
         });
         main.mountTo(el);
     };
-    fun();
+    try {
+        fun();
+    }
+    catch (e) {
+        console.error(e);
+    }
     exports.GSetupState.setup = fun;
 };
 exports.setup = setup;

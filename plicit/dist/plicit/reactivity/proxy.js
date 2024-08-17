@@ -5,7 +5,12 @@ const proxy = (initial, subscribers = []) => {
     return new Proxy(initial, {
         get: (target, p, _receiver) => {
             const key = p;
-            subscribers.forEach((sub) => sub.get(target, key, _receiver));
+            try {
+                subscribers.forEach((sub) => sub.get(target, key, _receiver));
+            }
+            catch (e) {
+                console.error(e);
+            }
             return target[key];
         },
         set: (target, p, next, receiver) => {
@@ -15,7 +20,12 @@ const proxy = (initial, subscribers = []) => {
                 return true;
             target[p] = next;
             //const result = Reflect.set(target,p, next, receiver);
-            subscribers.forEach((sub) => sub.set(target, key, next, receiver));
+            try {
+                subscribers.forEach((sub) => sub.set(target, key, next, receiver));
+            }
+            catch (e) {
+                console.error(e);
+            }
             return true;
         },
     });

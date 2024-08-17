@@ -14,7 +14,11 @@ export const proxy = <T extends Indexable>(
   return new Proxy<T>(initial, {
     get: (target, p, _receiver) => {
       const key = p as keyof T;
-      subscribers.forEach((sub) => sub.get(target, key, _receiver));
+      try {
+        subscribers.forEach((sub) => sub.get(target, key, _receiver));
+      } catch (e) {
+        console.error(e);
+      }
       return target[key];
     },
     set: (target, p, next, receiver) => {
@@ -23,7 +27,12 @@ export const proxy = <T extends Indexable>(
       if (prev === next) return true;
       target[p] = next;
       //const result = Reflect.set(target,p, next, receiver);
-      subscribers.forEach((sub) => sub.set(target, key, next, receiver));
+
+      try {
+        subscribers.forEach((sub) => sub.set(target, key, next, receiver));
+      } catch (e) {
+        console.error(e);
+      }
       return true;
     },
   });

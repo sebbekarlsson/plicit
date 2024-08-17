@@ -22,7 +22,11 @@ export const setup = (component: Component, el: HTMLElement | Element) => {
     main.mountTo(el);
   }
 
-  fun();
+  try {
+    fun();
+  } catch (e) {
+    console.error(e);
+  }
 
   GSetupState.setup = fun;
 }

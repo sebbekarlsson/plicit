@@ -17,6 +17,7 @@ var ELNodeType;
     ELNodeType["FRAGMENT"] = "FRAGMENT";
     ELNodeType["EMPTY"] = "EMPTY";
     ELNodeType["COMMENT"] = "COMMENT";
+    ELNodeType["SLOT"] = "SLOT";
 })(ELNodeType || (exports.ELNodeType = ELNodeType = {}));
 const stringGen = (0, utils_1.stringGenerator)();
 class LNode {
@@ -36,12 +37,13 @@ class LNode {
     signal;
     type = ELNodeType.ELEMENT;
     uid = stringGen.next(16);
+    slots = {};
     events = new event_1.EventEmitter();
     didMount = false;
     unsubs = [];
     constructor(name, attributes, implicitKey = -1, depth = -1) {
         this.name = (0, reactivity_1.pget)(attributes.tag || name);
-        this.attributes = (0, reactivity_2.proxy)(attributes || {});
+        this.attributes = (attributes || {});
         this.parent = (0, reactivity_1.signal)(undefined);
         this.component = (0, reactivity_1.ref)(undefined);
         this.key = (0, reactivity_1.pget)(this.attributes.key || "");
@@ -231,7 +233,23 @@ class LNode {
             return this.el;
         return this.render();
     }
+    getSlot(name) {
+        this.slots[name] ??= (0, reactivity_1.ref)(undefined);
+        return this.slots[name];
+    }
+    setSlot(name, node) {
+        const slot = this.getSlot(name);
+        slot.value = node;
+    }
     onReceiveChild(child, childIndex) {
+        if ((0, exports.isLNode)(child) && child.type === ELNodeType.SLOT) {
+            const name = child.attributes.name;
+            if (typeof name !== 'string') {
+                console.warn(`Invalid slot name: ${name}`);
+                return;
+            }
+            this.setSlot(name, child);
+        }
         if ((0, reactivity_1.isRef)(child)) {
             child._deps.forEach((d) => {
                 const un = (0, reactivity_2.unwrapReactiveDep)(d);
