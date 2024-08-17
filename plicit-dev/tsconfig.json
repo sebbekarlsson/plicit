@@ -8,6 +8,6 @@
       "plicit/*": ["../plicit"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/svg.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/svg.d.ts", "./tailwind.config.js", "./tailwind.config.ts"],
   "references": [{ "path": "../plicit" }]
 }

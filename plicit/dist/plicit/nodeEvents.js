@@ -5,6 +5,9 @@ var ENodeEvent;
 (function (ENodeEvent) {
     ENodeEvent["MOUNTED"] = "MOUNTED";
     ENodeEvent["UNMOUNTED"] = "UNMOUNTED";
+    ENodeEvent["BEFORE_REPLACE"] = "BEFORE_REPLACE";
+    ENodeEvent["AFTER_REPLACE"] = "AFTER_REPLACE";
+    ENodeEvent["RECEIVE_PARENT"] = "RECEIVE_PARENT";
     ENodeEvent["REPLACED"] = "REPLACED";
     ENodeEvent["UPDATED"] = "UPDATED";
     ENodeEvent["LOADED"] = "LOADED";

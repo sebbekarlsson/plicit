@@ -1,4 +1,4 @@
-import { computedSignal, isHTMLElement, LNodeRef, signal, watchRef } from "plicit";
+import { computedSignal, debounce, isHTMLElement, LNodeRef, signal, watchRef } from "plicit";
 import { AABB, VEC2 } from "tsmathutil";
 
 export const useElementBounds = (elRef: LNodeRef) => {
@@ -40,6 +40,9 @@ export const useElementBounds = (elRef: LNodeRef) => {
     bounds.trigger();
   }
 
+  let wasCalled: boolean = false;
+  const debouncedUpdate = debounce(update, 10);
+
   watchRef(() => {
     const node = elRef.value;
     if (!node) return;
@@ -47,18 +50,23 @@ export const useElementBounds = (elRef: LNodeRef) => {
     if (!el || !isHTMLElement(el)) return;
 
     const obs = new ResizeObserver(() => {
-      update();
+      if (wasCalled) {
+        debouncedUpdate();
+      } else {
+        update();
+        wasCalled = true;
+      }
     });
 
     obs.observe(el);
   }, [elRef]);
 
   const onWindowResize = () => {
-    update();
+    debouncedUpdate();
   }
 
   const onScroll = () => {
-    update();
+    debouncedUpdate();
   }
 
   window.addEventListener('resize', onWindowResize);

@@ -56,11 +56,11 @@ export const isHTMLElement = (x: any): x is HTMLElement => {
 
 export const isInputElement = (x: any): x is HTMLInputElement => {
   if (typeof x !== 'object') return false;
-  return isHTMLElement(x) && x.tagName === 'INPUT';
+  return isHTMLElement(x) && (x.tagName || '').toLowerCase() === 'input';
 }
 
 
-export const SVG_NAMES = ['svg', 'path', 'polyline', 'circle', 'line', 'g'];
+export const SVG_NAMES = ['svg', 'path', 'polyline', 'circle', 'line', 'g', 'rect', 'text', 'defs', 'linearGradient', 'stop'];
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
 export const isSVGSVGElement = (x: any): x is SVGSVGElement => {

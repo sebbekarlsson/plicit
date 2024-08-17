@@ -4,12 +4,6 @@ exports.ljsx = ljsx;
 const component_1 = require("./component");
 const lnode_1 = require("./lnode");
 const reactivity_1 = require("./reactivity");
-let implicit_key = 0;
-const nextKey = () => {
-    const k = implicit_key;
-    implicit_key = (implicit_key + 1) % Number.MAX_SAFE_INTEGER;
-    return k;
-};
 const remapChild = (child) => {
     if (typeof child === "string" || typeof child === 'number')
         return (0, lnode_1.lnode)("span", { text: child + '', nodeType: lnode_1.ELNodeType.TEXT_ELEMENT });
@@ -25,6 +19,6 @@ function ljsx(tag, attribs_, ...childs) {
     if ((0, component_1.isComponent)(tag)) {
         return tag({ ...attribs, children: children });
     }
-    return (0, lnode_1.lnode)(tag, { ...attribs, children: children }, nextKey());
+    return (0, lnode_1.lnode)(tag, { ...attribs, children: children });
 }
 //# sourceMappingURL=jsx.js.map

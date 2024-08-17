@@ -29,18 +29,31 @@ export type LNodeAttributesBase = {
     tag?: string;
     onMounted?: (node: LNode) => any;
     onLoaded?: (node: LNode) => any;
+    isRoot?: boolean;
     ref?: LNodeRef;
     class?: string;
     [key: string]: any;
 };
 export type LNodeAttributes = WithSignals<LNodeAttributesBase>;
-export type NodeEventPayload = {};
-export type NodeEvent<Payload> = PlicitEvent<Payload, ENodeEvent, LNode>;
+export type NodeEventReceiveParentPayload = {
+    parent: LNode;
+};
+export type NodeEventPayload = NodeEventReceiveParentPayload | {};
+export type NodeEventBeforeReplace = PlicitEvent<{}, ENodeEvent.BEFORE_REPLACE, LNode>;
+export type NodeEventAfterReplace = PlicitEvent<{}, ENodeEvent.AFTER_REPLACE, LNode>;
+export type NodeEventReplaced = PlicitEvent<{}, ENodeEvent.REPLACED, LNode>;
+export type NodeEventUpdated = PlicitEvent<{}, ENodeEvent.UPDATED, LNode>;
+export type NodeEventLoaded = PlicitEvent<{}, ENodeEvent.LOADED, LNode>;
+export type NodeEventUnMounted = PlicitEvent<{}, ENodeEvent.UNMOUNTED, LNode>;
+export type NodeEventMounted = PlicitEvent<{}, ENodeEvent.MOUNTED, LNode>;
+export type NodeEventReceiveParent = PlicitEvent<NodeEventReceiveParentPayload, ENodeEvent.RECEIVE_PARENT, LNode>;
+export type NodeEvent = NodeEventBeforeReplace | NodeEventAfterReplace | NodeEventReplaced | NodeEventUpdated | NodeEventLoaded | NodeEventUnMounted | NodeEventMounted | NodeEventReceiveParent;
 export type LNodeNativeElement = HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment | SVGElement | Element;
 export declare class LNode {
     _lnode: "lnode";
-    depth: number;
-    implicitKey: number;
+    _id: number;
+    _idCounter: number;
+    isRoot: boolean;
     isTrash: boolean;
     key: string;
     el?: LNodeNativeElement;
@@ -49,7 +62,6 @@ export declare class LNode {
     attributes: LProxy<LNodeAttributes>;
     name: string;
     children: LNodeChild[];
-    mappedChildren: Record<string, LNodeChild>;
     component: Ref<Component | undefined>;
     signal: Signal<LNode> | undefined;
     type: ELNodeType;
@@ -58,13 +70,14 @@ export declare class LNode {
     events: EventEmitter<NodeEventPayload, ENodeEvent, LNode>;
     didMount: boolean;
     unsubs: Array<() => void>;
-    constructor(name: string, attributes?: LNodeAttributes, implicitKey?: number, depth?: number);
+    constructor(name: string, attributes?: LNodeAttributes);
     destroy(): void;
     toObject(): any;
+    setId(id: number): void;
     patchWith(other: LNodeChild): void;
     invalidate(): void;
     updateRef(): void;
-    emit(event: Omit<NodeEvent<any>, "target">): void;
+    emit(event: NodeEvent): void;
     addEventListener(evtype: ENodeEvent, sub: EventSubscriber<NodeEventPayload, ENodeEvent, LNode>): () => void;
     mountTo(target: NativeElement | null | undefined): void;
     createElement(): HTMLElement | SVGElement | Comment;
@@ -81,7 +94,7 @@ export declare class LNode {
     setAttribute(key: string, value: string): void;
     render(): LNodeNativeElement;
 }
-export declare const lnode: (name: string, attributes?: LNodeAttributes, implicitKey?: number, depth?: number) => LNode;
+export declare const lnode: (name: string, attributes?: LNodeAttributes) => LNode;
 export declare const none: () => LNode;
 export declare const isLNode: (x: any) => x is LNode;
 export {};

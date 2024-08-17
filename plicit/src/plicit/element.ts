@@ -1,18 +1,26 @@
-import { ElementWithAttributes } from "./types";
+import { ElementWithAttributes, isAnySVGElement } from "./types";
 
-export const setElementAttribute = (el: ElementWithAttributes, key: string, value: any) => {
+export const setElementAttribute = (
+  el: ElementWithAttributes,
+  key: string,
+  value: any,
+) => {
   try {
     el.setAttribute(key, value);
   } catch (e) {
+    console.warn(e);
     // @ts-ignore
   }
 
-  try {
-    (el as any)[key] = value;
-  } catch (e) {
-    // @ts-ignore
+
+  if (!isAnySVGElement(el)) {
+    try {
+      (el as any)[key] = value;
+    } catch (e) {
+      console.warn(e);
+    }
   }
-}
+};
 
 export const getElementAttributes = (a: ElementWithAttributes): Attr[] => {
   return Array.from(a.attributes);
@@ -30,24 +38,39 @@ export const getElementsAttributesDiff = (
   return attributesB.filter(([key, value]) => a.getAttribute(key) !== value);
 };
 
-export const getElementsDiff = (a: ElementWithAttributes, b: ElementWithAttributes) => {
+export const getElementsDiff = (
+  a: ElementWithAttributes,
+  b: ElementWithAttributes,
+) => {
   return getElementsAttributesDiff(a, b);
 };
 
 
+type PatchElementsOptions = {
+  attributeCallback?: (pair: KeyPair) => void;
+  onBeforeReplace?: (old: HTMLElement, next: HTMLElement) => void;
+  onAfterReplace?: (old: HTMLElement, next: HTMLElement) => void;
+}
+
 export const patchElements = (
   old: HTMLElement,
   nextEl: HTMLElement,
-  attributeCallback?: (pair: KeyPair) => void,
+  options: PatchElementsOptions = {}
 ) => {
   if (old.innerHTML !== nextEl.innerHTML) {
+    if (options.onBeforeReplace) {
+      options.onBeforeReplace(old, nextEl);
+    }
     old.replaceWith(nextEl);
+    if (options.onAfterReplace) {
+      options.onAfterReplace(old, nextEl);
+    }
     return nextEl;
   } else {
     const diff = getElementsAttributesDiff(old, nextEl);
     diff.forEach(([key, value]) => {
-      if (attributeCallback) {
-        attributeCallback([key, value]);
+      if (options.attributeCallback) {
+        options.attributeCallback([key, value]);
       }
       setElementAttribute(old, key, value);
     });

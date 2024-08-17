@@ -44,10 +44,10 @@ exports.isHTMLElement = isHTMLElement;
 const isInputElement = (x) => {
     if (typeof x !== 'object')
         return false;
-    return (0, exports.isHTMLElement)(x) && x.tagName === 'INPUT';
+    return (0, exports.isHTMLElement)(x) && (x.tagName || '').toLowerCase() === 'input';
 };
 exports.isInputElement = isInputElement;
-exports.SVG_NAMES = ['svg', 'path', 'polyline', 'circle', 'line', 'g'];
+exports.SVG_NAMES = ['svg', 'path', 'polyline', 'circle', 'line', 'g', 'rect', 'text', 'defs', 'linearGradient', 'stop'];
 exports.SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const isSVGSVGElement = (x) => {
     if (!x)

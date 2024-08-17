@@ -14,6 +14,7 @@ export const setup = (component: Component, el: HTMLElement | Element) => {
     el.innerHTML = '';
     const main = lnode('div', {
       nodeType: ELNodeType.FRAGMENT,
+      isRoot: true,
       children: [
         component
       ]

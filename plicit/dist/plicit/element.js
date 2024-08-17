@@ -1,18 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.patchElements = exports.getElementsDiff = exports.getElementsAttributesDiff = exports.getElementAttributes = exports.setElementAttribute = void 0;
+const types_1 = require("./types");
 const setElementAttribute = (el, key, value) => {
     try {
         el.setAttribute(key, value);
     }
     catch (e) {
+        console.warn(e);
         // @ts-ignore
     }
-    try {
-        el[key] = value;
-    }
-    catch (e) {
-        // @ts-ignore
+    if (!(0, types_1.isAnySVGElement)(el)) {
+        try {
+            el[key] = value;
+        }
+        catch (e) {
+            console.warn(e);
+        }
     }
 };
 exports.setElementAttribute = setElementAttribute;
@@ -29,16 +33,22 @@ const getElementsDiff = (a, b) => {
     return (0, exports.getElementsAttributesDiff)(a, b);
 };
 exports.getElementsDiff = getElementsDiff;
-const patchElements = (old, nextEl, attributeCallback) => {
+const patchElements = (old, nextEl, options = {}) => {
     if (old.innerHTML !== nextEl.innerHTML) {
+        if (options.onBeforeReplace) {
+            options.onBeforeReplace(old, nextEl);
+        }
         old.replaceWith(nextEl);
+        if (options.onAfterReplace) {
+            options.onAfterReplace(old, nextEl);
+        }
         return nextEl;
     }
     else {
         const diff = (0, exports.getElementsAttributesDiff)(old, nextEl);
         diff.forEach(([key, value]) => {
-            if (attributeCallback) {
-                attributeCallback([key, value]);
+            if (options.attributeCallback) {
+                options.attributeCallback([key, value]);
             }
             (0, exports.setElementAttribute)(old, key, value);
         });

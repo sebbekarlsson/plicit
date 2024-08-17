@@ -234,3 +234,4 @@ tags
 # .pnp.*
 
 # End of https://www.toptal.com/developers/gitignore/api/vim,emacs,node,npm,yarn,webpack,typescript
+plicit-dev/dist/

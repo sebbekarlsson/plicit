@@ -2,13 +2,6 @@ import { Component, isComponent } from "./component";
 import { ELNodeType, isLNode, lnode, LNodeAttributes } from "./lnode";
 import { isRef, isSignal } from "./reactivity";
 
-let implicit_key: number = 0;
-
-const nextKey = () => {
-  const k = implicit_key;
-  implicit_key = (implicit_key + 1) % Number.MAX_SAFE_INTEGER;
-  return k;
-}
 
 const remapChild = (child: any) => {
   if (typeof child === "string" || typeof child === 'number')
@@ -32,5 +25,5 @@ export function ljsx(
     return tag({ ...attribs, children: children });
   }
 
-  return lnode(tag, { ...attribs, children: children }, nextKey());
+  return lnode(tag, { ...attribs, children: children });
 }

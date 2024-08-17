@@ -8,6 +8,7 @@ const setup = (component, el) => {
         el.innerHTML = '';
         const main = (0, lnode_1.lnode)('div', {
             nodeType: lnode_1.ELNodeType.FRAGMENT,
+            isRoot: true,
             children: [
                 component
             ]
