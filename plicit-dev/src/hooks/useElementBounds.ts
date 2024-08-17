@@ -40,9 +40,6 @@ export const useElementBounds = (elRef: LNodeRef) => {
     bounds.trigger();
   }
 
-  let wasCalled: boolean = false;
-  const debouncedUpdate = debounce(update, 10);
-
   watchRef(() => {
     const node = elRef.value;
     if (!node) return;
@@ -50,23 +47,18 @@ export const useElementBounds = (elRef: LNodeRef) => {
     if (!el || !isHTMLElement(el)) return;
 
     const obs = new ResizeObserver(() => {
-      if (wasCalled) {
-        debouncedUpdate();
-      } else {
-        update();
-        wasCalled = true;
-      }
+      update();
     });
 
     obs.observe(el);
   }, [elRef]);
 
   const onWindowResize = () => {
-    debouncedUpdate();
+    update();
   }
 
   const onScroll = () => {
-    debouncedUpdate();
+    update();
   }
 
   window.addEventListener('resize', onWindowResize);
