@@ -179,3 +179,13 @@ export const debounce = <F extends (...args: Parameters<F>) => ReturnType<F>>(
     timeout = setTimeout(() => func(...args), waitFor);
   };
 };
+
+
+export const micro = <T = any>(fun: () => T): Promise<T> => {
+  return new Promise<T>((resolve) => {
+    queueMicrotask(() => {
+      const ret = fun();
+      resolve(ret);
+    })
+  })
+}

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.debounce = exports.throttle = exports.stringGenerator = exports.numberGenerator = exports.hashu32 = exports.toUint32 = exports.smoothstep = exports.fract = exports.clamp = exports.lerp = exports.unique = exports.range = void 0;
+exports.micro = exports.debounce = exports.throttle = exports.stringGenerator = exports.numberGenerator = exports.hashu32 = exports.toUint32 = exports.smoothstep = exports.fract = exports.clamp = exports.lerp = exports.unique = exports.range = void 0;
 const is_1 = require("./is");
 const range = (n) => n <= 0 || typeof n !== "number" || isNaN(n) || !isFinite(n)
     ? []
@@ -138,4 +138,13 @@ const debounce = (func, waitFor) => {
     };
 };
 exports.debounce = debounce;
+const micro = (fun) => {
+    return new Promise((resolve) => {
+        queueMicrotask(() => {
+            const ret = fun();
+            resolve(ret);
+        });
+    });
+};
+exports.micro = micro;
 //# sourceMappingURL=utils.js.map

@@ -34,7 +34,7 @@ export const MainRouter: Component = () => {
             const child = childComponent.data;
 
             if (parent.value === child.value && child.value) {
-              return <child.value />;
+              return <child.value />
             }
 
             if (parent.value && child.value) {

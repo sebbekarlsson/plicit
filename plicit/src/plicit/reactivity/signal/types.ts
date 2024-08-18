@@ -6,9 +6,6 @@ export type Trackable = {
   tracked: Trackable[];
   trackedEffects: Array<() => any>;
   watchers: Array<(x: any) => any>;
-  lastSet: number;
-  lastGet: number;
-  createdAt: number;
   isEffect?: boolean;
   isComputed?: boolean;
   isTrash?: boolean;

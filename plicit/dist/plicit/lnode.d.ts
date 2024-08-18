@@ -4,7 +4,7 @@ import { CSSProperties } from "./css";
 import { NativeElement, NativeElementListeners } from "./types";
 import { ENodeEvent } from "./nodeEvents";
 import { MaybeRef, Ref, Signal } from "./reactivity";
-import { ReactiveDep, LProxy } from "./reactivity";
+import { ReactiveDep } from "./reactivity";
 export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
 export type LNodeRef = Ref<LNode | undefined>;
 export declare enum ELNodeType {
@@ -57,18 +57,15 @@ export declare class LNode {
     isTrash: boolean;
     key: string;
     el?: LNodeNativeElement;
-    elRef: LNodeRef;
     parent: Signal<LNode | undefined>;
-    attributes: LProxy<LNodeAttributes>;
+    attributes: LNodeAttributes;
     name: string;
     children: LNodeChild[];
     component: Ref<Component | undefined>;
     signal: Signal<LNode> | undefined;
     type: ELNodeType;
-    uid: string;
     slots: Record<string, LNodeRef>;
     events: EventEmitter<NodeEventPayload, ENodeEvent, LNode>;
-    didMount: boolean;
     unsubs: Array<() => void>;
     constructor(name: string, attributes?: LNodeAttributes);
     destroy(): void;

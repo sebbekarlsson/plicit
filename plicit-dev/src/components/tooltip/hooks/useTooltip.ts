@@ -102,7 +102,7 @@ export const useTooltip = (props: UseTooltipProps): UseTooltip => {
     let py = 0;
     const spacing = props.spacing ?? 0;
     
-    const p = targetPos.get().clone();
+    const p = targetPos.get();
     if (props.centerX) {
       px -= mySize.x * 0.5;
     }

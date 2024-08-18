@@ -1,7 +1,7 @@
 import { EventEmitter, EventSubscriber, PlicitEvent } from "./event";
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { CSSProperties, cssPropsToString } from "./css";
-import { patchElements, setElementAttribute } from "./element";
+import { patchElements } from "./element";
 import {
   isComment,
   isElementWithChildren,
@@ -9,16 +9,12 @@ import {
   isReplaceableElement,
   isSVGElement,
   isSVGPathElement,
-  isSVGPolylineElement,
   isSVGSVGElement,
   isText,
   NativeElement,
   NativeElementListeners,
   SVG_NAMES,
-  SVG_NAMESPACE,
-  WebElement,
 } from "./types";
-import { stringGenerator } from "./utils";
 import { ENodeEvent } from "./nodeEvents";
 import {
   isRef,
@@ -37,8 +33,6 @@ import {
   ReactiveDep,
   unwrapReactiveDep,
   deepSubscribe,
-  LProxy,
-  proxy,
 } from "./reactivity";
 
 export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
@@ -51,7 +45,7 @@ export enum ELNodeType {
   FRAGMENT = "FRAGMENT",
   EMPTY = "EMPTY",
   COMMENT = "COMMENT",
-  SLOT = "SLOT"
+  SLOT = "SLOT",
 }
 
 type WithSignals<T> = {
@@ -81,40 +75,49 @@ export type LNodeAttributes = WithSignals<LNodeAttributesBase>;
 
 export type NodeEventReceiveParentPayload = {
   parent: LNode;
-}
-
+};
 
 export type NodeEventPayload = NodeEventReceiveParentPayload | {};
 
-export type NodeEventBeforeReplace = PlicitEvent<{}, ENodeEvent.BEFORE_REPLACE, LNode>
-export type NodeEventAfterReplace = PlicitEvent<{}, ENodeEvent.AFTER_REPLACE, LNode>
-export type NodeEventReplaced = PlicitEvent<{}, ENodeEvent.REPLACED, LNode>
-export type NodeEventUpdated = PlicitEvent<{}, ENodeEvent.UPDATED, LNode>
-export type NodeEventLoaded = PlicitEvent<{}, ENodeEvent.LOADED, LNode>
-export type NodeEventUnMounted = PlicitEvent<{}, ENodeEvent.UNMOUNTED, LNode>
-export type NodeEventMounted = PlicitEvent<{}, ENodeEvent.MOUNTED, LNode>
-export type NodeEventReceiveParent = PlicitEvent<NodeEventReceiveParentPayload, ENodeEvent.RECEIVE_PARENT, LNode>
+export type NodeEventBeforeReplace = PlicitEvent<
+  {},
+  ENodeEvent.BEFORE_REPLACE,
+  LNode
+>;
+export type NodeEventAfterReplace = PlicitEvent<
+  {},
+  ENodeEvent.AFTER_REPLACE,
+  LNode
+>;
+export type NodeEventReplaced = PlicitEvent<{}, ENodeEvent.REPLACED, LNode>;
+export type NodeEventUpdated = PlicitEvent<{}, ENodeEvent.UPDATED, LNode>;
+export type NodeEventLoaded = PlicitEvent<{}, ENodeEvent.LOADED, LNode>;
+export type NodeEventUnMounted = PlicitEvent<{}, ENodeEvent.UNMOUNTED, LNode>;
+export type NodeEventMounted = PlicitEvent<{}, ENodeEvent.MOUNTED, LNode>;
+export type NodeEventReceiveParent = PlicitEvent<
+  NodeEventReceiveParentPayload,
+  ENodeEvent.RECEIVE_PARENT,
+  LNode
+>;
 
-export type NodeEvent = NodeEventBeforeReplace | NodeEventAfterReplace | NodeEventReplaced | NodeEventUpdated | NodeEventLoaded | NodeEventUnMounted | NodeEventMounted | NodeEventReceiveParent;//PlicitEvent<NodeEventPayload, ENodeEvent, LNode> | NodeEventReceiveParent;
+export type NodeEvent =
+  | NodeEventBeforeReplace
+  | NodeEventAfterReplace
+  | NodeEventReplaced
+  | NodeEventUpdated
+  | NodeEventLoaded
+  | NodeEventUnMounted
+  | NodeEventMounted
+  | NodeEventReceiveParent;
 
-
-
-export type LNodeNativeElement = HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment | SVGElement | Element;
-const stringGen = stringGenerator();
-
-//export type GlobalLNodeState = {
-//  idCounter: number;
-//}
-//
-//export const GNode: GlobalLNodeState = {
-//  idCounter: 0
-//}
-//
-//export const getNextNodeID = () => {
-//  const id = GNode.idCounter;
-//  GNode.idCounter = GNode.idCounter + 1;
-//  return id;
-//}
+export type LNodeNativeElement =
+  | HTMLElement
+  | Text
+  | SVGSVGElement
+  | SVGPathElement
+  | Comment
+  | SVGElement
+  | Element;
 
 export class LNode {
   _lnode: "lnode" = "lnode" as "lnode";
@@ -124,44 +127,29 @@ export class LNode {
   isTrash: boolean = false;
   key: string = "";
   el?: LNodeNativeElement;
-  elRef: LNodeRef;
   parent: Signal<LNode | undefined>;
-  attributes: LProxy<LNodeAttributes>;
+  attributes: LNodeAttributes;
   name: string;
   children: LNodeChild[] = [];
   component: Ref<Component | undefined>;
   signal: Signal<LNode> | undefined;
   type: ELNodeType = ELNodeType.ELEMENT;
-  uid: string = stringGen.next(16);
   slots: Record<string, LNodeRef> = {};
   events: EventEmitter<NodeEventPayload, ENodeEvent, LNode> = new EventEmitter<
     NodeEventPayload,
     ENodeEvent,
     LNode
   >();
-
-  didMount: boolean = false;
   unsubs: Array<() => void> = [];
 
-  constructor(
-    name: string,
-    attributes?: LNodeAttributes,
-  ) {
+  constructor(name: string, attributes?: LNodeAttributes) {
     this.name = pget(attributes.tag || name);
-    this.attributes = (attributes || {});
+    this.attributes = attributes || {};
     this.parent = signal<LNode | undefined>(undefined);
     this.component = ref<Component | undefined>(undefined);
     this.key = pget(this.attributes.key || "");
     this.type = pget(this.attributes.nodeType || this.type);
     this.isRoot = pget(this.attributes.isRoot) || false;
-    this.elRef = ref(undefined);
-
-    //watchSignal(this.parent, (parent) => {
-    //  this._id = parent._id + parent._idCounter;
-    //  parent._idCounter = parent._idCounter + 1;
-    //  console.log(this._id);
-    //})
-
 
     const deps = pget(this.attributes.deps || []);
     for (let i = 0; i < deps.length; i++) {
@@ -267,7 +255,7 @@ export class LNode {
           },
           onAfterReplace: (_old, _next) => {
             this.emit({ type: ENodeEvent.AFTER_REPLACE, payload: {} });
-          }
+          },
         }),
       );
     }
@@ -278,17 +266,17 @@ export class LNode {
     //const old = this.el;
     //if (!old) return;
 
-      const component = this.component.value;
-      if (component) {
-        if (this.el) {
-          this.patchWith(component);
-          return;
-        } else {
-          console.log('Did we not have an element?')
-        }
+    const component = this.component.value;
+    if (component) {
+      if (this.el) {
+        this.patchWith(component);
+        return;
+      } else {
+        console.log("Did we not have an element?");
       }
+    }
 
-    console.log('did we end up here?')
+    console.log("did we end up here?");
     this.emit({ type: ENodeEvent.BEFORE_REPLACE, payload: {} });
     this.el = undefined;
     const next = this.render();
@@ -307,12 +295,16 @@ export class LNode {
       this.events.emit({ ...event, target: this });
 
       switch (event.type) {
-        case ENodeEvent.BEFORE_REPLACE: {
-          this._idCounter = 0;
-        }; break;
-        case ENodeEvent.RECEIVE_PARENT: {
-          // noop
-        }; break;
+        case ENodeEvent.BEFORE_REPLACE:
+          {
+            this._idCounter = 0;
+          }
+          break;
+        case ENodeEvent.RECEIVE_PARENT:
+          {
+            // noop
+          }
+          break;
         case ENodeEvent.MOUNTED:
           {
             if (this.attributes.onMounted) {
@@ -358,11 +350,10 @@ export class LNode {
       return document.createComment(`comment`);
     }
 
-
     if (SVG_NAMES.includes(this.name)) {
       return document.createElementNS(`http://www.w3.org/2000/svg`, this.name);
     }
-    
+
     if (this.name === "svg") {
       return document.createElementNS("http://www.w3.org/2000/svg", "svg");
     } else if (this.name === "path") {
@@ -389,9 +380,7 @@ export class LNode {
     });
   }
 
-  setElement(
-    el: LNodeNativeElement,
-  ) {
+  setElement(el: LNodeNativeElement) {
     this.el = el;
     this.updateRef();
   }
@@ -412,7 +401,7 @@ export class LNode {
     this.slots[name] ??= ref(undefined);
     return this.slots[name];
   }
-  
+
   setSlot(name: string, node: LNode) {
     const slot = this.getSlot(name);
     slot.value = node;
@@ -420,14 +409,14 @@ export class LNode {
 
   private onReceiveChild(child: LNodeChild, childIndex: number) {
     if (isLNode(child) && child.type === ELNodeType.SLOT) {
-      const name = child.attributes.name
-      if (typeof name !== 'string') {
+      const name = child.attributes.name;
+      if (typeof name !== "string") {
         console.warn(`Invalid slot name: ${name}`);
         return;
       }
       this.setSlot(name, child);
     }
-    
+
     if (isRef(child)) {
       child._deps.forEach((d) => {
         const un = unwrapReactiveDep(d);
@@ -460,7 +449,9 @@ export class LNode {
       ? Array.from(thisEl.children)[index]
       : null;
     const nextEl = newNode.render();
-    const oldNode = this.children[index] ? pget(unwrapComponentTree(this.children[index])) : null;
+    const oldNode = this.children[index]
+      ? pget(unwrapComponentTree(this.children[index]))
+      : null;
 
     if (myChild) {
       if (isHTMLElement(myChild) && isHTMLElement(nextEl)) {
@@ -521,19 +512,12 @@ export class LNode {
     }
 
     const unwrapped = unwrapComponentTree(child);
-
     let unreffed = pget(unwrapped);
-
-
-    if (isSignal<LNode>(unreffed)) {
-      unreffed = unreffed.get();
-    }
 
     if (isLNode(child)) {
       child.parent.set(this);
-      this.emit({ type: ENodeEvent.RECEIVE_PARENT, payload:  { parent: this } });
+      this.emit({ type: ENodeEvent.RECEIVE_PARENT, payload: { parent: this } });
     }
-
 
     const el = this.ensureElement();
     if (!this.children.includes(child)) {
@@ -541,11 +525,10 @@ export class LNode {
       this.onReceiveChild(child, childIndex);
     }
 
-
     if (isLNode(unreffed)) {
       unreffed.parent.set(this);
       unreffed.setId(this._id + childIndex);
-      this.emit({ type: ENodeEvent.RECEIVE_PARENT, payload:  { parent: this } });
+      this.emit({ type: ENodeEvent.RECEIVE_PARENT, payload: { parent: this } });
 
       if (!isText(el)) {
         unreffed.mountTo(el);
@@ -567,7 +550,6 @@ export class LNode {
     if (!this.el) return;
     if (isText(this.el) || isComment(this.el)) return;
 
-
     if (!["innerHTML"].includes(key)) {
       this.el.setAttribute(key, value);
     }
@@ -581,16 +563,14 @@ export class LNode {
 
   render() {
     const el = this.ensureElement();
-
-    //queueMicrotask(() => {
-    //  this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
-    //  this.emit({ type: ENodeEvent.LOADED, payload: {} });
-    //});
-
     if (this.attributes.text) {
       if (isText(el) || isComment(el)) {
         el.data = this.attributes.text;
-      } else if (!isSVGElement(el) && !isSVGPathElement(el) && !isSVGSVGElement(el)) {
+      } else if (
+        !isSVGElement(el) &&
+        !isSVGPathElement(el) &&
+        !isSVGSVGElement(el)
+      ) {
         el.innerHTML = "";
         // @ts-ignore
         el.innerText = unref(this.attributes.text) + "";
@@ -645,14 +625,15 @@ export class LNode {
       el.addEventListener(key, value);
     }
 
-    for (const [key, value] of Object.entries(this.attributes)) {
-      if (
-        ["text", "children", "on", "style", "nodeType", "class"].includes(key)
-      )
-        continue;
-      if (typeof value !== "string") continue;
-      if (isText(el)) continue;
-      this.setAttribute(key, value);
+    if (!isText(el)) {
+      for (const [key, value] of Object.entries(this.attributes)) {
+        if (
+          ["text", "children", "on", "style", "nodeType", "class"].includes(key)
+        )
+          continue;
+        if (!(typeof value == "string" || typeof value === "number")) continue;
+        this.setAttribute(key, value + "");
+      }
     }
 
     const attrChildren = pget(this.attributes.children || []);
@@ -670,10 +651,8 @@ export class LNode {
   }
 }
 
-export const lnode = (
-  name: string,
-  attributes?: LNodeAttributes,
-) => new LNode(name, attributes);
+export const lnode = (name: string, attributes?: LNodeAttributes) =>
+  new LNode(name, attributes);
 
 // TODO: remove this and allow `null` as children to indicate that nothing should render
 export const none = () =>

@@ -6,7 +6,6 @@ const component_1 = require("./component");
 const css_1 = require("./css");
 const element_1 = require("./element");
 const types_1 = require("./types");
-const utils_1 = require("./utils");
 const nodeEvents_1 = require("./nodeEvents");
 const reactivity_1 = require("./reactivity");
 const reactivity_2 = require("./reactivity");
@@ -19,20 +18,6 @@ var ELNodeType;
     ELNodeType["COMMENT"] = "COMMENT";
     ELNodeType["SLOT"] = "SLOT";
 })(ELNodeType || (exports.ELNodeType = ELNodeType = {}));
-const stringGen = (0, utils_1.stringGenerator)();
-//export type GlobalLNodeState = {
-//  idCounter: number;
-//}
-//
-//export const GNode: GlobalLNodeState = {
-//  idCounter: 0
-//}
-//
-//export const getNextNodeID = () => {
-//  const id = GNode.idCounter;
-//  GNode.idCounter = GNode.idCounter + 1;
-//  return id;
-//}
 class LNode {
     _lnode = "lnode";
     _id = 0;
@@ -41,7 +26,6 @@ class LNode {
     isTrash = false;
     key = "";
     el;
-    elRef;
     parent;
     attributes;
     name;
@@ -49,25 +33,17 @@ class LNode {
     component;
     signal;
     type = ELNodeType.ELEMENT;
-    uid = stringGen.next(16);
     slots = {};
     events = new event_1.EventEmitter();
-    didMount = false;
     unsubs = [];
     constructor(name, attributes) {
         this.name = (0, reactivity_1.pget)(attributes.tag || name);
-        this.attributes = (attributes || {});
+        this.attributes = attributes || {};
         this.parent = (0, reactivity_1.signal)(undefined);
         this.component = (0, reactivity_1.ref)(undefined);
         this.key = (0, reactivity_1.pget)(this.attributes.key || "");
         this.type = (0, reactivity_1.pget)(this.attributes.nodeType || this.type);
         this.isRoot = (0, reactivity_1.pget)(this.attributes.isRoot) || false;
-        this.elRef = (0, reactivity_1.ref)(undefined);
-        //watchSignal(this.parent, (parent) => {
-        //  this._id = parent._id + parent._idCounter;
-        //  parent._idCounter = parent._idCounter + 1;
-        //  console.log(this._id);
-        //})
         const deps = (0, reactivity_1.pget)(this.attributes.deps || []);
         for (let i = 0; i < deps.length; i++) {
             const dep = deps[i];
@@ -155,7 +131,7 @@ class LNode {
                 },
                 onAfterReplace: (_old, _next) => {
                     this.emit({ type: nodeEvents_1.ENodeEvent.AFTER_REPLACE, payload: {} });
-                }
+                },
             }));
         }
     }
@@ -170,10 +146,10 @@ class LNode {
                 return;
             }
             else {
-                console.log('Did we not have an element?');
+                console.log("Did we not have an element?");
             }
         }
-        console.log('did we end up here?');
+        console.log("did we end up here?");
         this.emit({ type: nodeEvents_1.ENodeEvent.BEFORE_REPLACE, payload: {} });
         this.el = undefined;
         const next = this.render();
@@ -193,13 +169,11 @@ class LNode {
                     {
                         this._idCounter = 0;
                     }
-                    ;
                     break;
                 case nodeEvents_1.ENodeEvent.RECEIVE_PARENT:
                     {
                         // noop
                     }
-                    ;
                     break;
                 case nodeEvents_1.ENodeEvent.MOUNTED:
                     {
@@ -294,7 +268,7 @@ class LNode {
     onReceiveChild(child, childIndex) {
         if ((0, exports.isLNode)(child) && child.type === ELNodeType.SLOT) {
             const name = child.attributes.name;
-            if (typeof name !== 'string') {
+            if (typeof name !== "string") {
                 console.warn(`Invalid slot name: ${name}`);
                 return;
             }
@@ -331,7 +305,9 @@ class LNode {
             ? Array.from(thisEl.children)[index]
             : null;
         const nextEl = newNode.render();
-        const oldNode = this.children[index] ? (0, reactivity_1.pget)((0, component_1.unwrapComponentTree)(this.children[index])) : null;
+        const oldNode = this.children[index]
+            ? (0, reactivity_1.pget)((0, component_1.unwrapComponentTree)(this.children[index]))
+            : null;
         if (myChild) {
             if ((0, types_1.isHTMLElement)(myChild) && (0, types_1.isHTMLElement)(nextEl)) {
                 (0, element_1.patchElements)(myChild, nextEl, {
@@ -388,9 +364,6 @@ class LNode {
         }
         const unwrapped = (0, component_1.unwrapComponentTree)(child);
         let unreffed = (0, reactivity_1.pget)(unwrapped);
-        if ((0, reactivity_1.isSignal)(unreffed)) {
-            unreffed = unreffed.get();
-        }
         if ((0, exports.isLNode)(child)) {
             child.parent.set(this);
             this.emit({ type: nodeEvents_1.ENodeEvent.RECEIVE_PARENT, payload: { parent: this } });
@@ -435,15 +408,13 @@ class LNode {
     }
     render() {
         const el = this.ensureElement();
-        //queueMicrotask(() => {
-        //  this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
-        //  this.emit({ type: ENodeEvent.LOADED, payload: {} });
-        //});
         if (this.attributes.text) {
             if ((0, types_1.isText)(el) || (0, types_1.isComment)(el)) {
                 el.data = this.attributes.text;
             }
-            else if (!(0, types_1.isSVGElement)(el) && !(0, types_1.isSVGPathElement)(el) && !(0, types_1.isSVGSVGElement)(el)) {
+            else if (!(0, types_1.isSVGElement)(el) &&
+                !(0, types_1.isSVGPathElement)(el) &&
+                !(0, types_1.isSVGSVGElement)(el)) {
                 el.innerHTML = "";
                 // @ts-ignore
                 el.innerText = (0, reactivity_1.unref)(this.attributes.text) + "";
@@ -478,14 +449,14 @@ class LNode {
         for (const [key, value] of Object.entries(this.attributes.on || {})) {
             el.addEventListener(key, value);
         }
-        for (const [key, value] of Object.entries(this.attributes)) {
-            if (["text", "children", "on", "style", "nodeType", "class"].includes(key))
-                continue;
-            if (typeof value !== "string")
-                continue;
-            if ((0, types_1.isText)(el))
-                continue;
-            this.setAttribute(key, value);
+        if (!(0, types_1.isText)(el)) {
+            for (const [key, value] of Object.entries(this.attributes)) {
+                if (["text", "children", "on", "style", "nodeType", "class"].includes(key))
+                    continue;
+                if (!(typeof value == "string" || typeof value === "number"))
+                    continue;
+                this.setAttribute(key, value + "");
+            }
         }
         const attrChildren = (0, reactivity_1.pget)(this.attributes.children || []);
         for (let i = 0; i < attrChildren.length; i++) {

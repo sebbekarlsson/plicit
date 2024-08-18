@@ -1,6 +1,5 @@
 import { EventEmitter, PlicitEvent } from "../../event";
 import { isFunction } from "../../is";
-import { proxy } from "../proxy";
 import { debounce, throttle } from "../../utils";
 import { ESignalState } from "./constants";
 import { ESignalEvent } from "./event";
@@ -37,7 +36,6 @@ export type SignalOptions = {
 };
 
 type Fun<T = any> = () => T;
-type AsyncFun<T = any> = () => Promise<T>;
 
 export type SignalEventPayload = {};
 
@@ -54,7 +52,6 @@ export type Signal<T = any> = Trackable & {
 };
 
 export type SignalNode<T = any> = {
-  index: number;
   state: ESignalState;
   fun?: Fun<T>;
   _value?: T;
@@ -75,12 +72,7 @@ export const signal = <T = any>(
   const uid = options.uid || nextId();
   const init = isFunction(initial) ? initial : () => initial;
 
-  const node: SignalNode<T> = proxy<SignalNode<T>>({
-    index: -1,
-    _value: isFunction(initial) ? null : initial,
-    fun: init,
-    state: ESignalState.UNINITIALIZED,
-  });
+  //const node: SignalNode<T> = ;
 
   const emit = (
     event: Omit<
@@ -102,7 +94,7 @@ export const signal = <T = any>(
 
     if (options.isComputed) {
       withUpdateEvents(() => {
-        node._value = init();
+        sig.node._value = init();
       });
     } else {
       withUpdateEvents(() => init());
@@ -148,48 +140,43 @@ export const signal = <T = any>(
     trigger = fn;
   }
 
-  const now = performance.now();
 
   const sig: Signal<T> = {
-    createdAt: now,
     isComputed: options.isComputed,
     isEffect: options.isEffect,
     emitter: new EventEmitter(),
     sym: "Signal",
     uid: uid,
-    node,
+    node: ({
+      _value: isFunction(initial) ? null : initial,
+      fun: init,
+      state: ESignalState.UNINITIALIZED,
+    }),
     trigger,
-    peek: () => node._value || init(),
+    peek: () => sig.node._value || init(),
     tracked: [],
     trackedEffects: [],
     watchers: [],
     get: () => {
-      if (node.state === ESignalState.UNINITIALIZED || node._value === null) {
+      if (sig.node.state === ESignalState.UNINITIALIZED || sig.node._value === null) {
         //        trigger();
-        node._value = init();
-        node.state = ESignalState.INITIALIZED;
+        sig.node._value = init();
+        sig.node.state = ESignalState.INITIALIZED;
       }
       track();
-      queueMicrotask(() => {
-        sig.lastGet = performance.now();
-      });
-      return node._value;
+      return sig.node._value;
     },
     set: (fun: ((old: T) => T) | T) => {
-      const oldValue = node._value;
-      const nextValue = isFunction(fun) ? fun(node._value) : fun;
+      const oldValue = sig.node._value;
+      const nextValue = isFunction(fun) ? fun(sig.node._value) : fun;
       if (nextValue === oldValue) {
         return;
       }
       //
 
-      node._value = nextValue;
-      node.state = ESignalState.DIRTY;
+      sig.node._value = nextValue;
+      sig.node.state = ESignalState.DIRTY;
       trigger();
-
-      queueMicrotask(() => {
-        sig.lastSet = performance.now();
-      });
     },
     dispose: () => {
       queueMicrotask(() => {
@@ -199,8 +186,6 @@ export const signal = <T = any>(
         sig.emitter.clear();
       });
     },
-    lastSet: -1,
-    lastGet: -1,
   };
 
   GSignal.current = sig;

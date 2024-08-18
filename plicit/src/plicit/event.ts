@@ -13,12 +13,9 @@ export class EventEmitter<T = any, K extends string = string, Target = any> {
 
   emit(event: PlicitEvent<T, K, Target>) {
     if (!this.slots[event.type] || this.slots[event.type].length <= 0) return;
+
     this.slots[event.type].forEach((sub) => {
-      try {
-        sub(event);
-      } catch (e) {
-        console.error(e);
-      }
+      sub(event);
     });
   }
 

@@ -46,17 +46,26 @@ export const useElementBounds = (
     updateFunc();
   };
 
+  let lastEl: HTMLElement | null = null;
+  let lastObs: ResizeObserver | null = null;
+
   watchRef(() => {
     const node = elRef.value;
     if (!node) return;
     const el = node.el;
     if (!el || !isHTMLElement(el)) return;
 
+    if (el !== lastEl && lastObs) {
+      lastObs.disconnect();
+      lastEl = el;
+    }
+
     const obs = new ResizeObserver(() => {
       update();
     });
 
     obs.observe(el);
+    lastObs = obs;
   }, [elRef]);
 
   const onWindowResize = () => {

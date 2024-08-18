@@ -29,7 +29,6 @@ export type Signal<T = any> = Trackable & {
     dispose: () => void;
 };
 export type SignalNode<T = any> = {
-    index: number;
     state: ESignalState;
     fun?: Fun<T>;
     _value?: T;
