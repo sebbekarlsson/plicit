@@ -1,35 +1,37 @@
 import "./assets/css/index.css";
 import { Component, ljsx, setup } from "plicit";
-import { RouterView } from "./components/router/components/router-view";
 import "./router";
 import { NavBar } from "./components/navbar";
 import { ModalContainer } from "./components/modal/container";
 import { ToastContainer } from "./components/toast/container";
 import { SideMenu } from "./components/side-menu";
 import { ISideMenu, ISideMenuItem } from "./components/side-menu/types";
-import { useRouter } from "./components/router/hooks";
 import { useSideMenu } from "./components/side-menu/hooks/useSideMenu";
 import { MainRouter } from "./components/router/components/main-router";
 
 globalThis.ljsx = ljsx;
 
-const router = useRouter();
 
 const componentRoutes: ISideMenuItem[] = [
   {
     label: "Button",
+    path: '/components/button'
   },
   {
-    label: 'Input Field'
+    label: 'Input Field',
+    path: '/components/input-field'
   },
   {
-    label: 'Range Slider'
+    label: 'Range Slider',
+    path: '/components/range-slider'
   },
   {
-    label: 'Context Menu'
+    label: 'Context Menu',
+    path: '/components/context-menu'
   },
   {
-    label: 'Tooltip'
+    label: 'Tooltip',
+    path: '/components/tooltip'
   },
   {
     label: 'Line Graph',

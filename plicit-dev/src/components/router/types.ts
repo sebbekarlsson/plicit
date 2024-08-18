@@ -1,14 +1,15 @@
-import { Component, Dict, Ref } from "plicit";
+import { AsyncFun, Component, Dict, Ref } from "plicit";
 
 export type RouterNavigationAction = {
   path: string;
+  name?: string;
   props?: Dict;
 }
 
 export type IRoute = {
   name?: string;
   path: string;
-  component: Component;
+  component: Component | AsyncFun<Component>;
   children?: IRoute[];
 }
 

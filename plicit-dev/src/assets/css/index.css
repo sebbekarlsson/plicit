@@ -10,6 +10,9 @@
 * {
     font-family: Open-Sans;
     box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-stroke: 0.09px;
 }
 
 html {

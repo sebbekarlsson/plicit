@@ -16,45 +16,43 @@ import {
   quadTreeFromLines,
   range,
   remap,
-  VEC2
+  VEC2,
+  Vector
 } from "tsmathutil";
 import { useElementBounds } from "../../hooks/useElementBounds";
 import { Line, linesFromPoints, pathFromPoints } from "./utils";
 import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
 import { twColor } from "../../utils/style";
+import { Tooltip } from "../tooltip";
+import { useTooltip } from "../tooltip/hooks/useTooltip";
+import { GraphPointData, LineGraphProps } from "./types";
 
-const N = 100;
+const N = 300;
+const SEED = 144.93491823;
+const OCT = 5;
+const FREQ = 3;
 
 const TICK_LINE_COLOR = "rgba(0, 0, 0, 0.15)";
+const PRIMARY_COLOR = twColor("amaranth-500");
 
-type LineGraphAxis = {
-  tickCount?: number;
-  format?: (x: number) => string;
-};
 
-type LineGraphProps = {
-  xAxis?: LineGraphAxis;
-  yAxis?: LineGraphAxis;
-};
 
-const props: LineGraphProps = {
-  xAxis: { tickCount: 16 },
-  yAxis: {
-    tickCount: 16,
-    format: (x) => x.toFixed(2),
-  },
-};
 
-export const LineGraph: Component = () => {
+export const LineGraph: Component<LineGraphProps> = (props) => {
   const wrapperRef: LNodeRef = ref(undefined);
-  const svgBounds = useElementBounds(wrapperRef);
+  const svgBounds = useElementBounds(wrapperRef, { debounce: 60 });
   const mouse = useMousePositionSignal();
+  
 
   const values = computedSignal(() => {
     return range(N).map(
-      (i) => noise2D(i / N, 0.003123 + i / N, 1.39123, 2, 6) * 100,
+      (i) => noise2D(i / N, 0.003123 + i / N, SEED, OCT, FREQ) * 100,
     );
   });
+
+  const dataCount = computedSignal(() => {
+    return values.get().length;
+  })
 
   const low = computedSignal(() => Math.min(...values.get()));
   const high = computedSignal(() => Math.max(...values.get()));
@@ -87,7 +85,7 @@ export const LineGraph: Component = () => {
     return Math.floor(
       Math.max(
         1,
-        Math.min(values.get().length, size.y, props.yAxis?.tickCount || 1),
+        Math.min(values.get().length, size.y, props.yAxis?.tickCount || 8),
       ),
     );
   });
@@ -128,7 +126,7 @@ export const LineGraph: Component = () => {
     return Math.floor(
       Math.max(
         1,
-        Math.min(values.get().length, size.x, props.xAxis?.tickCount || 1),
+        Math.min(values.get().length, size.x, props.xAxis?.tickCount || 8),
       ),
     );
   });
@@ -257,6 +255,24 @@ export const LineGraph: Component = () => {
     return VEC2(0, 0);
   });
 
+  const intersectionGlobal = computedSignal(() => {
+    const point = mouseIntersection.get();
+    return point.add(svgBounds.bounds.get().min);
+  });
+
+  const intersectionData = computedSignal(():GraphPointData => {
+    const count = dataCount.get();
+    const bounds = graphBounds.get();
+    const p = mouseIntersection.get();
+    const x = p.x;
+    const y = p.y;
+    const index =  clamp(count - (1+Math.floor(remap(x, { min: bounds.min.x, max: bounds.max.x }, { min: 0, max: count-1 }))), 0, count-1);
+    const value = values.get()[index];
+    const interpolatedValue = remap(y, { max: bounds.min.y, min: bounds.max.y }, { min: low.get(), max: high.get() });
+    
+    return { index, value, interpolatedValue };
+  })
+
   const pathCommands = computedSignal(() => {
     return points
       .get()
@@ -279,29 +295,51 @@ export const LineGraph: Component = () => {
 
   const elRect = computedSignal(() => {
     const box = graphBounds.get();
-
-    const vertices = [
-      VEC2(box.min.x, box.min.y),
-      VEC2(box.max.x, box.min.y),
-      VEC2(box.max.x, box.max.y),
-      VEC2(box.min.x, box.max.y),
-    ];
-
-    const cmd = pathFromPoints(vertices);
     return (
       <path
-        d={cmd}
-        fill="none"
-        stroke={twColor("amaranth-500")}
-        stroke-width="2px"
+        d={pathFromPoints([
+          VEC2(box.min.x, box.min.y),
+          VEC2(box.max.x, box.min.y),
+          VEC2(box.max.x, box.max.y),
+          VEC2(box.min.x, box.max.y),
+        ])}
+        fill="url(#areaGradient)"
+        stroke-width="1px"
       />
     );
   });
 
+  const tooltip = useTooltip({
+    triggerRef: wrapperRef,
+    targetPosition: intersectionGlobal,
+    centerX: true,
+    centerY: true,
+    placement: 'top',
+    spacing: 16,
+    body: () => {
+      const value = computedSignal(() => {
+        const data = intersectionData.get();
+        const format = props.yAxis?.format || ((x) => x + "");
+        return <span>{format(data.interpolatedValue)}</span>;
+      })
+      return <div class={`p-4 text-white font-semibold`} style={{
+        background: PRIMARY_COLOR
+      }}>
+        { value }
+      </div>;
+    }
+  });
+
+
   return (
     <div
       class="w-full h-full select-none"
-      style={{ minHeight: "480px" }}
+      style={{
+        ...(props.resolution ? {
+          width: `${props.resolution.x}px`,
+          height: `${props.resolution.y}px`
+        } : {})
+      }}
       ref={wrapperRef}
     >
       <svg
@@ -309,7 +347,7 @@ export const LineGraph: Component = () => {
           const size = wrapperSize.get();
           return {
             width: "100%",
-            height: size.y + "px",
+            height: "100%",
           };
         })}
       >
@@ -318,7 +356,12 @@ export const LineGraph: Component = () => {
             <stop offset="25%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
             <stop offset="100%" stop-color={TICK_LINE_COLOR} />
           </linearGradient>
+          <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="60%" stop-color={PRIMARY_COLOR} stop-opacity="0%" />
+            <stop offset="100%" stop-color={PRIMARY_COLOR} stop-opacity="10%" />
+          </linearGradient>
         </defs>
+        {elRect}
         {computedSignal(() => {
           const size = wrapperSize.get();
           const labels = yLabels.get();
@@ -362,18 +405,8 @@ export const LineGraph: Component = () => {
                 const start = tick;
                 const label = labels[i];
                 const end = VEC2(tick.x, size.y);
-                const cmd = [start, end]
-                  .map((it) => `${it.x},${it.y}`)
-                  .join(" ");
                 return (
                   <g>
-                    {/*<polyline
-                      points={cmd}
-                      stroke={TICK_LINE_COLOR}
-                      stroke-width="1px"
-                      fill="none"
-                    />
-                       */}
                     <rect
                       x={start.x + ""}
                       y={start.y + ""}
@@ -398,7 +431,7 @@ export const LineGraph: Component = () => {
         {computedSignal(() => (
           <polyline
             points={pathCommands.get()}
-            stroke={twColor("amaranth-500")}
+            stroke={PRIMARY_COLOR}
             stroke-width="4px"
             fill="none"
           />
@@ -411,7 +444,7 @@ export const LineGraph: Component = () => {
                 .map((p) => `${p.x},${p.y}`)
                 .join(" ")}
               fill="none"
-              stroke={twColor("amaranth-700")}
+              stroke={PRIMARY_COLOR}
               stroke-width="2px"
             />
           );
@@ -423,14 +456,14 @@ export const LineGraph: Component = () => {
               cx={p.x + "px"}
               cy={p.y + "px"}
               r={8 + ""}
-              fill={twColor("amaranth-700")}
+              fill={PRIMARY_COLOR}
             />
           );
         })}
-        {elRect}
         {/*elTree*/}
         {/*elLines*/}
       </svg>
+      <Tooltip hook={tooltip}/>
     </div>
   );
 };

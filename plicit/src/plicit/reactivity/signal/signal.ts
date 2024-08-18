@@ -37,6 +37,7 @@ export type SignalOptions = {
 };
 
 type Fun<T = any> = () => T;
+type AsyncFun<T = any> = () => Promise<T>;
 
 export type SignalEventPayload = {};
 
@@ -175,11 +176,11 @@ export const signal = <T = any>(
       return node._value;
     },
     set: (fun: ((old: T) => T) | T) => {
-      //const oldValue = node._value;
+      const oldValue = node._value;
       const nextValue = isFunction(fun) ? fun(node._value) : fun;
-      //if (nextValue === oldValue) {
-      //  return;
-      //}
+      if (nextValue === oldValue) {
+        return;
+      }
       //
 
       node._value = nextValue;

@@ -2,7 +2,7 @@ import { computedSignal, CSSProperties, isHTMLElement, LNodeChild, LNodeRef, pge
 import { ITooltipConfig } from "../types"
 import { useElementBounds } from "../../../hooks/useElementBounds";
 import { useInterpolationSignal } from "../../../hooks/useInterpolationSignal";
-import { getAABBSize } from "tsmathutil";
+import { getAABBSize, VEC2 } from "tsmathutil";
 
 export type UseTooltipProps = ITooltipConfig & {
   active?: Signal<boolean>;
@@ -66,23 +66,26 @@ export const useTooltip = (props: UseTooltipProps): UseTooltip => {
   }, [props.triggerRef]);
 
 
-  const getMySize = () => {
+  const selfSize = computedSignal(() => {
     const bound = toolBounds.bounds.get();
     return getAABBSize(bound);
-  }
+  });
 
-  const getTriggerSize = () => {
+  const triggerSize = computedSignal(() => {
     const bound = triggerBounds.bounds.get();
     return getAABBSize(bound);
-  }
+  })
+
 
 
   const targetPos = computedSignal(() => {
+    const userPos = pget(props.targetPosition);
+    if (userPos) return userPos;
     const b = triggerBounds.bounds.get();
-    const p = b.min.clone();
+    let p = b.min.clone();
 
-    const mySize = getMySize();
-    const trigSize = getTriggerSize();
+    const mySize = selfSize.get();
+    const trigSize = triggerSize.get();
     p.x -= mySize.x * 0.5;
     p.x += trigSize.x * 0.5;
     p.y -= 0.5 * trigSize.y;
@@ -92,8 +95,35 @@ export const useTooltip = (props: UseTooltipProps): UseTooltip => {
   });
 
 
+  const pos = computedSignal(() => {
+    const mySize = selfSize.get();
+
+    let px = 0;
+    let py = 0;
+    const spacing = props.spacing ?? 0;
+    
+    const p = targetPos.get().clone();
+    if (props.centerX) {
+      px -= mySize.x * 0.5;
+    }
+    if (props.centerY) {
+      py -= mySize.y * 0.5;
+    }
+
+    switch (props.placement) {
+      case 'top':  {
+        py -= mySize.y * 0.5;
+        py -= spacing;
+      }; break;
+    }
+
+    
+    return p.add(VEC2(px, py));
+  })
+
+
   const style = computedSignal((): CSSProperties => {
-    const p = targetPos.get();
+    const p = pos.get();
     const x = p.x;
     const y = p.y;
 

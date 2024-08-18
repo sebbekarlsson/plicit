@@ -1,35 +1,56 @@
-import { Component, ELNodeType } from "plicit";
+import {
+  Component,
+  computedAsync,
+  computedSignal,
+  ELNodeType,
+  isAsyncFunction,
+} from "plicit";
 import { useRoute, useRouter } from "../../hooks";
 
 export const MainRouter: Component = () => {
   const router = useRouter();
   const route = useRoute();
 
+  const parentComponent = computedAsync(async () => {
+    const r = route.match.value;
+    if (!r || !r.parent) return null;
+    if (isAsyncFunction(r.parent.component)) return await r.parent.component();
+    return r.parent.component;
+  }, [router.router.value.current.nav, route.match]);
+
+  const childComponent = computedAsync(async () => {
+    const r = route.match.value;
+    if (!r || !r.route) return null;
+    if (isAsyncFunction(r.route.component)) return await r.route.component();
+    return r.route.component;
+  }, [router.router.value.current.nav, route.match]);
+
   return (
     <div class="w-full h-full" nodeType={ELNodeType.FRAGMENT}>
       {() => (
-        <div class="w-full h-full" deps={[router.router.value.current.nav]}>
-          {() => {
-            const r = route.match.value;
+        <div class="w-full h-full">
+          {computedSignal(() => {
+            const parent = parentComponent.data;
+            const child = childComponent.data;
 
-            if (r.parent === r.route && r.route) {
-              return <r.route.component />;
+            if (parent.value === child.value && child.value) {
+              return <child.value />;
             }
 
-            if (r.parent && r.route) {
+            if (parent.value && child.value) {
               return (
-                <r.parent.component>
-                  <r.route.component />
-                </r.parent.component>
+                <parent.value>
+                  <child.value />
+                </parent.value>
               );
-            } else if (r.route) {
-              return <r.route.component />;
-            } else if (r.parent) {
-              return <r.parent.component />;
+            } else if (child.value) {
+              return <child.value />;
+            } else if (parent.value) {
+              return <parent.value />;
             } else {
               return <div />;
             }
-          }}
+          })}
         </div>
       )}
     </div>

@@ -111,11 +111,11 @@ const signal = (initial, options = {}) => {
             return node._value;
         },
         set: (fun) => {
-            //const oldValue = node._value;
+            const oldValue = node._value;
             const nextValue = (0, is_1.isFunction)(fun) ? fun(node._value) : fun;
-            //if (nextValue === oldValue) {
-            //  return;
-            //}
+            if (nextValue === oldValue) {
+                return;
+            }
             //
             node._value = nextValue;
             node.state = constants_1.ESignalState.DIRTY;

@@ -7,6 +7,7 @@ import { FileTree } from "../../components/file-tree";
 import { TextReverser } from "../../components/text-reverser";
 import { Hero } from "../../components/hero";
 import { PageContent } from "../../layouts/page-content";
+import { LineGraph } from "../../components/line-graph";
 
 const RangeItem: Component<{ label: string; value: number }> = (props) => {
   const state = S<number>(props.value);
@@ -26,7 +27,6 @@ const RangeItem: Component<{ label: string; value: number }> = (props) => {
     </div>
   );
 };
-
 export const HomeRoute: Component = () => {
   return (
     <div class="w-full h-full">
@@ -40,8 +40,13 @@ export const HomeRoute: Component = () => {
             gap: "1rem",
           }}
         >
-          <Card class="min-w-[300px]" title="Counter" subtitle="Classic Counter">
-            <Counter />
+          <Card title="Graph" subtitle="Line Graph">
+            <div class="h-[256px]">
+              <LineGraph
+                xAxis={{ tickCount: 8 }}
+                yAxis={{ tickCount: 6, format: (x) => x.toFixed(2) }}
+              />
+            </div>
           </Card>
           <Card title="Range Slider" subtitle="Reactive Range Slider">
             <div class="space-y-4">
@@ -50,10 +55,13 @@ export const HomeRoute: Component = () => {
               <RangeItem value={75} label="C" />
             </div>
           </Card>
+          <Card title="Counter" subtitle="Classic Counter">
+            <Counter />
+          </Card>
           <Card title="Item List" subtitle="Reactive Item List">
             <ItemList />
           </Card>
-          
+
           <Card title="File Tree" subtitle="A virtual filesystem">
             <FileTree />
           </Card>

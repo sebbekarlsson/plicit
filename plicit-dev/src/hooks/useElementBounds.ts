@@ -1,7 +1,12 @@
 import { computedSignal, debounce, isHTMLElement, LNodeRef, signal, watchRef } from "plicit";
 import { AABB, VEC2 } from "tsmathutil";
 
-export const useElementBounds = (elRef: LNodeRef) => {
+
+export type UseElementBoundsOptions = {
+  debounce?: number;
+}
+
+export const useElementBounds = (elRef: LNodeRef, options: UseElementBoundsOptions = {}) => {
 
 
   const counter = signal<number>(0);
@@ -36,9 +41,14 @@ export const useElementBounds = (elRef: LNodeRef) => {
   });
 
   const update = () => {
-    counter.set((x) => x+1);
-    bounds.trigger();
+    const fun = () => {
+      counter.set((x) => x+1);
+    }
+    const updateFunc = options.debounce ? debounce(fun, options.debounce) : fun;
+    updateFunc();
   }
+
+  
 
   watchRef(() => {
     const node = elRef.value;

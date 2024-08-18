@@ -1,2 +1,3 @@
 import { Component } from "plicit";
-export declare const LineGraph: Component;
+import { LineGraphProps } from "./types";
+export declare const LineGraph: Component<LineGraphProps>;

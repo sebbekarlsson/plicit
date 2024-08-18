@@ -13,7 +13,7 @@ export const isConsonant = (char: string): boolean => {
 
 export const isFunction = (x: any): x is Function => typeof x === 'function';
 
-type AsyncFun<T = any> = () => Promise<T>;
+export type AsyncFun<T = any> = () => Promise<T>;
 export const isAsyncFunction = <T = any>(x: any): x is AsyncFun<T> => {
   if (!x) return false;
   if (typeof x !== 'function') return false;

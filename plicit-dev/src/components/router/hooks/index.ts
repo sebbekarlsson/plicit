@@ -40,6 +40,7 @@ const createRoute = (props: IRouteConfig): IRoute => {
   };
 };
 
+
 export const createRouter = (props: IRouterConfig) => {
   router.value = {
     ...router.value,
