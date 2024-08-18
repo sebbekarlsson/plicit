@@ -12,13 +12,15 @@ const remapChild = (child) => {
 };
 function ljsx(tag, attribs_, ...childs) {
     const attribs = attribs_ || {};
+    const depth = typeof attribs.__depth === 'number' ? attribs.__depth : 0;
     const children = childs
         .map((child) => remapChild(child))
         .flat()
         .filter((it) => (0, lnode_1.isLNode)(it) || (0, component_1.isComponent)(it) || (0, reactivity_1.isRef)(it) || (0, reactivity_1.isSignal)(it));
     if ((0, component_1.isComponent)(tag)) {
-        return tag({ ...attribs, children: children });
+        const next = tag({ ...attribs, __depth: depth + 1, children: children });
+        return next;
     }
-    return (0, lnode_1.lnode)(tag, { ...attribs, children: children });
+    return (0, lnode_1.lnode)(tag, { ...attribs, __depth: depth + 1, children: children });
 }
 //# sourceMappingURL=jsx.js.map

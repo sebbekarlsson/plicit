@@ -3,13 +3,11 @@ import { Card } from "../../components/card";
 import { Counter } from "../../components/counter";
 import { ItemList } from "../../components/item-list";
 import { RangeSlider } from "../../components/range-slider";
-import { FileTree } from "../../components/file-tree";
 import { TextReverser } from "../../components/text-reverser";
 import { Hero } from "../../components/hero";
 import { PageContent } from "../../layouts/page-content";
 import { LineGraph } from "../../components/line-graph";
 import { Table } from "../../components/table";
-import { range } from "tsmathutil";
 import { ITableRow, ITable } from "../../components/table/types";
 import { useFakeDatabase } from "../../hooks/useFakeDatabase";
 import { InputField } from "../../components/input-field";
@@ -112,10 +110,6 @@ export const HomeRoute: Component = () => {
           </Card>
           <Card title="Item List" subtitle="Reactive Item List">
             <ItemList />
-          </Card>
-
-          <Card title="File Tree" subtitle="A virtual filesystem">
-            <FileTree />
           </Card>
           <Card title="Text Reverser" subtitle="Reactive text reverser">
             <TextReverser />

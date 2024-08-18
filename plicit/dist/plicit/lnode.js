@@ -31,6 +31,7 @@ class LNode {
     name;
     children = [];
     component;
+    childComponents = [];
     signal;
     type = ELNodeType.ELEMENT;
     slots = {};
@@ -58,22 +59,16 @@ class LNode {
             this.unsubs = [...this.unsubs, ...nextUnsubs];
         }
     }
-    destroy() {
+    emitCleanup() {
+        this.emit({ type: nodeEvents_1.ENodeEvent.CLEANUP, payload: {} });
+    }
+    cleanup() {
+        this.emitCleanup();
         this.unsubs.forEach((unsub) => unsub());
         this.unsubs = [];
-        if (this.parent) {
-            this.parent.dispose();
-        }
-        if (this.signal) {
-            this.signal.dispose();
-        }
-        this.isTrash = true;
-        const attribs = Object.values(this.attributes);
-        for (const attrib of attribs) {
-            if ((0, reactivity_1.isSignal)(attrib)) {
-                attrib.dispose();
-            }
-        }
+    }
+    destroy() {
+        this.cleanup();
     }
     toObject() {
         return {
@@ -105,14 +100,7 @@ class LNode {
         }
         const nextEl = unreffed.getElement();
         if ((0, exports.isLNode)(next)) {
-            next.unsubs.forEach((unsub) => unsub());
-            next.unsubs = [];
-            if (next.parent) {
-                next.parent.dispose();
-            }
-            if (next.signal) {
-                next.signal.dispose();
-            }
+            next.cleanup();
         }
         if ((0, types_1.isHTMLElement)(old) && (0, types_1.isHTMLElement)(nextEl)) {
             if ((0, exports.isLNode)(next)) {
@@ -136,20 +124,11 @@ class LNode {
         }
     }
     invalidate() {
-        //if (!this.parent.get()) return;
-        //const old = this.el;
-        //if (!old) return;
         const component = this.component.value;
-        if (component) {
-            if (this.el) {
-                this.patchWith(component);
-                return;
-            }
-            else {
-                console.log("Did we not have an element?");
-            }
+        if (component && this.el) {
+            this.patchWith(component);
+            return;
         }
-        console.log("did we end up here?");
         this.emit({ type: nodeEvents_1.ENodeEvent.BEFORE_REPLACE, payload: {} });
         this.el = undefined;
         const next = this.render();
@@ -339,6 +318,10 @@ class LNode {
         }
     }
     patchChildFromSignal(child, sig, _childIndex) {
+        const comp = sig.node._value;
+        if ((0, component_1.isComponent)(comp)) {
+            this.childComponents[_childIndex] = comp;
+        }
         const node = (0, component_1.unwrapComponentTree)(sig.node._value);
         if ((0, exports.isLNode)(node)) {
             const index = this.children.indexOf(child);
@@ -352,7 +335,11 @@ class LNode {
         }
     }
     appendChild(child, childIndex) {
+        if ((0, component_1.isComponent)(child)) {
+            this.childComponents[childIndex] = child;
+        }
         if ((0, reactivity_1.isSignal)(child)) {
+            const childNode = this.children[childIndex];
             const sig = child;
             child.emitter.addEventListener(reactivity_2.ESignalEvent.AFTER_UPDATE, (event) => {
                 this.patchChildFromSignal(child, event.target, childIndex);
@@ -407,6 +394,7 @@ class LNode {
         }
     }
     render() {
+        this.emit({ type: nodeEvents_1.ENodeEvent.BEFORE_RENDER, payload: {} });
         const el = this.ensureElement();
         if (this.attributes.text) {
             if ((0, types_1.isText)(el) || (0, types_1.isComment)(el)) {
@@ -447,11 +435,20 @@ class LNode {
             }
         }
         for (const [key, value] of Object.entries(this.attributes.on || {})) {
+            el.removeEventListener(key, value);
             el.addEventListener(key, value);
         }
         if (!(0, types_1.isText)(el)) {
             for (const [key, value] of Object.entries(this.attributes)) {
-                if (["text", "children", "on", "style", "nodeType", "class"].includes(key))
+                if ([
+                    "text",
+                    "children",
+                    "on",
+                    "style",
+                    "nodeType",
+                    "class",
+                    "__depth",
+                ].includes(key))
                     continue;
                 if (!(typeof value == "string" || typeof value === "number"))
                     continue;

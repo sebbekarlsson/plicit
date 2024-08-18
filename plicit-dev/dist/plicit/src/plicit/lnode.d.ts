@@ -46,8 +46,10 @@ export type NodeEventUpdated = PlicitEvent<{}, ENodeEvent.UPDATED, LNode>;
 export type NodeEventLoaded = PlicitEvent<{}, ENodeEvent.LOADED, LNode>;
 export type NodeEventUnMounted = PlicitEvent<{}, ENodeEvent.UNMOUNTED, LNode>;
 export type NodeEventMounted = PlicitEvent<{}, ENodeEvent.MOUNTED, LNode>;
+export type NodeEventBeforeRender = PlicitEvent<{}, ENodeEvent.BEFORE_RENDER, LNode>;
+export type NodeEventCleanup = PlicitEvent<{}, ENodeEvent.CLEANUP, LNode>;
 export type NodeEventReceiveParent = PlicitEvent<NodeEventReceiveParentPayload, ENodeEvent.RECEIVE_PARENT, LNode>;
-export type NodeEvent = NodeEventBeforeReplace | NodeEventAfterReplace | NodeEventReplaced | NodeEventUpdated | NodeEventLoaded | NodeEventUnMounted | NodeEventMounted | NodeEventReceiveParent;
+export type NodeEvent = NodeEventBeforeReplace | NodeEventAfterReplace | NodeEventReplaced | NodeEventUpdated | NodeEventLoaded | NodeEventUnMounted | NodeEventMounted | NodeEventCleanup | NodeEventBeforeRender | NodeEventReceiveParent;
 export type LNodeNativeElement = HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment | SVGElement | Element;
 export declare class LNode {
     _lnode: "lnode";
@@ -62,12 +64,15 @@ export declare class LNode {
     name: string;
     children: LNodeChild[];
     component: Ref<Component | undefined>;
+    childComponents: Component[];
     signal: Signal<LNode> | undefined;
     type: ELNodeType;
     slots: Record<string, LNodeRef>;
     events: EventEmitter<NodeEventPayload, ENodeEvent, LNode>;
     unsubs: Array<() => void>;
     constructor(name: string, attributes?: LNodeAttributes);
+    emitCleanup(): void;
+    cleanup(): void;
     destroy(): void;
     toObject(): any;
     setId(id: number): void;

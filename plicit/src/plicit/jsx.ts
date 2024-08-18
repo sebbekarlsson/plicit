@@ -16,14 +16,16 @@ export function ljsx(
   ...childs: any[]
 ) {
   const attribs = attribs_ || {};
+  const depth = typeof attribs.__depth === 'number' ? attribs.__depth : 0;
   const children = childs
     .map((child) => remapChild(child))
     .flat()
     .filter((it) => isLNode(it) || isComponent(it) || isRef(it) || isSignal(it));
 
   if (isComponent(tag)) {
-    return tag({ ...attribs, children: children });
+    const next = tag({ ...attribs, __depth: depth + 1, children: children });
+    return next;
   }
 
-  return lnode(tag, { ...attribs, children: children });
+  return lnode(tag, { ...attribs, __depth: depth + 1, children: children });
 }

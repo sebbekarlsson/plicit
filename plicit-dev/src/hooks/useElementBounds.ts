@@ -8,8 +8,11 @@ import {
 } from "plicit";
 import { AABB, VEC2 } from "tsmathutil";
 
+type Timer = ReturnType<typeof setInterval>;
+
 export type UseElementBoundsOptions = {
   debounce?: number;
+  interval?: number;
 };
 
 export const useElementBounds = (
@@ -82,7 +85,13 @@ export const useElementBounds = (
   window.addEventListener("wheel", update);
   window.addEventListener("scroll", update);
 
+  //let interval: (Timer | null) = options.interval ? setInterval(() => {
+  //  update();
+  //}, options.interval) : null;
+
   const destroy = () => {
+   // clearInterval(interval);
+   // interval = null;
     window.removeEventListener("resize", update);
     window.removeEventListener("wheel", update);
     window.removeEventListener("scroll", update);

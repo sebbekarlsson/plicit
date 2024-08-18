@@ -38,7 +38,7 @@ const PRIMARY_COLOR = twColor("primary-500");
 
 export const LineGraph: Component<LineGraphProps> = (props) => {
   const wrapperRef: LNodeRef = ref(undefined);
-  const svgBounds = useElementBounds(wrapperRef, { debounce: 60 });
+  const svgBounds = useElementBounds(wrapperRef, { interval: 1000 });
   const mouse = useMousePositionSignal();
   const hover = useElementHover(wrapperRef);
 

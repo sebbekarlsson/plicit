@@ -78,10 +78,14 @@ const signal = (initial, options = {}) => {
         const [fn] = (0, utils_1.throttle)(trigger, options.throttle);
         trigger = fn;
     }
+    let wrapper = null;
     const sig = {
         isComputed: options.isComputed,
         isEffect: options.isEffect,
         emitter: new event_1.EventEmitter(),
+        wrapGetWith: (wrapFun) => {
+            wrapper = wrapFun;
+        },
         sym: "Signal",
         uid: uid,
         node: ({
@@ -95,13 +99,19 @@ const signal = (initial, options = {}) => {
         trackedEffects: [],
         watchers: [],
         get: () => {
-            if (sig.node.state === constants_1.ESignalState.UNINITIALIZED || sig.node._value === null) {
-                //        trigger();
-                sig.node._value = init();
-                sig.node.state = constants_1.ESignalState.INITIALIZED;
+            const _get = () => {
+                if (sig.node.state === constants_1.ESignalState.UNINITIALIZED || sig.node._value === null) {
+                    //        trigger();
+                    sig.node._value = init();
+                    sig.node.state = constants_1.ESignalState.INITIALIZED;
+                }
+                track();
+                return sig.node._value;
+            };
+            if (wrapper) {
+                return wrapper(_get);
             }
-            track();
-            return sig.node._value;
+            return _get();
         },
         set: (fun) => {
             const oldValue = sig.node._value;
@@ -113,15 +123,7 @@ const signal = (initial, options = {}) => {
             sig.node._value = nextValue;
             sig.node.state = constants_1.ESignalState.DIRTY;
             trigger();
-        },
-        dispose: () => {
-            queueMicrotask(() => {
-                sig.isTrash = true;
-                unsubs.forEach((unsub) => unsub());
-                unsubs = [];
-                sig.emitter.clear();
-            });
-        },
+        }
     };
     exports.GSignal.current = sig;
     exports.GSignal.currentEffect = trigger;
