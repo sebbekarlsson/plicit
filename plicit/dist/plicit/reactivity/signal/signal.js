@@ -78,14 +78,10 @@ const signal = (initial, options = {}) => {
         const [fn] = (0, utils_1.throttle)(trigger, options.throttle);
         trigger = fn;
     }
-    let wrapper = null;
     const sig = {
         isComputed: options.isComputed,
         isEffect: options.isEffect,
         emitter: new event_1.EventEmitter(),
-        wrapGetWith: (wrapFun) => {
-            wrapper = wrapFun;
-        },
         sym: "Signal",
         uid: uid,
         node: ({
@@ -99,19 +95,13 @@ const signal = (initial, options = {}) => {
         trackedEffects: [],
         watchers: [],
         get: () => {
-            const _get = () => {
-                if (sig.node.state === constants_1.ESignalState.UNINITIALIZED || sig.node._value === null) {
-                    //        trigger();
-                    sig.node._value = init();
-                    sig.node.state = constants_1.ESignalState.INITIALIZED;
-                }
-                track();
-                return sig.node._value;
-            };
-            if (wrapper) {
-                return wrapper(_get);
+            if (sig.node.state === constants_1.ESignalState.UNINITIALIZED || sig.node._value === null) {
+                //        trigger();
+                sig.node._value = init();
+                sig.node.state = constants_1.ESignalState.INITIALIZED;
             }
-            return _get();
+            track();
+            return sig.node._value;
         },
         set: (fun) => {
             const oldValue = sig.node._value;

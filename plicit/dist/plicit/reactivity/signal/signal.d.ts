@@ -17,17 +17,15 @@ export type SignalOptions = {
 };
 type Fun<T = any> = () => T;
 export type SignalEventPayload = {};
-type Getter<T> = () => T;
 export type Signal<T = any> = Trackable & {
     uid: string;
     node: SignalNode<T>;
     set: (fun: ((old: T) => T) | T) => void;
-    get: Getter<T>;
+    get: () => T;
     peek: () => T;
     trigger: () => void;
     sym: "Signal";
     emitter: EventEmitter<SignalEventPayload, ESignalEvent, Signal<T>>;
-    wrapGetWith: (fun: (get: Getter<T>) => T) => void;
 };
 export type SignalNode<T = any> = {
     state: ESignalState;

@@ -39,18 +39,15 @@ type Fun<T = any> = () => T;
 
 export type SignalEventPayload = {};
 
-type Getter<T> = () => T;
-
 export type Signal<T = any> = Trackable & {
   uid: string;
   node: SignalNode<T>;
   set: (fun: ((old: T) => T) | T) => void;
-  get: Getter<T>;
+  get: () => T;
   peek: () => T;
   trigger: () => void;
   sym: "Signal";
   emitter: EventEmitter<SignalEventPayload, ESignalEvent, Signal<T>>;
-  wrapGetWith: (fun: (get: Getter<T>) => T) => void;
 };
 
 export type SignalNode<T = any> = {
@@ -142,15 +139,11 @@ export const signal = <T = any>(
     trigger = fn;
   }
 
-  let wrapper: ((get: Getter<T>) => T) | null = null;
 
   const sig: Signal<T> = {
     isComputed: options.isComputed,
     isEffect: options.isEffect,
     emitter: new EventEmitter(),
-    wrapGetWith: (wrapFun) => {
-      wrapper = wrapFun;
-    },
     sym: "Signal",
     uid: uid,
     node: ({
@@ -164,22 +157,13 @@ export const signal = <T = any>(
     trackedEffects: [],
     watchers: [],
     get: () => {
-
-      const _get = () => {
-        if (sig.node.state === ESignalState.UNINITIALIZED || sig.node._value === null) {
-          //        trigger();
-          sig.node._value = init();
-          sig.node.state = ESignalState.INITIALIZED;
-        }
-        track();
-        return sig.node._value;
+      if (sig.node.state === ESignalState.UNINITIALIZED || sig.node._value === null) {
+        //        trigger();
+        sig.node._value = init();
+        sig.node.state = ESignalState.INITIALIZED;
       }
-
-      if (wrapper) {
-        return wrapper(_get);
-      }
-
-      return _get();
+      track();
+      return sig.node._value;
     },
     set: (fun: ((old: T) => T) | T) => {
       const oldValue = sig.node._value;
