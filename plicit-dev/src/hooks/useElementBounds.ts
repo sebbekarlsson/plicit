@@ -1,24 +1,22 @@
-import { computedSignal, debounce, isHTMLElement, LNodeRef, signal, watchRef } from "plicit";
+import {
+  computedSignal,
+  debounce,
+  isHTMLElement,
+  LNodeRef,
+  signal,
+  watchRef,
+} from "plicit";
 import { AABB, VEC2 } from "tsmathutil";
-
 
 export type UseElementBoundsOptions = {
   debounce?: number;
-}
+};
 
-export const useElementBounds = (elRef: LNodeRef, options: UseElementBoundsOptions = {}) => {
-
-
+export const useElementBounds = (
+  elRef: LNodeRef,
+  options: UseElementBoundsOptions = {},
+) => {
   const counter = signal<number>(0);
-  
-  //const observe = computedSignal(() => {
-  //  const node = elRef.value;
-  //  if (!node) return null;
-  //  const el = node.el;
-  //  if (!el) return null;
-  // 
-  //})
-
 
   const calcAABB = (el: HTMLElement): AABB => {
     const box = el.getBoundingClientRect();
@@ -28,8 +26,8 @@ export const useElementBounds = (elRef: LNodeRef, options: UseElementBoundsOptio
       min: pos,
       max: pos.add(size),
     };
-  }
-  
+  };
+
   const bounds = computedSignal<AABB>(() => {
     counter.get();
     const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
@@ -42,13 +40,11 @@ export const useElementBounds = (elRef: LNodeRef, options: UseElementBoundsOptio
 
   const update = () => {
     const fun = () => {
-      counter.set((x) => x+1);
-    }
+      counter.set((x) => x + 1);
+    };
     const updateFunc = options.debounce ? debounce(fun, options.debounce) : fun;
     updateFunc();
-  }
-
-  
+  };
 
   watchRef(() => {
     const node = elRef.value;
@@ -65,19 +61,19 @@ export const useElementBounds = (elRef: LNodeRef, options: UseElementBoundsOptio
 
   const onWindowResize = () => {
     update();
-  }
+  };
 
   const onScroll = () => {
     update();
-  }
+  };
 
-  window.addEventListener('resize', onWindowResize);
-  window.addEventListener('wheel', onScroll);
+  window.addEventListener("resize", onWindowResize);
+  window.addEventListener("wheel", onScroll);
 
   const destroy = () => {
-    window.removeEventListener('resize', onWindowResize);
-    window.removeEventListener('wheel', onScroll);
-  }
+    window.removeEventListener("resize", onWindowResize);
+    window.removeEventListener("wheel", onScroll);
+  };
 
   return { bounds, update, destroy };
-}
+};
