@@ -103,7 +103,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     return computedSignal(() => {
       const f = fraction.get();
       return <div
-        class="bg-amaranth-300 h-full absolute rounded-full shadow-inner"
+        class="bg-primary-300 h-full absolute rounded-full shadow-inner"
         id="RAIL"
         style={{
           left: "0px",
@@ -138,7 +138,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
             dragging.set(() => false);
           },
         }}
-        class="aspect-[1/1] bg-amaranth-500 absolute rounded-full cursor-grab"
+        class="aspect-[1/1] bg-primary-500 absolute rounded-full cursor-grab"
         style={{
           height: KNOB_SIZE + 'px',
           left: knobPosition.get().x + "px",
@@ -169,7 +169,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     text: 'Hello!',
     body: () => {
       return <div class="w-full">
-        <div class="h-[2rem] w-full bg-amaranth-500 text-white flex items-center px-4 text-sm font-medium">Slider</div>
+        <div class="h-[2rem] w-full bg-primary-500 text-white flex items-center px-4 text-sm font-medium">Slider</div>
         <div class="p-4 w-full">
           { computedSignal(() => <div class="font-semibold">{outputValue.get().toFixed(1)}</div>) }
         </div>

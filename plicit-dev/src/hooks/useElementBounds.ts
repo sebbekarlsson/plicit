@@ -38,13 +38,13 @@ export const useElementBounds = (
     return calcAABB(el);
   });
 
-  const update = () => {
-    const fun = () => {
-      counter.set((x) => x + 1);
-    };
-    const updateFunc = options.debounce ? debounce(fun, options.debounce) : fun;
-    updateFunc();
+  const refresh = () => {
+    counter.set((x) => x + 1);
   };
+
+  const update = options.debounce
+    ? debounce(refresh, options.debounce)
+    : refresh;
 
   let lastEl: HTMLElement | null = null;
   let lastObs: ResizeObserver | null = null;
@@ -55,33 +55,37 @@ export const useElementBounds = (
     const el = node.el;
     if (!el || !isHTMLElement(el)) return;
 
-    if (el !== lastEl && lastObs) {
-      lastObs.disconnect();
+    if (el !== lastEl) {
+      if (lastObs) {
+        lastObs.disconnect();
+      }
+
+      if (lastEl) {
+        lastEl.removeEventListener("mousedown", update);
+      }
+
+      el.addEventListener("mousedown", update);
+
       lastEl = el;
+      update();
     }
 
     const obs = new ResizeObserver(() => {
-      update();
+      refresh();
     });
+    lastObs = obs;
 
     obs.observe(el);
-    lastObs = obs;
   }, [elRef]);
 
-  const onWindowResize = () => {
-    update();
-  };
-
-  const onScroll = () => {
-    update();
-  };
-
-  window.addEventListener("resize", onWindowResize);
-  window.addEventListener("wheel", onScroll);
+  window.addEventListener("resize", update);
+  window.addEventListener("wheel", update);
+  window.addEventListener("scroll", update);
 
   const destroy = () => {
-    window.removeEventListener("resize", onWindowResize);
-    window.removeEventListener("wheel", onScroll);
+    window.removeEventListener("resize", update);
+    window.removeEventListener("wheel", update);
+    window.removeEventListener("scroll", update);
   };
 
   return { bounds, update, destroy };

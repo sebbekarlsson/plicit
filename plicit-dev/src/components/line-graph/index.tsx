@@ -33,7 +33,7 @@ const OCT = 5;
 const FREQ = 3;
 
 const TICK_LINE_COLOR = "rgba(0, 0, 0, 0.15)";
-const PRIMARY_COLOR = twColor("amaranth-500");
+const PRIMARY_COLOR = twColor("primary-500");
 
 
 
@@ -353,8 +353,14 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
       >
         <defs>
           <linearGradient id="xTickGradient" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="25%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
-            <stop offset="100%" stop-color={TICK_LINE_COLOR} />
+            <stop offset="0%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
+            <stop offset="50%" stop-color={TICK_LINE_COLOR} />
+            <stop offset="100%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
+          </linearGradient>
+          <linearGradient id="yTickGradient" x1="1" x2="0" y1="0" y2="0">
+            <stop offset="0%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
+            <stop offset="50%" stop-color={TICK_LINE_COLOR} />
+            <stop offset="100%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
           </linearGradient>
           <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
             <stop offset="60%" stop-color={PRIMARY_COLOR} stop-opacity="0%" />
@@ -371,16 +377,14 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
                 const start = tick;
                 const label = labels[i];
                 const end = VEC2(size.x, tick.y);
-                const cmd = [start, end]
-                  .map((it) => `${it.x},${it.y}`)
-                  .join(" ");
                 return (
                   <g>
-                    <polyline
-                      points={cmd}
-                      stroke={TICK_LINE_COLOR}
-                      stroke-width="1px"
-                      fill="none"
+                    <rect
+                      x={start.x + ""}
+                      y={start.y + ""}
+                      width={(end.x - start.x) + "px"}
+                      height={1 + 'px'}
+                      fill="url(#yTickGradient)"
                     />
                     <text
                       dominant-baseline="central"
@@ -410,7 +414,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
                     <rect
                       x={start.x + ""}
                       y={start.y + ""}
-                      width={2 + ""}
+                      width={1 + "px"}
                       height={end.y - start.y + ""}
                       fill="url(#xTickGradient)"
                     />
@@ -445,7 +449,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
                 .join(" ")}
               fill="none"
               stroke={PRIMARY_COLOR}
-              stroke-width="2px"
+              stroke-width="0.5px"
             />
           );
         })}
@@ -455,7 +459,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
             <circle
               cx={p.x + "px"}
               cy={p.y + "px"}
-              r={8 + ""}
+              r={6 + ""}
               fill={PRIMARY_COLOR}
             />
           );

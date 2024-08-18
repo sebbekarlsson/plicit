@@ -29,7 +29,7 @@ export const NavBar = () => {
 
 
   return (
-    <div class="w-full h-[4rem] px-4 bg-amaranth-950 text-white flex-none flex flex-row select-none" style={{
+    <div class="w-full h-[4rem] px-4 bg-primary-950 text-white flex-none flex flex-row select-none" style={{
       justifyContent: 'space-between',
     }}>
       <div class="justify-start flex items-center gap-[1rem] h-full">

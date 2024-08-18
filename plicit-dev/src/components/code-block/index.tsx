@@ -32,7 +32,7 @@ export const CodeBlock: Component<{ value: string | Signal<string>; title: strin
         }}/>
       </div>
     </div>
-    {(() => <pre class="bg-gray-800 text-amaranth-100 min-h-[1rem] max-h-[320px] w-full py-2 px-2 max-w-[100%] overflow-auto" deps={[val]}>
+    {(() => <pre class="bg-gray-800 text-primary-100 min-h-[1rem] max-h-[320px] w-full py-2 px-2 max-w-[100%] overflow-auto" deps={[val]}>
       {val.value}
     </pre>)}
   </div>

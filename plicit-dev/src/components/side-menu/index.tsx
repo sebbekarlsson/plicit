@@ -25,7 +25,7 @@ const SectionBanner: Component<{
     if (closed || !props.item.label) return none();
     return (
       <div
-        class="w-full h-[4rem] flex items-center px-4 text-lg bg-amaranth-700 font-semibold uppercase cursor-pointer"
+        class="w-full h-[4rem] flex items-center px-4 text-lg bg-primary-700 font-semibold uppercase cursor-pointer"
         on={{ click: () => props.toggleExpanded() }}
       >
         {props.item.label}
@@ -132,8 +132,8 @@ const MenuItem: Component<{
         <div
           on={{ click: () => handleClick(props.item) }}
           class={
-            "w-full h-[2.7rem] hover:bg-amaranth-500 transition-colors" +
-            (isActive.value ? ` bg-amaranth-500` : ``)
+            "w-full h-[2.7rem] hover:bg-primary-500 transition-colors" +
+            (isActive.value ? ` bg-primary-500` : ``)
           }
           style={style}
         >
@@ -218,11 +218,11 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
 
   return (
     <div
-      class="h-full bg-amaranth-900 text-white select-none"
+      class="h-full bg-primary-900 text-white select-none"
       style={props.hook.style}
     >
       {() => (
-        <div class="w-full h-[2rem] flex items-center px-4 hover:text-amaranth-300">
+        <div class="w-full h-[2rem] flex items-center px-4 hover:text-primary-300">
           {() => (
             <div
               on={{

@@ -41,6 +41,8 @@ export const useTooltip = (props: UseTooltipProps): UseTooltip => {
   })
 
   watchSignal(shouldBeVisible, (isOnTrigger) => {
+    toolBounds.update();
+    triggerBounds.update();
     if (isOnTrigger) {
       interp.run({
         to: 1.0,
