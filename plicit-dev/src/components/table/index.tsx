@@ -1,27 +1,21 @@
-import { Component, computed, unique, unref } from "plicit";
+import { Component, computed, computedSignal, pget, unique, unref } from "plicit";
 import { ITableProps, ITableRow } from "./types";
 
 const TableRow: Component<{ row: ITableRow; head?: boolean }> = (props) => {
   return (
     <tr
-      class={"h-[3rem] transition-colors" + (!props.head ? " hover:bg-primary-50" : "")}
-      style={{
-        height: "3rem",
-        maxHeight: "3rem",
-        minHeight: "3rem",
-      }}
+      class={"transition-colors" + (!props.head ? " hover:bg-primary-50" : " bg-gray-100")}
     >
       {props.row.columns.map((col) => {
         return (
           <td
             tag={props.head ? "th" : "td"}
-            class="h-[3rem] border-b border-gray-300 px-2"
+            class="border-b border-gray-300 px-2"
             style={{
               borderCollapse: "separate",
               zIndex: "2",
-              height: "3rem",
-              maxHeight: "3rem",
-              minHeight: "3rem",
+              height: "4rem",
+              minHeight: "4rem",
             }}
           >
             {col.body}
@@ -33,33 +27,26 @@ const TableRow: Component<{ row: ITableRow; head?: boolean }> = (props) => {
 };
 
 export const Table: Component<ITableProps> = (props) => {
-  const rows = computed(
-    () => unref(props.table.rows),
-    [() => props.table.rows],
-    { deep: false },
-  );
-  const labels = computed(
+  const labels = computedSignal(
     () =>
       unique(
-        rows.value
+        props.table.rows.get()
           .slice(0, 4)
           .map((row) => row.columns.map((col) => col.label))
           .flat(),
       ),
-    [rows],
-    { deep: false },
   );
 
-  const headRows = computed((): ITableRow[] => {
+  const headRows = computedSignal((): ITableRow[] => {
     return [
       {
-        columns: labels.value.map((label) => ({
+        columns: labels.get().map((label) => ({
           label: label,
           body: () => <span>{label}</span>,
         })),
       },
     ];
-  }, [labels]);
+  });
 
   return (
     <div
@@ -81,20 +68,20 @@ export const Table: Component<ITableProps> = (props) => {
           borderSpacing: "0",
         }}
       >
-        {() => (
+        {computedSignal(() => (
           <thead class="sticky top-0 left-0 bg-white">
-            {headRows.value.map((row) => {
+            {headRows.get().map((row) => {
               return <TableRow head row={row} />;
             })}
           </thead>
-        )}
-        {() => (
-          <tbody deps={[rows]}>
-            {rows.value.map((row) => {
+        ))}
+        {computedSignal(() => (
+          <tbody>
+            {props.table.rows.get().map((row) => {
               return <TableRow row={row} />;
             })}
           </tbody>
-        )}
+        ))}
       </table>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Component, LNode, MaybeRef } from "plicit";
+import { Component, LNode, MaybeRef, MaybeSignal, Signal } from "plicit";
 
 export type ITableColumn = {
   label: string;
@@ -10,7 +10,7 @@ export type ITableRow = {
 }
 
 export type ITable = {
-  rows: MaybeRef<ITableRow[]>; 
+  rows: Signal<ITableRow[]>; 
 }
 
 export type ITableProps = {

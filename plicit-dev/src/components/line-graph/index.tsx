@@ -3,6 +3,7 @@ import {
   computedSignal,
   CSSProperties,
   LNodeRef,
+  none,
   ref,
 } from "plicit";
 import {
@@ -17,7 +18,6 @@ import {
   range,
   remap,
   VEC2,
-  Vector
 } from "tsmathutil";
 import { useElementBounds } from "../../hooks/useElementBounds";
 import { Line, linesFromPoints, pathFromPoints } from "./utils";
@@ -26,6 +26,7 @@ import { twColor } from "../../utils/style";
 import { Tooltip } from "../tooltip";
 import { useTooltip } from "../tooltip/hooks/useTooltip";
 import { GraphPointData, LineGraphProps } from "./types";
+import { useElementHover } from "../../hooks/useElementHover";
 
 const N = 300;
 const SEED = 144.93491823;
@@ -35,14 +36,11 @@ const FREQ = 3;
 const TICK_LINE_COLOR = "rgba(0, 0, 0, 0.15)";
 const PRIMARY_COLOR = twColor("primary-500");
 
-
-
-
 export const LineGraph: Component<LineGraphProps> = (props) => {
   const wrapperRef: LNodeRef = ref(undefined);
   const svgBounds = useElementBounds(wrapperRef, { debounce: 60 });
   const mouse = useMousePositionSignal();
-  
+  const hover = useElementHover(wrapperRef);
 
   const values = computedSignal(() => {
     return range(N).map(
@@ -52,7 +50,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
 
   const dataCount = computedSignal(() => {
     return values.get().length;
-  })
+  });
 
   const low = computedSignal(() => Math.min(...values.get()));
   const high = computedSignal(() => Math.max(...values.get()));
@@ -225,6 +223,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
     const tree = quadTree.get();
     const mline = mouseLine.get();
     const all = lines.get();
+    
     const qlines = quadTreeFindLines(tree, mline);
     if (qlines.length <= 0 || all.length <= 0) {
       return VEC2(0, 0);
@@ -260,18 +259,34 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
     return point.add(svgBounds.bounds.get().min);
   });
 
-  const intersectionData = computedSignal(():GraphPointData => {
+  const intersectionData = computedSignal((): GraphPointData => {
     const count = dataCount.get();
     const bounds = graphBounds.get();
     const p = mouseIntersection.get();
     const x = p.x;
     const y = p.y;
-    const index =  clamp(count - (1+Math.floor(remap(x, { min: bounds.min.x, max: bounds.max.x }, { min: 0, max: count-1 }))), 0, count-1);
+    const index = clamp(
+      count -
+        (1 +
+          Math.floor(
+            remap(
+              x,
+              { min: bounds.min.x, max: bounds.max.x },
+              { min: 0, max: count - 1 },
+            ),
+          )),
+      0,
+      count - 1,
+    );
     const value = values.get()[index];
-    const interpolatedValue = remap(y, { max: bounds.min.y, min: bounds.max.y }, { min: low.get(), max: high.get() });
-    
+    const interpolatedValue = remap(
+      y,
+      { max: bounds.min.y, min: bounds.max.y },
+      { min: low.get(), max: high.get() },
+    );
+
     return { index, value, interpolatedValue };
-  })
+  });
 
   const pathCommands = computedSignal(() => {
     return points
@@ -314,37 +329,42 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
     targetPosition: intersectionGlobal,
     centerX: true,
     centerY: true,
-    placement: 'top',
+    placement: "top",
     spacing: 16,
     body: () => {
       const value = computedSignal(() => {
         const data = intersectionData.get();
         const format = props.yAxis?.format || ((x) => x + "");
         return <span>{format(data.interpolatedValue)}</span>;
-      })
-      return <div class={`p-4 text-white font-semibold`} style={{
-        background: PRIMARY_COLOR
-      }}>
-        { value }
-      </div>;
-    }
+      });
+      return (
+        <div
+          class={`p-4 text-white font-semibold`}
+          style={{
+            background: PRIMARY_COLOR,
+          }}
+        >
+          {value}
+        </div>
+      );
+    },
   });
-
 
   return (
     <div
       class="w-full h-full select-none"
       style={{
-        ...(props.resolution ? {
-          width: `${props.resolution.x}px`,
-          height: `${props.resolution.y}px`
-        } : {})
+        ...(props.resolution
+          ? {
+              width: `${props.resolution.x}px`,
+              height: `${props.resolution.y}px`,
+            }
+          : {}),
       }}
       ref={wrapperRef}
     >
       <svg
         style={computedSignal((): CSSProperties => {
-          const size = wrapperSize.get();
           return {
             width: "100%",
             height: "100%",
@@ -355,12 +375,20 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
           <linearGradient id="xTickGradient" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
             <stop offset="50%" stop-color={TICK_LINE_COLOR} />
-            <stop offset="100%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
+            <stop
+              offset="100%"
+              stop-color={TICK_LINE_COLOR}
+              stop-opacity="0%"
+            />
           </linearGradient>
           <linearGradient id="yTickGradient" x1="1" x2="0" y1="0" y2="0">
             <stop offset="0%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
             <stop offset="50%" stop-color={TICK_LINE_COLOR} />
-            <stop offset="100%" stop-color={TICK_LINE_COLOR} stop-opacity="0%" />
+            <stop
+              offset="100%"
+              stop-color={TICK_LINE_COLOR}
+              stop-opacity="0%"
+            />
           </linearGradient>
           <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
             <stop offset="60%" stop-color={PRIMARY_COLOR} stop-opacity="0%" />
@@ -382,8 +410,8 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
                     <rect
                       x={start.x + ""}
                       y={start.y + ""}
-                      width={(end.x - start.x) + "px"}
-                      height={1 + 'px'}
+                      width={end.x - start.x + "px"}
+                      height={1 + "px"}
                       fill="url(#yTickGradient)"
                     />
                     <text
@@ -440,34 +468,42 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
             fill="none"
           />
         ))}
+
         {computedSignal(() => {
+          if (!hover.get()) return none();
           return (
-            <polyline
-              points={mouseLine
-                .get()
-                .map((p) => `${p.x},${p.y}`)
-                .join(" ")}
-              fill="none"
-              stroke={PRIMARY_COLOR}
-              stroke-width="0.5px"
-            />
-          );
-        })}
-        {computedSignal(() => {
-          const p = mouseIntersection.get();
-          return (
-            <circle
-              cx={p.x + "px"}
-              cy={p.y + "px"}
-              r={6 + ""}
-              fill={PRIMARY_COLOR}
-            />
+            <g>
+              {computedSignal(() => {
+                return (
+                  <polyline
+                    points={mouseLine
+                      .get()
+                      .map((p) => `${p.x},${p.y}`)
+                      .join(" ")}
+                    fill="none"
+                    stroke={PRIMARY_COLOR}
+                    stroke-width="0.5px"
+                  />
+                );
+              })}
+              {computedSignal(() => {
+                const p = mouseIntersection.get();
+                return (
+                  <circle
+                    cx={p.x + "px"}
+                    cy={p.y + "px"}
+                    r={6 + ""}
+                    fill={PRIMARY_COLOR}
+                  />
+                );
+              })}
+            </g>
           );
         })}
         {/*elTree*/}
         {/*elLines*/}
       </svg>
-      <Tooltip hook={tooltip}/>
+      <Tooltip hook={tooltip} />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { Component, ljsx, CS, S } from "plicit";
+import { Component, ljsx, CS, S, computedSignal, signal } from "plicit";
 import { Card } from "../../components/card";
 import { Counter } from "../../components/counter";
 import { ItemList } from "../../components/item-list";
@@ -8,6 +8,11 @@ import { TextReverser } from "../../components/text-reverser";
 import { Hero } from "../../components/hero";
 import { PageContent } from "../../layouts/page-content";
 import { LineGraph } from "../../components/line-graph";
+import { Table } from "../../components/table";
+import { range } from "tsmathutil";
+import { ITableRow, ITable } from "../../components/table/types";
+import { useFakeDatabase } from "../../hooks/useFakeDatabase";
+import { InputField } from "../../components/input-field";
 
 const RangeItem: Component<{ label: string; value: number }> = (props) => {
   const state = S<number>(props.value);
@@ -27,6 +32,50 @@ const RangeItem: Component<{ label: string; value: number }> = (props) => {
     </div>
   );
 };
+
+
+const TableDemo: Component = () => {
+
+  const query = signal<string>('', { debounce: 60 });
+  const db = useFakeDatabase({
+    query,
+    count: 10,
+    seed: 5013.3812
+  });
+
+  const rows = computedSignal((): ITableRow[] => {
+    return db.users.get().map((user) => {
+      return {
+        columns: [
+          {
+            label: 'firstname',
+            body: () => <span>{user.firstname}</span>
+          },
+          {
+            label: 'lastname',
+            body: () => <span>{user.lastname}</span>
+          },
+          {
+            label: 'age',
+            body: () => <span>{user.age}</span>
+          }  
+        ]
+      }
+    })
+  });
+
+  const table: ITable = {
+    rows
+  }
+
+  return () => <div class="flex flex-col h-[400px] w-full">
+    <div class="h-[4rem] flex-none flex items-start">
+      <InputField value="" type="text" onChange={(val) => query.set(val)} placeholder="Search..."/>
+    </div>
+    <Table table={table}/> 
+  </div>
+}
+
 export const HomeRoute: Component = () => {
   return (
     <div class="w-full h-full">
@@ -54,6 +103,9 @@ export const HomeRoute: Component = () => {
               <RangeItem value={50} label="B" />
               <RangeItem value={75} label="C" />
             </div>
+          </Card>
+          <Card title="Table" subtitle="Data Table">
+            <TableDemo/>
           </Card>
           <Card title="Counter" subtitle="Classic Counter">
             <Counter />

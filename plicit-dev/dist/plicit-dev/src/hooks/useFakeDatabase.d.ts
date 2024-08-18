@@ -7,6 +7,7 @@ export type User = {
 export declare const useFakeDatabase: (props: {
     query: Signal<string>;
     count?: number;
+    seed?: number;
 }) => {
     users: Signal<User[]>;
 };

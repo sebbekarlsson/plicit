@@ -11,7 +11,7 @@ export const PeopleTable = () => {
     count: 256
   });
 
-  const rows = computed((): ITableRow[] => {
+  const rows = computedSignal((): ITableRow[] => {
     return db.users.get().map((user) => {
       return {
         columns: [
@@ -30,7 +30,7 @@ export const PeopleTable = () => {
         ]
       }
     })
-  }, [db.users, query], { deep: false });
+  });
 
   const table: ITable = {
     rows
@@ -40,6 +40,6 @@ export const PeopleTable = () => {
     <div class="h-[4rem] flex-none flex items-start">
       <InputField value="" type="text" onChange={(val) => query.set(val)} placeholder="Search..."/>
     </div>
-    {() => <Table table={table}/>} 
+    <Table table={table}/> 
   </div> 
 }

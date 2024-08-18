@@ -9,13 +9,14 @@ export type User = {
 const NUM_PEOPLE = 100;
 
 export const useFakeDatabase = (props: {
-  query: Signal<string>,
-  count?: number
+  query: Signal<string>;
+  count?: number;
+  seed?: number
 }) => {
 
   const count = props.count || NUM_PEOPLE;
   
-  const numGen = numberGenerator(3919);
+  const numGen = numberGenerator(props.seed ?? 3919);
   const stringGen = stringGenerator(undefined, numGen);
 
   const initialUsers: User[] = range(count).map(() => {
