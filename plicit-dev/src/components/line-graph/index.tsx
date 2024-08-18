@@ -4,6 +4,8 @@ import {
   CSSProperties,
   LNodeRef,
   none,
+  onMounted,
+  onUnmounted,
   ref,
 } from "plicit";
 import {
@@ -38,9 +40,17 @@ const PRIMARY_COLOR = twColor("primary-500");
 
 export const LineGraph: Component<LineGraphProps> = (props) => {
   const wrapperRef: LNodeRef = ref(undefined);
-  const svgBounds = useElementBounds(wrapperRef, { interval: 1000 });
+  const svgBounds = useElementBounds(wrapperRef);
   const mouse = useMousePositionSignal();
   const hover = useElementHover(wrapperRef);
+
+  onMounted(() => {
+    console.log('Linegraph mounted! --->');
+  })
+
+  onUnmounted(() => {
+    console.log('Linegraph unmounted! <---')
+  })
 
   const values = computedSignal(() => {
     return range(N).map(
@@ -341,7 +351,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
         <div
           class={`p-4 text-white font-semibold`}
           style={{
-            background: PRIMARY_COLOR,
+            background: props.color || PRIMARY_COLOR,
           }}
         >
           {value}
@@ -391,8 +401,8 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
             />
           </linearGradient>
           <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="60%" stop-color={PRIMARY_COLOR} stop-opacity="0%" />
-            <stop offset="100%" stop-color={PRIMARY_COLOR} stop-opacity="10%" />
+            <stop offset="60%" stop-color={props.color || PRIMARY_COLOR} stop-opacity="0%" />
+            <stop offset="100%" stop-color={props.color || PRIMARY_COLOR} stop-opacity="10%" />
           </linearGradient>
         </defs>
         {elRect}
@@ -463,7 +473,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
         {computedSignal(() => (
           <polyline
             points={pathCommands.get()}
-            stroke={PRIMARY_COLOR}
+            stroke={props.color || PRIMARY_COLOR}
             stroke-width="4px"
             fill="none"
           />
@@ -481,7 +491,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
                       .map((p) => `${p.x},${p.y}`)
                       .join(" ")}
                     fill="none"
-                    stroke={PRIMARY_COLOR}
+                    stroke={props.color || PRIMARY_COLOR}
                     stroke-width="0.5px"
                   />
                 );
@@ -493,7 +503,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
                     cx={p.x + "px"}
                     cy={p.y + "px"}
                     r={6 + ""}
-                    fill={PRIMARY_COLOR}
+                    fill={props.color || PRIMARY_COLOR}
                   />
                 );
               })}

@@ -1,16 +1,18 @@
 import { Component } from "./component";
-import { ELNodeType, lnode } from "./lnode";
+import { ELNodeType, LNode, lnode } from "./lnode";
+import { popScope, pushScope } from "./scope";
 
 
 type GlobalSetupState = {
-  setup?: () => void
+  setup?: () => void;
+  root?: LNode;
 }
 
 export const GSetupState: GlobalSetupState = {};
 
 export const setup = (component: Component, el: HTMLElement | Element) => {
-
   const fun = () => {
+    
     el.innerHTML = '';
     const main = lnode('div', {
       nodeType: ELNodeType.FRAGMENT,
@@ -21,6 +23,7 @@ export const setup = (component: Component, el: HTMLElement | Element) => {
     });
 
     main.mountTo(el);
+    GSetupState.root = main;
   }
 
   try {

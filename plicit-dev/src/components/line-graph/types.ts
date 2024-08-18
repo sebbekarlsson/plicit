@@ -16,4 +16,5 @@ export type LineGraphProps = {
   xAxis?: LineGraphAxis;
   yAxis?: LineGraphAxis;
   resolution?: Vector;
+  color?: string;
 };

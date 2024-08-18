@@ -11,6 +11,7 @@ import { Table } from "../../components/table";
 import { ITableRow, ITable } from "../../components/table/types";
 import { useFakeDatabase } from "../../hooks/useFakeDatabase";
 import { InputField } from "../../components/input-field";
+import { twColor } from "../../utils/style";
 
 const RangeItem: Component<{ label: string; value: number }> = (props) => {
   const state = S<number>(props.value);
@@ -77,7 +78,7 @@ const TableDemo: Component = () => {
 export const HomeRoute: Component = () => {
   return (
     <div class="w-full h-full">
-      <Hero title="Plicit Demo" />
+      <Hero title="Plicit" subtitle="Explicitly Reactive" />
       <PageContent>
         <div
           class="h-full w-full"
@@ -92,6 +93,7 @@ export const HomeRoute: Component = () => {
               <LineGraph
                 xAxis={{ tickCount: 8 }}
                 yAxis={{ tickCount: 6, format: (x) => x.toFixed(2) }}
+                color={twColor('primary-500')}
               />
             </div>
           </Card>

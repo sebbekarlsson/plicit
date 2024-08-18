@@ -1,6 +1,4 @@
-import { EventEmitter } from "../../event";
 import { ESignalState } from "./constants";
-import { ESignalEvent } from "./event";
 import { Trackable } from "./types";
 export type GlobalSignalState = {
     current: Signal | undefined;
@@ -14,6 +12,7 @@ export type SignalOptions = {
     throttle?: number;
     debounce?: number;
     uid?: string;
+    autoDiffCheck?: boolean;
 };
 type Fun<T = any> = () => T;
 export type SignalEventPayload = {};
@@ -25,7 +24,6 @@ export type Signal<T = any> = Trackable & {
     peek: () => T;
     trigger: () => void;
     sym: "Signal";
-    emitter: EventEmitter<SignalEventPayload, ESignalEvent, Signal<T>>;
 };
 export type SignalNode<T = any> = {
     state: ESignalState;

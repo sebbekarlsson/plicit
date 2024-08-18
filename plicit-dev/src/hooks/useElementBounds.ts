@@ -3,6 +3,8 @@ import {
   debounce,
   isHTMLElement,
   LNodeRef,
+  onMounted,
+  onUnmounted,
   signal,
   watchRef,
 } from "plicit";
@@ -65,9 +67,11 @@ export const useElementBounds = (
 
       if (lastEl) {
         lastEl.removeEventListener("mousedown", update);
+        lastEl.removeEventListener("mouseenter", update);
       }
 
       el.addEventListener("mousedown", update);
+      el.addEventListener("mouseenter", update);
 
       lastEl = el;
       update();
@@ -85,17 +89,29 @@ export const useElementBounds = (
   window.addEventListener("wheel", update);
   window.addEventListener("scroll", update);
 
-  //let interval: (Timer | null) = options.interval ? setInterval(() => {
-  //  update();
-  //}, options.interval) : null;
+  let interval: Timer | null = null;
+
+  if (options.interval) {
+    onMounted(() => {
+      interval = options.interval
+        ? setInterval(() => {
+            update();
+          }, options.interval)
+        : null;
+    });
+  }
 
   const destroy = () => {
-   // clearInterval(interval);
-   // interval = null;
+    clearInterval(interval);
+    interval = null;
     window.removeEventListener("resize", update);
     window.removeEventListener("wheel", update);
     window.removeEventListener("scroll", update);
   };
+
+  onUnmounted(() => {
+    destroy();
+  });
 
   return { bounds, update, destroy };
 };

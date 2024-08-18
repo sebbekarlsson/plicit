@@ -1,4 +1,5 @@
-import { isLNode, LNode, LNodeAttributes } from "./lnode";
+import { ELNodeType, isLNode, lnode, LNode, LNodeAttributes, lnodeX } from "./lnode";
+import { ENodeEvent } from "./nodeEvents";
 import {
   isRef,
   isSignal,
@@ -6,19 +7,21 @@ import {
   MaybeSignal,
   Signal,
 } from "./reactivity";
+import { popScope, pushScope, trackCurrentScope, withCurrentScope } from "./scope";
 import { Dict } from "./types";
 
 export type UnwrappableComponent =
   | Component
   | MaybeRef<LNode>
   | Signal<LNode>
-  | MaybeSignal<LNode>;
+  | MaybeSignal<LNode>
+  | string;
 
 export type UnwrappedComponent = MaybeRef<LNode> | MaybeSignal<LNode>;
 
 export type Component<T extends Dict = Dict> = (
   props?: T & LNodeAttributes,
-) => MaybeRef<LNode> | Component | Signal<LNode> | MaybeSignal<LNode>;
+) => MaybeRef<LNode> | Component | Signal<LNode> | MaybeSignal<LNode> | string;
 
 export const isComponent = (x: any): x is Component =>
   !!x && typeof x === "function";
@@ -34,21 +37,55 @@ export const unwrapComponentTree = (
     attribs: LNodeAttributes = {},
     depth: number = 0,
   ) => {
-    if (isSignal(component)) {
+    if (isLNode(component)) {
       return component;
     }
-    if (isRef(component)) return component; //unwrapComponentTree(component.value);
+    if (isSignal(component)) return lnodeX(ELNodeType.SIGNAL, { ...attribs, signal: component });
+    if (isRef(component)) return component;
     if (isComponent(component)) {
-      const next = component(attribs);
+      pushScope();
+      const next = component({...attribs, component});
+      
       if (isLNode(next)) {
-        next.component.value = component;
+        next.component = component;
       }
-      return unwrap(next, attribs, depth + 1);
+      const ret = unwrap(next, {...attribs, component}, depth + 1);
+
+      withCurrentScope((scope) => {
+        if (isLNode(ret)) {
+          scope.onMounted.forEach(fun => ret.addEventListener(ENodeEvent.MOUNTED, () => fun(ret)));
+          scope.onBeforeUnmount.forEach(fun => ret.addEventListener(ENodeEvent.BEFORE_UNMOUNT, () => fun(ret)));
+          scope.onUnmounted.forEach(fun => ret.addEventListener(ENodeEvent.UNMOUNTED, () => fun(ret)));
+        }
+      })
+      popScope();
+      return ret;
+    }
+    if (typeof component === 'string' || typeof component === 'number') {
+      return lnode('span', { text: component + '', nodeType: ELNodeType.TEXT_ELEMENT });
     }
     return component;
   };
 
-  const next = unwrap(component, propagatedAttribs);
-
-  return next;
+  return unwrap(component, propagatedAttribs);
 };
+
+export const unwrapChild = (child: UnwrappableComponent): LNode => { 
+  if (isSignal<LNode>(child)) {
+    return unwrapChild(child.get());
+  }
+  if (isRef<LNode>(child)) {
+    return unwrapChild(child.value);
+  }
+  if (isComponent(child)) {
+    return unwrapChild(child({}));
+  }
+  if (typeof child === 'string' || typeof child === 'number') {
+    return lnode('span', { text: child + '', nodeType: ELNodeType.TEXT_ELEMENT });
+  }
+  if (isLNode(child)) {
+    if (child.attributes.signal) return unwrapChild(child.attributes.signal);
+    return child;
+  }
+  return child;
+}

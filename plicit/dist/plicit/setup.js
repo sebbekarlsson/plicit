@@ -14,6 +14,7 @@ const setup = (component, el) => {
             ]
         });
         main.mountTo(el);
+        exports.GSetupState.root = main;
     };
     try {
         fun();

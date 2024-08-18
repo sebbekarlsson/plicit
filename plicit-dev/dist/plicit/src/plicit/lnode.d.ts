@@ -13,7 +13,10 @@ export declare enum ELNodeType {
     FRAGMENT = "FRAGMENT",
     EMPTY = "EMPTY",
     COMMENT = "COMMENT",
-    SLOT = "SLOT"
+    SLOT = "SLOT",
+    COMPONENT = "COMPONENT",
+    SIGNAL = "COMPONENT",
+    REF = "REF"
 }
 type WithSignals<T> = {
     [Prop in keyof T]: T[Prop] extends Ref | Signal | ((...args: any[]) => void) ? T[Prop] : T[Prop] | Signal<T[Prop]>;
@@ -32,6 +35,9 @@ export type LNodeAttributesBase = {
     isRoot?: boolean;
     ref?: LNodeRef;
     class?: string;
+    component?: Component;
+    _component?: Component;
+    signal?: Signal;
     [key: string]: any;
 };
 export type LNodeAttributes = WithSignals<LNodeAttributesBase>;
@@ -46,15 +52,14 @@ export type NodeEventUpdated = PlicitEvent<{}, ENodeEvent.UPDATED, LNode>;
 export type NodeEventLoaded = PlicitEvent<{}, ENodeEvent.LOADED, LNode>;
 export type NodeEventUnMounted = PlicitEvent<{}, ENodeEvent.UNMOUNTED, LNode>;
 export type NodeEventMounted = PlicitEvent<{}, ENodeEvent.MOUNTED, LNode>;
+export type NodeEventBeforeUnMount = PlicitEvent<{}, ENodeEvent.BEFORE_UNMOUNT, LNode>;
 export type NodeEventBeforeRender = PlicitEvent<{}, ENodeEvent.BEFORE_RENDER, LNode>;
 export type NodeEventCleanup = PlicitEvent<{}, ENodeEvent.CLEANUP, LNode>;
 export type NodeEventReceiveParent = PlicitEvent<NodeEventReceiveParentPayload, ENodeEvent.RECEIVE_PARENT, LNode>;
-export type NodeEvent = NodeEventBeforeReplace | NodeEventAfterReplace | NodeEventReplaced | NodeEventUpdated | NodeEventLoaded | NodeEventUnMounted | NodeEventMounted | NodeEventCleanup | NodeEventBeforeRender | NodeEventReceiveParent;
+export type NodeEvent = NodeEventBeforeReplace | NodeEventAfterReplace | NodeEventReplaced | NodeEventUpdated | NodeEventLoaded | NodeEventUnMounted | NodeEventMounted | NodeEventCleanup | NodeEventBeforeRender | NodeEventBeforeUnMount | NodeEventReceiveParent;
 export type LNodeNativeElement = HTMLElement | Text | SVGSVGElement | SVGPathElement | Comment | SVGElement | Element;
 export declare class LNode {
     _lnode: "lnode";
-    _id: number;
-    _idCounter: number;
     isRoot: boolean;
     isTrash: boolean;
     key: string;
@@ -63,40 +68,41 @@ export declare class LNode {
     attributes: LNodeAttributes;
     name: string;
     children: LNodeChild[];
-    component: Ref<Component | undefined>;
-    childComponents: Component[];
-    signal: Signal<LNode> | undefined;
+    childNodes: LNode[];
+    component: Component | undefined;
     type: ELNodeType;
-    slots: Record<string, LNodeRef>;
+    resizeObserver: ResizeObserver | null;
     events: EventEmitter<NodeEventPayload, ENodeEvent, LNode>;
     unsubs: Array<() => void>;
     constructor(name: string, attributes?: LNodeAttributes);
+    addGC(unsub: () => void): void;
+    addChildNode(node: LNode): void;
+    emitBeforeUnmount(): void;
+    emitUnmounted(): void;
     emitCleanup(): void;
     cleanup(): void;
     destroy(): void;
+    getChildCount(): number;
+    getChildNodes(): LNode[];
     toObject(): any;
-    setId(id: number): void;
     patchWith(other: LNodeChild): void;
     invalidate(): void;
     updateRef(): void;
     emit(event: NodeEvent): void;
     addEventListener(evtype: ENodeEvent, sub: EventSubscriber<NodeEventPayload, ENodeEvent, LNode>): () => void;
     mountTo(target: NativeElement | null | undefined): void;
-    createElement(): HTMLElement | SVGElement | Comment;
-    listenForMutation(callback: (disconnect: () => void) => void): void;
-    setElement(el: LNodeNativeElement): void;
-    ensureElement(): LNodeNativeElement;
-    getElement(): LNodeNativeElement;
-    getSlot(name: string): LNodeRef;
-    setSlot(name: string, node: LNode): void;
+    createElement(): NativeElement;
+    setElement(el: LNodeNativeElement): LNodeNativeElement;
+    getElementOrRender(): LNodeNativeElement;
+    getElementOrThrow(): LNodeNativeElement;
     private onReceiveChild;
     patchChildWithNode(index: number, newNode: LNode): void;
-    patchChildFromSignal(child: LNodeChild, sig: Signal<LNode>, _childIndex: number): void;
     appendChild(child: LNodeChild, childIndex: number): void;
     setAttribute(key: string, value: string): void;
     render(): LNodeNativeElement;
 }
 export declare const lnode: (name: string, attributes?: LNodeAttributes) => LNode;
+export declare const lnodeX: (nodeType: ELNodeType, attributes?: LNodeAttributes) => LNode;
 export declare const none: () => LNode;
 export declare const isLNode: (x: any) => x is LNode;
 export {};

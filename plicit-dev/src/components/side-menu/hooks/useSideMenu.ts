@@ -43,7 +43,8 @@ export const useSideMenu = (): UseSideMenu => {
     const w = lerp(64, 300, f); 
     
     return {
-      width: w + 'px' 
+      width: w + 'px',
+      boxShadow: 'rgba(0, 0, 0, 0.25) 0px 14px 28px inset, rgba(0, 0, 0, 0.22) 0px 10px 10px'
     }
   });
 

@@ -1,8 +1,6 @@
-import { EventEmitter, PlicitEvent } from "../../event";
 import { isFunction } from "../../is";
 import { debounce, throttle } from "../../utils";
 import { ESignalState } from "./constants";
-import { ESignalEvent } from "./event";
 import { Trackable } from "./types";
 
 export type GlobalSignalState = {
@@ -33,6 +31,7 @@ export type SignalOptions = {
   throttle?: number;
   debounce?: number;
   uid?: string;
+  autoDiffCheck?: boolean;
 };
 
 type Fun<T = any> = () => T;
@@ -47,7 +46,6 @@ export type Signal<T = any> = Trackable & {
   peek: () => T;
   trigger: () => void;
   sym: "Signal";
-  emitter: EventEmitter<SignalEventPayload, ESignalEvent, Signal<T>>;
 };
 
 export type SignalNode<T = any> = {
@@ -71,32 +69,11 @@ export const signal = <T = any>(
   const uid = options.uid || nextId();
   const init = isFunction(initial) ? initial : () => initial;
 
-  //const node: SignalNode<T> = ;
-
-  const emit = (
-    event: Omit<
-      PlicitEvent<SignalEventPayload, ESignalEvent, Signal>,
-      "target"
-    >,
-  ) => {
-    sig.emitter.emit({ ...event, target: sig });
-  };
-
-  const withUpdateEvents = (fn: () => void) => {
-    emit({ type: ESignalEvent.BEFORE_UPDATE, payload: {} });
-    fn();
-    emit({ type: ESignalEvent.AFTER_UPDATE, payload: {} });
-  };
-
   const triggerFun = () => {
-    emit({ type: ESignalEvent.TRIGGER, payload: {} });
-
     if (options.isComputed) {
-      withUpdateEvents(() => {
-        sig.node._value = init();
-      });
+      sig.node._value = init();
     } else {
-      withUpdateEvents(() => init());
+      init();
     }
 
     GSignal.current = undefined;
@@ -109,8 +86,6 @@ export const signal = <T = any>(
 
     sig.trackedEffects.forEach((fx) => fx());
   };
-
-  let unsubs: Array<() => void> = [];
 
   const track = () => {
     const current = GSignal.current;
@@ -125,8 +100,6 @@ export const signal = <T = any>(
     ) {
       sig.trackedEffects.push(GSignal.currentEffect);
     }
-
-    emit({ type: ESignalEvent.TRACK, payload: {} });
   };
 
   let trigger = triggerFun;
@@ -139,26 +112,30 @@ export const signal = <T = any>(
     trigger = fn;
   }
 
+  const canBeAutoDiffed = (a: any, b: any): boolean => {
+    return (typeof a !== 'object' && typeof b !== 'object');
+  }
 
   const sig: Signal<T> = {
     isComputed: options.isComputed,
     isEffect: options.isEffect,
-    emitter: new EventEmitter(),
     sym: "Signal",
     uid: uid,
-    node: ({
+    node: {
       _value: isFunction(initial) ? null : initial,
       fun: init,
       state: ESignalState.UNINITIALIZED,
-    }),
+    },
     trigger,
     peek: () => sig.node._value || init(),
     tracked: [],
     trackedEffects: [],
     watchers: [],
     get: () => {
-      if (sig.node.state === ESignalState.UNINITIALIZED || sig.node._value === null) {
-        //        trigger();
+      if (
+        sig.node.state === ESignalState.UNINITIALIZED ||
+        sig.node._value === null
+      ) {
         sig.node._value = init();
         sig.node.state = ESignalState.INITIALIZED;
       }
@@ -166,17 +143,14 @@ export const signal = <T = any>(
       return sig.node._value;
     },
     set: (fun: ((old: T) => T) | T) => {
-      const oldValue = sig.node._value;
       const nextValue = isFunction(fun) ? fun(sig.node._value) : fun;
-      if (nextValue === oldValue) {
+      if ((options.autoDiffCheck !== false) && canBeAutoDiffed(sig.node._value, nextValue) && (nextValue === sig.node._value)) {
         return;
       }
-      //
-
       sig.node._value = nextValue;
       sig.node.state = ESignalState.DIRTY;
       trigger();
-    }
+    },
   };
 
   GSignal.current = sig;
@@ -184,11 +158,6 @@ export const signal = <T = any>(
   trigger();
   GSignal.currentEffect = undefined;
   GSignal.current = undefined;
-
-  // if (!options.isEffect) {
-  //   pushToStack(sig);
-  //   GSignal.current = sig;
-  // }
 
   return sig;
 };
@@ -216,7 +185,6 @@ export const watchSignal = <T = any>(
   if (!sig.watchers.includes(fun)) {
     sig.watchers.push(fun);
   }
-
 
   if (options.immediate) {
     fun(sig.node._value);

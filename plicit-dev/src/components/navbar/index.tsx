@@ -33,6 +33,7 @@ export const NavBar = () => {
       justifyContent: 'space-between',
     }}>
       <div class="justify-start flex items-center gap-[1rem] h-full">
+        <div class="text-primary-200 font-semibold text-lg">Demo App</div>
       </div>
       <div class="justify-end flex items-center gap-[1rem] h-full">
         <Button

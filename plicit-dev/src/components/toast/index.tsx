@@ -35,10 +35,9 @@ export const Toast: Component<ToastProps> = (props) => {
   return () => (
     <div
       deps={[interp]}
-      class="max-w-xs bg-primary-200 text-sm text-gray-800 rounded-xl shadow-lg dark:bg-neutral-900"
+      class="max-w-xs bg-primary-200 text-sm text-gray-800 rounded-xl shadow-lg"
       role="alert"
       tabindex="-1"
-      aria-labelledby="hs-toast-solid-color-dark-label"
       style={{
         position: "fixed",
         bottom: `${offsetBottom.value}px`,

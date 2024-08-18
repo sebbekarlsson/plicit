@@ -25,7 +25,7 @@ const SectionBanner: Component<{
     if (closed || !props.item.label) return none();
     return (
       <div
-        class="w-full h-[4rem] flex items-center px-4 text-lg bg-primary-700 font-semibold uppercase cursor-pointer"
+        class="w-full h-[4rem] flex items-center px-4 text-sm bg-primary-700 font-semibold uppercase cursor-pointer"
         on={{ click: () => props.toggleExpanded() }}
       >
         {props.item.label}
@@ -48,7 +48,7 @@ const MenuItem: Component<{
   });
 
   const hasChildren = !!props.item.items && props.item.items.length > 0;
-  
+
   const expanded = signal<boolean>(false);
   const toggleExpanded = () => {
     if (!hasChildren) return;
@@ -78,12 +78,9 @@ const MenuItem: Component<{
     }
   };
 
-  const isActive = computed(
-    () => {
-      return route.current.value?.path === props.item.path;
-    },
-    [router, router.router.value.current.nav, route.current],
-  );
+  const isActive = computed(() => {
+    return route.current.value?.path === props.item.path;
+  }, [router, router.router.value.current.nav, route.current]);
 
   const style = computedSignal((): CSSProperties => {
     const closed = props.isClosed.get();
@@ -93,7 +90,7 @@ const MenuItem: Component<{
         ? "1rem 1fr"
         : "auto";
 
-    const pad = closed ? 0 : (props.depth + 1);
+    const pad = closed ? 0 : props.depth + 1;
     return {
       paddingLeft: `${pad}rem`,
       display: "grid",
@@ -147,7 +144,13 @@ const MenuItem: Component<{
       {props.item.items && props.item.items.length > 0 && (
         <div class="w-full" style={childListStyle}>
           {(props.item.items || []).map((child) => {
-            return <MenuItem item={child} isClosed={props.isClosed} depth={props.depth + 1} />;
+            return (
+              <MenuItem
+                item={child}
+                isClosed={props.isClosed}
+                depth={props.depth + 1}
+              />
+            );
           })}
         </div>
       )}
@@ -218,7 +221,7 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
 
   return (
     <div
-      class="h-full bg-primary-900 text-white select-none"
+      class="h-full bg-primary-950 border-primary-500 text-white select-none"
       style={props.hook.style}
     >
       {() => (
@@ -238,7 +241,7 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
                 <Icon
                   icon={{
                     src: async () =>
-                      import("../../assets/icons/chevron-left.svg"),
+                      import("../../assets/icons/chevron-left2.svg"),
                     size: "1rem",
                     fill: "currentColor",
                     flipH: isClosed,

@@ -1,0 +1,26 @@
+import { Component } from "./component";
+import { LNode } from "./lnode";
+export type ComponentHook = (node?: LNode) => any;
+export type ComponentScope = {
+    onMounted: Array<ComponentHook>;
+    onUnmounted: Array<ComponentHook>;
+    onBeforeUnmount: Array<ComponentHook>;
+    onLoaded: Array<ComponentHook>;
+    children: ComponentScope[];
+    stack: ComponentScope[];
+    stackIndex: number;
+    current: ComponentScope | null;
+    node?: any;
+    component?: Component;
+    didMount?: boolean;
+    didUnmount?: boolean;
+};
+export declare const createComponentScope: () => ComponentScope;
+export declare const GScope: ComponentScope;
+export declare const pushScope: () => ComponentScope;
+export declare const popScope: (scope?: ComponentScope) => ComponentScope;
+export declare const withCurrentScope: (fun: (scope: ComponentScope) => any) => void;
+export declare const trackCurrentScope: () => void;
+export declare const onMounted: (fun: ComponentHook) => void;
+export declare const onBeforeUnmount: (fun: ComponentHook) => void;
+export declare const onUnmounted: (fun: ComponentHook) => void;
