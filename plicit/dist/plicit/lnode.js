@@ -18,8 +18,17 @@ var ELNodeType;
     ELNodeType["SLOT"] = "SLOT";
     ELNodeType["COMPONENT"] = "COMPONENT";
     ELNodeType["SIGNAL"] = "COMPONENT";
-    ELNodeType["REF"] = "REF";
 })(ELNodeType || (exports.ELNodeType = ELNodeType = {}));
+const INTERNAL_ATTRIBUTES = [
+    "text",
+    "children",
+    "on",
+    "style",
+    "nodeType",
+    "class",
+    "watch",
+    "__depth",
+];
 class LNode {
     _lnode = "lnode";
     isRoot = false;
@@ -97,7 +106,7 @@ class LNode {
         this.events.clear();
     }
     getChildCount() {
-        const attr = ((0, reactivity_1.pget)(this.attributes.children) || []);
+        const attr = (0, reactivity_1.pget)(this.attributes.children) || [];
         const childNodes = this.getChildNodes();
         return Math.max(attr.length, childNodes.length);
     }
@@ -214,7 +223,7 @@ class LNode {
         }
         if ((0, types_1.isHTMLElement)(el) && !this.resizeObserver && this.getChildCount() > 0) {
             let didContain = false;
-            const obs = this.resizeObserver = new ResizeObserver(() => {
+            const obs = (this.resizeObserver = new ResizeObserver(() => {
                 if (document.contains(el)) {
                     didContain = true;
                     this.emit({ type: nodeEvents_1.ENodeEvent.MOUNTED, payload: {} });
@@ -236,7 +245,7 @@ class LNode {
                         });
                     });
                 }
-            });
+            }));
             obs.observe(el);
         }
     }
@@ -400,6 +409,15 @@ class LNode {
                 el.innerText = (0, reactivity_1.pget)(this.attributes.text) + "";
             }
         }
+        const watchedAttributes = (0, reactivity_1.pget)(this.attributes.watch) || [];
+        for (const key of watchedAttributes) {
+            const attrib = this.attributes[key];
+            if ((0, reactivity_1.isSignal)(attrib)) {
+                (0, reactivity_1.watchSignal)(attrib, (value) => {
+                    this.setAttribute(key, value);
+                }, { immediate: true });
+            }
+        }
         const style = this.attributes.style;
         if (style && !(0, types_1.isText)(el)) {
             if ((0, reactivity_1.isSignal)(style)) {
@@ -417,7 +435,7 @@ class LNode {
         const attrValue = this.attributes.value;
         if ((0, reactivity_1.isSignal)(attrValue)) {
             this.addGC((0, reactivity_1.watchSignal)(attrValue, (val) => {
-                this.setAttribute('value', val);
+                this.setAttribute("value", val);
             }, { immediate: true }));
         }
         const clazz = this.attributes.class;
@@ -438,16 +456,9 @@ class LNode {
         }
         if (!(0, types_1.isText)(el)) {
             for (const [key, value] of Object.entries(this.attributes)) {
-                if ([
-                    "text",
-                    "children",
-                    "on",
-                    "style",
-                    "nodeType",
-                    "class",
-                    "__depth",
-                ].includes(key))
+                if (INTERNAL_ATTRIBUTES.includes(key)) {
                     continue;
+                }
                 if (!(typeof value == "string" || typeof value === "number"))
                     continue;
                 this.setAttribute(key, value + "");

@@ -28,7 +28,7 @@ import { ReactiveDep } from "./reactivity";
 
 export type LNodeChild = Component | MaybeSignal<LNode>;
 
-export type LNodeRef = Signal<LNode | undefined>;//Ref<LNode | undefined>;
+export type LNodeRef = Signal<LNode | undefined>; //Ref<LNode | undefined>;
 
 export enum ELNodeType {
   ELEMENT = "ELEMENT",
@@ -39,7 +39,6 @@ export enum ELNodeType {
   SLOT = "SLOT",
   COMPONENT = "COMPONENT",
   SIGNAL = "COMPONENT",
-  REF = "REF",
 }
 
 type WithSignals<T> = {
@@ -59,6 +58,7 @@ export type LNodeAttributesBase = {
   tag?: string;
   onMounted?: (node: LNode) => any;
   onLoaded?: (node: LNode) => any;
+  watch?: string[];
   isRoot?: boolean;
   ref?: Signal<LNode | undefined>;
   class?: string;
@@ -67,6 +67,17 @@ export type LNodeAttributesBase = {
   signal?: Signal;
   [key: string]: any;
 };
+
+const INTERNAL_ATTRIBUTES = [
+  "text",
+  "children",
+  "on",
+  "style",
+  "nodeType",
+  "class",
+  "watch",
+  "__depth",
+];
 
 export type LNodeAttributes = WithSignals<LNodeAttributesBase>;
 
@@ -159,28 +170,30 @@ export class LNode {
     this.type = pget(this.attributes.nodeType || this.type);
     this.isRoot = pget(this.attributes.isRoot) || false;
 
-   const deps = pget(this.attributes.deps || []);
-   for (let i = 0; i < deps.length; i++) {
-     const dep = deps[i];
-     if (isSignal(dep)) {
-       this.addGC(watchSignal(dep, () => {
-         this.invalidate();
-       }));
-     }
-     //const nextUnsubs = deepSubscribe(
-     //  dep,
-     //  {
-     //    onSet: () => {
-     //      this.invalidate();
-     //    },
-     //    onTrigger: () => {
-     //      this.invalidate();
-     //    },
-     //  },
-     //  -1,
-     //);
-     //nextUnsubs.forEach((unsub) => this.addGC(unsub));
-   }
+    const deps = pget(this.attributes.deps || []);
+    for (let i = 0; i < deps.length; i++) {
+      const dep = deps[i];
+      if (isSignal(dep)) {
+        this.addGC(
+          watchSignal(dep, () => {
+            this.invalidate();
+          }),
+        );
+      }
+      //const nextUnsubs = deepSubscribe(
+      //  dep,
+      //  {
+      //    onSet: () => {
+      //      this.invalidate();
+      //    },
+      //    onTrigger: () => {
+      //      this.invalidate();
+      //    },
+      //  },
+      //  -1,
+      //);
+      //nextUnsubs.forEach((unsub) => this.addGC(unsub));
+    }
   }
 
   addGC(unsub: () => void) {
@@ -219,7 +232,7 @@ export class LNode {
   }
 
   getChildCount() {
-    const attr = (pget(this.attributes.children) || []);
+    const attr = pget(this.attributes.children) || [];
     const childNodes = this.getChildNodes();
     return Math.max(attr.length, childNodes.length);
   }
@@ -356,7 +369,7 @@ export class LNode {
 
     if (isHTMLElement(el) && !this.resizeObserver && this.getChildCount() > 0) {
       let didContain: boolean = false;
-      const obs = this.resizeObserver = new ResizeObserver(() => {
+      const obs = (this.resizeObserver = new ResizeObserver(() => {
         if (document.contains(el)) {
           didContain = true;
           this.emit({ type: ENodeEvent.MOUNTED, payload: {} });
@@ -377,7 +390,7 @@ export class LNode {
             });
           });
         }
-      });
+      }));
       obs.observe(el);
     }
   }
@@ -450,13 +463,12 @@ export class LNode {
     if (!thisEl) return;
 
     if (!isLNode(newNode)) {
-
       if (Array.isArray(newNode)) {
         const childs = newNode as Array<LNode>;
         childs.forEach((child, i) => this.appendChild(child, index + i));
         return;
       }
-      throw new Error(`NOT A NODE`)
+      throw new Error(`NOT A NODE`);
     }
 
     const myChild = this.getChildElementNode(index);
@@ -502,7 +514,10 @@ export class LNode {
     if (isSignal<LNode>(child)) {
       this.addGC(
         watchSignal(child, (next) => {
-          this.patchChildWithNode(childIndex, unwrapComponentTree(next as any) as any);
+          this.patchChildWithNode(
+            childIndex,
+            unwrapComponentTree(next as any) as any,
+          );
         }),
       );
       child = child.get();
@@ -571,6 +586,20 @@ export class LNode {
       }
     }
 
+    const watchedAttributes = pget(this.attributes.watch) || [];
+    for (const key of watchedAttributes) {
+      const attrib = this.attributes[key];
+      if (isSignal(attrib)) {
+        watchSignal(
+          attrib,
+          (value) => {
+            this.setAttribute(key, value);
+          },
+          { immediate: true },
+        );
+      }
+    }
+
     const style = this.attributes.style;
     if (style && !isText(el)) {
       if (isSignal(style)) {
@@ -583,7 +612,7 @@ export class LNode {
                 "style",
                 typeof styleValue === "string"
                   ? styleValue
-                  : cssPropsToString(styleValue)
+                  : cssPropsToString(styleValue),
               );
             },
             { immediate: true },
@@ -599,9 +628,15 @@ export class LNode {
 
     const attrValue = this.attributes.value;
     if (isSignal(attrValue)) {
-      this.addGC(watchSignal(attrValue, (val) => {
-        this.setAttribute('value', val);
-      }, { immediate: true }))
+      this.addGC(
+        watchSignal(
+          attrValue,
+          (val) => {
+            this.setAttribute("value", val);
+          },
+          { immediate: true },
+        ),
+      );
     }
 
     const clazz = this.attributes.class;
@@ -629,18 +664,9 @@ export class LNode {
 
     if (!isText(el)) {
       for (const [key, value] of Object.entries(this.attributes)) {
-        if (
-          [
-            "text",
-            "children",
-            "on",
-            "style",
-            "nodeType",
-            "class",
-            "__depth",
-          ].includes(key)
-        )
+        if (INTERNAL_ATTRIBUTES.includes(key)) {
           continue;
+        }
         if (!(typeof value == "string" || typeof value === "number")) continue;
         this.setAttribute(key, value + "");
       }

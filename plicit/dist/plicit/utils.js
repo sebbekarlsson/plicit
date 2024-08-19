@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.micro = exports.debounce = exports.throttle = exports.stringGenerator = exports.numberGenerator = exports.hashu32 = exports.toUint32 = exports.smoothstep = exports.fract = exports.clamp = exports.lerp = exports.unique = exports.range = void 0;
+exports.sleep = exports.micro = exports.debounce = exports.throttle = exports.stringGenerator = exports.numberGenerator = exports.hashu32 = exports.toUint32 = exports.smoothstep = exports.fract = exports.clamp = exports.lerp = exports.unique = exports.range = void 0;
 const is_1 = require("./is");
 const range = (n) => n <= 0 || typeof n !== "number" || isNaN(n) || !isFinite(n)
     ? []
@@ -147,4 +147,10 @@ const micro = (fun) => {
     });
 };
 exports.micro = micro;
+const sleep = (time) => {
+    return new Promise((resolve) => {
+        setTimeout(resolve, time);
+    });
+};
+exports.sleep = sleep;
 //# sourceMappingURL=utils.js.map

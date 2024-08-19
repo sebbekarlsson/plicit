@@ -31,7 +31,6 @@ import { GraphPointData, LineGraphProps } from "./types";
 import { useElementHover } from "../../hooks/useElementHover";
 
 const N = 300;
-const SEED = 144.93491823;
 const OCT = 5;
 const FREQ = 3;
 
@@ -44,6 +43,8 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
   const mouse = useMousePositionSignal();
   const hover = useElementHover(wrapperRef);
 
+  const SEED = (Math.random() * 103.39129) * (1.0 + Math.random());
+
   onMounted(() => {
     console.log('Linegraph mounted! --->');
   })
@@ -54,7 +55,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
 
   const values = computedSignal(() => {
     return range(N).map(
-      (i) => noise2D(i / N, 0.003123 + i / N, SEED, OCT, FREQ) * 100,
+      (i) => noise2D(i / N, 0.003123 + i / N, (SEED), OCT, FREQ) * 100,
     );
   });
 

@@ -189,3 +189,9 @@ export const micro = <T = any>(fun: () => T): Promise<T> => {
     })
   })
 }
+
+export const sleep = (time: number) => {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, time);
+  })
+}

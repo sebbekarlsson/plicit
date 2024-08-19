@@ -15,8 +15,7 @@ export declare enum ELNodeType {
     COMMENT = "COMMENT",
     SLOT = "SLOT",
     COMPONENT = "COMPONENT",
-    SIGNAL = "COMPONENT",
-    REF = "REF"
+    SIGNAL = "COMPONENT"
 }
 type WithSignals<T> = {
     [Prop in keyof T]: T[Prop] extends Signal | ((...args: any[]) => void) ? T[Prop] : T[Prop] | Signal<T[Prop]>;
@@ -32,6 +31,7 @@ export type LNodeAttributesBase = {
     tag?: string;
     onMounted?: (node: LNode) => any;
     onLoaded?: (node: LNode) => any;
+    watch?: string[];
     isRoot?: boolean;
     ref?: Signal<LNode | undefined>;
     class?: string;
