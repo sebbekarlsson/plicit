@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.watchSignal = exports.effectSignal = exports.computedSignal = exports.signal = exports.isSignal = exports.GSignal = void 0;
+exports.watchSignal = exports.effectSignal = exports.computedAsyncSignal = exports.computedSignal = exports.signal = exports.isSignal = exports.GSignal = void 0;
 const is_1 = require("../../is");
 const utils_1 = require("../../utils");
 const constants_1 = require("./constants");
@@ -13,11 +13,6 @@ exports.GSignal = oldG || {
 };
 // @ts-ignore
 window.GSignal = exports.GSignal;
-const nextId = () => {
-    const n = exports.GSignal.idCounter;
-    exports.GSignal.idCounter = exports.GSignal.idCounter + 1;
-    return `${n}`;
-};
 const isSignal = (x) => {
     if (!x)
         return false;
@@ -27,7 +22,6 @@ const isSignal = (x) => {
 };
 exports.isSignal = isSignal;
 const signal = (initial, options = {}) => {
-    const uid = options.uid || nextId();
     const init = (0, is_1.isFunction)(initial) ? initial : () => initial;
     const triggerFun = () => {
         if (options.isComputed) {
@@ -37,11 +31,15 @@ const signal = (initial, options = {}) => {
             init();
         }
         exports.GSignal.current = undefined;
-        sig.watchers.forEach((watcher) => watcher(sig.node._value));
+        sig.watchers.forEach((watcher) => {
+            watcher(sig.node._value);
+        });
         if (options.isEffect) {
             return;
         }
-        sig.trackedEffects.forEach((fx) => fx());
+        sig.trackedEffects.forEach((fx) => {
+            fx();
+        });
     };
     const track = () => {
         const current = exports.GSignal.current;
@@ -69,7 +67,6 @@ const signal = (initial, options = {}) => {
         isComputed: options.isComputed,
         isEffect: options.isEffect,
         sym: "Signal",
-        uid: uid,
         node: {
             _value: (0, is_1.isFunction)(initial) ? null : initial,
             fun: init,
@@ -109,6 +106,35 @@ const signal = (initial, options = {}) => {
 exports.signal = signal;
 const computedSignal = (init, options = { isComputed: true }) => (0, exports.signal)(init, { ...options, isComputed: true });
 exports.computedSignal = computedSignal;
+const computedAsyncSignal = (init, options = { isComputed: true }) => {
+    const sig = (0, exports.signal)(undefined);
+    const status = (0, exports.signal)('idle');
+    const update = async () => {
+        status.set('pending');
+        try {
+            const resp = await init();
+            sig.set(resp);
+            status.set('resolved');
+        }
+        catch (e) {
+            console.error(e);
+            status.set('error');
+        }
+    };
+    const refresh = async () => {
+        if (exports.GSignal.current && !exports.GSignal.current.trackedEffects.includes(update)) {
+            exports.GSignal.current.trackedEffects.push(update);
+        }
+        exports.GSignal.currentEffect = update;
+        update();
+        exports.GSignal.currentEffect = undefined;
+    };
+    if (options.immediate !== false) {
+        refresh().catch(e => console.error(e));
+    }
+    return { data: sig, status, update: refresh };
+};
+exports.computedAsyncSignal = computedAsyncSignal;
 const effectSignal = (init, options = { isEffect: true }) => (0, exports.signal)(init, { ...options, isEffect: true });
 exports.effectSignal = effectSignal;
 const watchSignal = (sig, fun, options = {}) => {

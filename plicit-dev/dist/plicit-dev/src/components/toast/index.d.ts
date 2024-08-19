@@ -1,7 +1,7 @@
-import { Component, MaybeRef } from "plicit";
+import { Component, MaybeSignal } from "plicit";
 import { InternalToast } from "./hook";
 type ToastProps = {
-    toast: MaybeRef<InternalToast>;
+    toast: MaybeSignal<InternalToast>;
 };
 export declare const Toast: Component<ToastProps>;
 export {};

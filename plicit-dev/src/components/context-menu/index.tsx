@@ -11,11 +11,10 @@ export const ContextMenu: Component<IContextMenuProps> = (props) => {
   return () => (
     <div
       class="bg-white text-gray-700 shadow-lg select-none rounded-lg overflow-hidden"
-      style={props.hook.style.value}
-      deps={[props.hook.style]}
+      style={props.hook.style}
       ref={props.hook.menuRef}
     >
-      {props.hook.menu.value.sections.map((sec) => {
+      {props.hook.menu.get().sections.map((sec) => {
         return (
           <div>
             {sec.label && <div>{sec.label}</div>}

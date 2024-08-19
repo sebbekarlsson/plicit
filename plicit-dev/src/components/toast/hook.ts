@@ -1,79 +1,91 @@
-import { computed, Ref, ref, stringGenerator } from "plicit"
-import { ToastObject } from "./types"
-import { useInterpolation, UseInterpolation } from "../../hooks/useInterpolation"
+import { computedSignal, signal, Signal, stringGenerator } from "plicit";
+import { ToastObject } from "./types";
+import {
+  UseInterpolationSignal,
+  useInterpolationSignal,
+} from "../../hooks/useInterpolationSignal";
 
 type Timer = ReturnType<typeof setTimeout>;
 
 export type InternalToast = ToastObject & {
-  animation: UseInterpolation;
+  animation: UseInterpolationSignal;
   uid: string;
   timer: Timer | null;
-}
+};
 
 export type UseToasts = {
   push: (toast: ToastObject) => void;
   pop: (uid: string) => void;
-  toasts: Ref<Ref<InternalToast>[]>;
-  count: Ref<number>;
-}
+  toasts: Signal<Signal<InternalToast>[]>;
+  count: Signal<number>;
+};
 
-const toasts = ref<Ref<InternalToast>[]>([]);
+const toasts = signal<Signal<InternalToast>[]>([]);
 const stringGen = stringGenerator();
 
 export const useToasts = (): UseToasts => {
   const push = (toast: ToastObject) => {
-    const animation = useInterpolation({
+    const animation = useInterpolationSignal({
       initial: 0,
-      duration: 1
-    })
-    const obj = ref<InternalToast>({
+      duration: 1,
+    });
+    const obj = signal<InternalToast>({
       ...toast,
       animation: animation,
       uid: stringGen.next(24),
-      timer: null
+      timer: null,
     });
-    toasts.value = [...toasts.value, obj];
+
+    toasts.set((old) => [...old, obj]);
 
     queueMicrotask(() => {
-      animation.run({
-        to: 1.0,
-        from: 0.0,
-        duration: 0.25
-      }).then(() => {
-        obj.value.timer = setTimeout(() => {
-          if (obj.value.timer === null) return;
-          pop(obj.value.uid);
-        }, 2500);
-      })
-    })
-  }
+      animation
+        .run({
+          to: 1.0,
+          from: 0.0,
+          duration: 0.25,
+        })
+        .then(() => {
+          obj.set((old) => ({
+            ...old,
+            timer: setTimeout(() => {
+              pop(old.uid);
+            }, 2500),
+          }));
+        });
+    });
+  };
 
   const pop = (uid: string) => {
     if (!uid) return;
-    const items = toasts.value;
+    const items = toasts.get();
     if (items.length <= 0) return;
-    const toast = items.find(it => it.value.uid === uid);
-    if (!toast) return;
+    const toastSig = items.find((it) => it.get().uid === uid);
+    if (!toastSig) return;
 
-    if (toast.value.timer !== null) {
-      clearTimeout(toast.value.timer);
+    const toast = toastSig.get();
+    const timer = toast.timer;
+    if (timer !== null) {
+      clearTimeout(timer);
     }
 
-    toast.value.animation.run({
-      from: 1.0,
-      to: 0.0,
-      duration: 0.25
-    }).then(() => {
-      toasts.value = toasts.value.filter(it => it.value.uid !== uid);
-    })
-  }
+    toast.animation
+      .run({
+        from: 1.0,
+        to: 0.0,
+        duration: 0.25,
+      })
+      .then(() => {
+        toasts.set((old) => old.filter((it) => it.get().uid !== uid));
+      });
+  };
 
-  const count = computed(() => toasts.value.length, [toasts]);
+  const count = computedSignal(() => toasts.get().length);
 
   return {
     push,
     pop,
     toasts,
-    count
-  }
-}
+    count,
+  };
+};

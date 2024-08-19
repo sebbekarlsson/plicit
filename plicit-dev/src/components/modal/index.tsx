@@ -1,30 +1,29 @@
 import { useModals } from "./hook";
 import { IModal } from "./types";
 import {
-  computed,
   computedSignal,
   lerp,
   ljsx,
   LNodeAttributes,
-  Ref,
+  Signal,
   smoothstep,
 } from "plicit";
 
 export const Modal = (
-  props: LNodeAttributes & { modal: Ref<IModal>; index: number },
+  props: LNodeAttributes & { modal: Signal<IModal>; index: number },
 ) => {
   const modals = useModals();
 
-  const opacity = computed(() => {
-    const f = props.modal.value.animation.value.value;
+  const opacity = computedSignal(() => {
+    const f = props.modal.get().animation.value.get();
     return f * 100;
-  }, [props.modal.value.animation.value]);
+  });
 
-  const scale = computed(() => {
-    const i = props.modal.value.animation.value.value;
+  const scale = computedSignal(() => {
+    const i = props.modal.get().animation.value.get();
     const f = lerp(0.5, 1.0, smoothstep(0.0, 1.0, i));
     return f;
-  }, [props.modal.value.animation.value]);
+  });
 
   return () => (
     <div
@@ -40,8 +39,8 @@ export const Modal = (
         right: "0px",
         bottom: "0px",
         margin: "auto",
-        opacity: `${opacity.value}%`,
-        scale: `${scale.value}`,
+        opacity: `${opacity.get()}%`,
+        scale: `${scale.get()}`,
       }))}
     >
       <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -69,10 +68,10 @@ export const Modal = (
                   class="text-base font-semibold leading-6 text-gray-900"
                   id="modal-title"
                 >
-                  {props.modal.value.title}
+                  {props.modal.get().title}
                 </h3>
                 <div class="text-sm text-gray-500">
-                  {props.modal.value.body}
+                  {props.modal.get().body}
                 </div>
               </div>
             </div>

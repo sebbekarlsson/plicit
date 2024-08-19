@@ -3,10 +3,10 @@ import { Component } from "./component";
 import { CSSProperties } from "./css";
 import { NativeElement, NativeElementListeners } from "./types";
 import { ENodeEvent } from "./nodeEvents";
-import { MaybeRef, Ref, Signal } from "./reactivity";
+import { MaybeSignal, Signal } from "./reactivity";
 import { ReactiveDep } from "./reactivity";
-export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
-export type LNodeRef = Ref<LNode | undefined>;
+export type LNodeChild = Component | MaybeSignal<LNode>;
+export type LNodeRef = Signal<LNode | undefined>;
 export declare enum ELNodeType {
     ELEMENT = "ELEMENT",
     TEXT_ELEMENT = "TEXT_ELEMENT",
@@ -19,7 +19,7 @@ export declare enum ELNodeType {
     REF = "REF"
 }
 type WithSignals<T> = {
-    [Prop in keyof T]: T[Prop] extends Ref | Signal | ((...args: any[]) => void) ? T[Prop] : T[Prop] | Signal<T[Prop]>;
+    [Prop in keyof T]: T[Prop] extends Signal | ((...args: any[]) => void) ? T[Prop] : T[Prop] | Signal<T[Prop]>;
 };
 export type LNodeAttributesBase = {
     text?: any;
@@ -33,7 +33,7 @@ export type LNodeAttributesBase = {
     onMounted?: (node: LNode) => any;
     onLoaded?: (node: LNode) => any;
     isRoot?: boolean;
-    ref?: LNodeRef;
+    ref?: Signal<LNode | undefined>;
     class?: string;
     component?: Component;
     _component?: Component;
@@ -95,7 +95,6 @@ export declare class LNode {
     setElement(el: LNodeNativeElement): LNodeNativeElement;
     getElementOrRender(): LNodeNativeElement;
     getElementOrThrow(): LNodeNativeElement;
-    private onReceiveChild;
     patchChildWithNode(index: number, newNode: LNode): void;
     appendChild(child: LNodeChild, childIndex: number): void;
     setAttribute(key: string, value: string): void;

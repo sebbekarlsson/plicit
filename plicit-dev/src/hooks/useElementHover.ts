@@ -1,4 +1,4 @@
-import { isHTMLElement, LNodeRef, signal, watchRef } from "plicit";
+import { isHTMLElement, LNodeRef, signal, watchSignal } from "plicit";
 
 export const useElementHover = (elRef: LNodeRef) => {
   const hover = signal<boolean>(false);
@@ -11,12 +11,15 @@ export const useElementHover = (elRef: LNodeRef) => {
     hover.set(false);
   }
 
-  watchRef(() => {
-    const el = elRef.value?.el;
+
+  watchSignal(elRef, (node) => {
+    const el = node.el;
+    if (!el) return;
     if (!isHTMLElement(el)) return;
     el.addEventListener('mouseenter', onMouseEnter);
     el.addEventListener('mouseleave', onMouseLeave);
-  }, [elRef])
+  })
+
 
   return hover;
 }

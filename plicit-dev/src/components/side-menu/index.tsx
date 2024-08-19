@@ -78,9 +78,9 @@ const MenuItem: Component<{
     }
   };
 
-  const isActive = computed(() => {
-    return route.current.value?.path === props.item.path;
-  }, [router, router.router.value.current.nav, route.current]);
+  const isActive = computedSignal(() => {
+    return route.current.get()?.path === props.item.path;
+  });
 
   const style = computedSignal((): CSSProperties => {
     const closed = props.isClosed.get();
@@ -130,7 +130,7 @@ const MenuItem: Component<{
           on={{ click: () => handleClick(props.item) }}
           class={
             "w-full h-[2.7rem] hover:bg-primary-500 transition-colors" +
-            (isActive.value ? ` bg-primary-500` : ``)
+            (isActive.get() ? ` bg-primary-500` : ``)
           }
           style={style}
         >

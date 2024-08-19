@@ -1,4 +1,4 @@
-import { LNodeRef, ref } from "plicit";
+import { LNodeRef, ref, signal } from "plicit";
 import { PageContent } from "../../../layouts/page-content"
 import { useContextMenu } from "../../../components/context-menu/hooks/useContextMenu";
 import { Button } from "../../../components/button";
@@ -6,7 +6,7 @@ import { ContextMenu } from "../../../components/context-menu";
 
 export default () => {
 
-  const elRef: LNodeRef = ref(undefined);
+  const elRef: LNodeRef = signal(undefined);
 
   const ctxMenu = useContextMenu({
     triggerRef: elRef,

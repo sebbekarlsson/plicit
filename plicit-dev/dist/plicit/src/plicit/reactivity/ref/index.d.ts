@@ -21,6 +21,4 @@ export declare const unref: <T = any>(x: T | Ref<T>) => T;
 type RefState<T = any> = {
     subscribers: RefSubscriber<T>[];
 };
-type EffectFun<T = any> = () => T;
-export declare const watchRef: <T = any>(fun: EffectFun<T>, deps?: ReactiveDep[]) => void;
 export {};

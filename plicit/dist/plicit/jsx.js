@@ -16,10 +16,13 @@ const remapChild = (child) => {
 function ljsx(tag, attribs_, ...childs) {
     const attribs = attribs_ || {};
     const depth = typeof attribs.__depth === "number" ? attribs.__depth : 0;
-    const children = childs
+    let children = childs
         .map((child) => remapChild(child))
         .flat()
-        .filter((it) => (0, lnode_1.isLNode)(it) || (0, component_1.isComponent)(it) || (0, reactivity_1.isRef)(it) || (0, reactivity_1.isSignal)(it));
+        .filter((it) => (0, lnode_1.isLNode)(it) || (0, component_1.isComponent)(it) || (0, reactivity_1.isSignal)(it));
+    if (!children || children.length <= 0 && Array.isArray(attribs.children)) {
+        children = attribs.children;
+    }
     if (typeof tag === "string") {
         return (0, lnode_1.lnode)(tag, { ...attribs, __depth: depth + 1, children: children });
     }

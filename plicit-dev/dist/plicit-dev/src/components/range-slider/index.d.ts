@@ -1,6 +1,6 @@
-import { Component, MaybeRef } from "plicit";
+import { Component, MaybeSignal } from "plicit";
 type RangeSliderProps = {
-    value: MaybeRef<number>;
+    value: MaybeSignal<number>;
     onChange?: (value: number) => any;
 };
 export declare const RangeSlider: Component<RangeSliderProps>;

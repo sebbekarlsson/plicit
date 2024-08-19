@@ -1,40 +1,45 @@
-import { Ref, ref } from "../../../../plicit/src"
-import { useInterpolation } from "../../hooks/useInterpolation";
+import { signal, Signal } from "../../../../plicit/src"
+import { useInterpolationSignal } from "../../hooks/useInterpolationSignal";
 import { IModal, IModalConfig } from "./types"
 
 export type UseModals = {
-  modals: Ref<Ref<IModal>[]>;
+  modals: Signal<Signal<IModal>[]>;
   push: (modal: IModalConfig) => Promise<void>;
   pop: () => Promise<void>;
 }
 
-const modals = ref<Ref<IModal>[]>([]);
+const modals = signal<Signal<IModal>[]>([]);
 
 export const useModals = (): UseModals => {
   const push = async (modalCfg: IModalConfig) => {
-    const modal: Ref<IModal> = ref({
+    const animation = useInterpolationSignal({
+      initial: 0,
+      duration: 0.25
+    });
+    const modal: Signal<IModal> = signal<IModal>({
       ...modalCfg,
-      animation: useInterpolation({
-        initial: 0,
-        duration: 0.25
-      })
-    })
-    modals.value = [...modals.value, modal];
-    return await modal.value.animation.run({
+      animation: animation 
+    });
+
+    modals.set((modals) => [...modals, modal]);
+    return await animation.run({
       from: 0,
       to: 1
     })
   }
 
   const pop = async () => {
-    if (modals.value.length <= 0) return;
-    const last = modals.value[modals.value.length-1];
+    const items = modals.get();
+    if (items.length <= 0) return;
+    const last = items[items.length-1];
     if (!last) return;
-    await last.value.animation.run({
+    const lastModal = last.get();
+    await lastModal.animation.run({
       from: 1,
       to: 0
-    })
-    modals.value = modals.value.slice(0, modals.value.length-1);
+    });
+
+    modals.set((modals) => modals.slice(0, modals.length-1))
   }
 
   return {

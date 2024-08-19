@@ -73,6 +73,15 @@ const sideMenu: ISideMenu = {
           },
         },
         {
+          label: "Performance",
+          path: "/performance",
+          icon: {
+            src: async () => import("./assets/icons/performance.svg"),
+            fill: "currentColor",
+            size: "1rem",
+          },
+        },
+        {
           label: "Components",
           icon: {
             src: async () => import("./assets/icons/component.svg"),
@@ -145,7 +154,7 @@ const App: Component = () => {
           </div>
         </div>
       </div>
-      {() => <ModalContainer />}
+      <ModalContainer />
       <ToastContainer />
     </div>
   );

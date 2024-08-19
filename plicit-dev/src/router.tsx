@@ -22,15 +22,19 @@ export const router = createRouter({
       component: PeopleRoute
     },
     {
+      path: '/performance',
+      name: 'Performance',
+      component: async () => (await import('./routes/performance')).default
+    },
+    {
       path: '/components',
       name: 'Components',
-      component: (props) => {
-
+      component: (_props) => {
         const route = useRoute();
         
-        return () => <div class="w-full h-full">
-          { computedSignal(() => <div class="p-4"><h1 class="text-lg font-semibold">{route.match?.value?.route?.name || 'EE'}</h1></div>) } 
-          {props.children}
+        return (props) => <div class="w-full h-full">
+          { computedSignal(() => <div class="p-4"><h1 class="text-lg font-semibold">{route.match?.get()?.route?.name || 'EE'}</h1></div>) } 
+          {props?.children}
         </div>;
       },
       children: [

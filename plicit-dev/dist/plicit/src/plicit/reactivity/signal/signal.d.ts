@@ -11,13 +11,13 @@ export type SignalOptions = {
     isComputed?: boolean;
     throttle?: number;
     debounce?: number;
-    uid?: string;
     autoDiffCheck?: boolean;
+    immediate?: boolean;
 };
 type Fun<T = any> = () => T;
+type AsyncFun<T = any> = () => Promise<T>;
 export type SignalEventPayload = {};
 export type Signal<T = any> = Trackable & {
-    uid: string;
     node: SignalNode<T>;
     set: (fun: ((old: T) => T) | T) => void;
     get: () => T;
@@ -34,6 +34,13 @@ export declare const isSignal: <T = any>(x: any) => x is Signal<T>;
 export type MaybeSignal<T = any> = T | Signal<T>;
 export declare const signal: <T = any>(initial: Fun<T> | T, options?: SignalOptions) => Signal<T>;
 export declare const computedSignal: <T = any>(init: Fun<T>, options?: SignalOptions) => Signal<T>;
+type Unpromise<T = any> = Awaited<T>;
+export type ComputedAsyncSignalStatus = "idle" | "pending" | "error" | "resolved";
+export declare const computedAsyncSignal: <T = any>(init: AsyncFun<T>, options?: SignalOptions) => {
+    data: Signal<Unpromise<T> | undefined>;
+    status: Signal<ComputedAsyncSignalStatus>;
+    update: () => Promise<void>;
+};
 export declare const effectSignal: <T = any>(init: Fun<T>, options?: SignalOptions) => Signal<T>;
 export type WatchSignalOptions = {
     immediate?: boolean;

@@ -1,17 +1,17 @@
-import { Ref } from "plicit";
+import { Signal } from "plicit";
 import { ToastObject } from "./types";
-import { UseInterpolation } from "../../hooks/useInterpolation";
+import { UseInterpolationSignal } from "../../hooks/useInterpolationSignal";
 type Timer = ReturnType<typeof setTimeout>;
 export type InternalToast = ToastObject & {
-    animation: UseInterpolation;
+    animation: UseInterpolationSignal;
     uid: string;
     timer: Timer | null;
 };
 export type UseToasts = {
     push: (toast: ToastObject) => void;
     pop: (uid: string) => void;
-    toasts: Ref<Ref<InternalToast>[]>;
-    count: Ref<number>;
+    toasts: Signal<Signal<InternalToast>[]>;
+    count: Signal<number>;
 };
 export declare const useToasts: () => UseToasts;
 export {};

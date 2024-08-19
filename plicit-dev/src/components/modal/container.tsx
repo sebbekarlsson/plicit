@@ -1,62 +1,66 @@
 import { Modal } from ".";
-import { computed, lerp, lnode } from "../../../../plicit/src";
+import {
+  computedSignal,
+  CSSProperties,
+  lerp,
+  signal,
+  watchSignal,
+} from "../../../../plicit/src";
+import { useInterpolationSignal } from "../../hooks/useInterpolationSignal";
 import { useModals } from "./hook";
 import { ljsx } from "plicit";
 
 export const ModalContainer = () => {
   const modals = useModals();
+  const didStart = signal<boolean>(false);
 
-  const interpolation = computed(
-    () =>
-      modals.modals.value.length <= 0
-        ? 0
-        : Math.max(
-            ...modals.modals.value.map(
-              (modal) => modal.value.animation.value.value,
-            ),
-          ),
+  const modalCount = computedSignal(() => modals.modals.get().length);
+  const interp = useInterpolationSignal({
+    duration: 0.25,
+    initial: 0,
+  });
 
-    [
-      modals.modals,
-      ...modals.modals.value.map((modal) => modal.value.animation.value),
-    ],
-  );
+  watchSignal(modalCount, (count) => {
+    if (count > 0 && !didStart.get()) {
+      interp.run({ to: 1.0, from: 0.0 });
+      didStart.set(true);
+    } else if (count <= 0 && didStart.get()) {
+      interp.run({ to: 0.0, from: 1.0 });
+      didStart.set(false);
+    }
+  });
 
-  const opacity = computed(() => {
-    return lerp(0.0, 0.5, interpolation.value);
-  }, [interpolation]); 
+  const opacity = computedSignal(() => {
+    modals.modals.get();
+    return lerp(0.0, 0.5, interp.value.get());
+  });
 
-  return () => (
+  return (
     <div
-      deps={[modals.modals]}
-      style={{
-        width: "100vw",
-        height: "100vh",
-        position: "fixed",
-        left: "0px",
-        top: "0px",
-        zIndex: "300",
-        pointerEvents: "none",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      {() => (
-        <div
-          style={{
-            position: "fixed",
-            top: "0px",
-            left: "0px",
-            width: "100vw",
-            height: "100vh",
-            background: `rgba(0, 0, 0, ${opacity.value})`,
-          }}
-          deps={[opacity]}
-        />
+      style={computedSignal(
+        (): CSSProperties => ({
+          width: "100vw",
+          height: "100vh",
+          position: "fixed",
+          left: "0px",
+          top: "0px",
+          zIndex: "300",
+          pointerEvents: "none",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          background: `rgba(0, 0, 0, ${opacity.get() * 100}%)`,
+        }),
       )}
-      {modals.modals.value.map((modal, i) => {
-        return <Modal deps={[modal]} modal={modal} index={i} />;
+    >
+      {computedSignal(() => {
+        return (
+          <div>
+            {modals.modals.get().map((modal, i) => {
+              return <Modal modal={modal} index={i} />;
+            })}
+          </div>
+        );
       })}
     </div>
   );

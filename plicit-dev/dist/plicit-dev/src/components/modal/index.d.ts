@@ -1,6 +1,6 @@
 import { IModal } from "./types";
-import { LNodeAttributes, Ref } from "plicit";
+import { LNodeAttributes, Signal } from "plicit";
 export declare const Modal: (props: LNodeAttributes & {
-    modal: Ref<IModal>;
+    modal: Signal<IModal>;
     index: number;
 }) => () => any;

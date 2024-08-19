@@ -7,6 +7,7 @@ import {
   onMounted,
   onUnmounted,
   ref,
+  signal,
 } from "plicit";
 import {
   AABB,
@@ -39,7 +40,7 @@ const TICK_LINE_COLOR = "rgba(0, 0, 0, 0.15)";
 const PRIMARY_COLOR = twColor("primary-500");
 
 export const LineGraph: Component<LineGraphProps> = (props) => {
-  const wrapperRef: LNodeRef = ref(undefined);
+  const wrapperRef: LNodeRef = signal(undefined);
   const svgBounds = useElementBounds(wrapperRef);
   const mouse = useMousePositionSignal();
   const hover = useElementHover(wrapperRef);

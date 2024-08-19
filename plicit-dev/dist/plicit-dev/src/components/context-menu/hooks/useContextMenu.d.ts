@@ -1,4 +1,4 @@
-import { CSSProperties, LNodeRef, Ref } from "plicit";
+import { CSSProperties, LNodeRef, Signal } from "plicit";
 import { IContextMenu, IContextMenuConfig } from "../types";
 export type UseContextMenuProps = {
     menu: IContextMenuConfig;
@@ -7,8 +7,8 @@ export type UseContextMenuProps = {
 export type UseContextMenu = {
     setOpen: (open: boolean) => void;
     toggleOpen: () => void;
-    menu: Ref<IContextMenu>;
-    style: Ref<CSSProperties>;
+    menu: Signal<IContextMenu>;
+    style: Signal<CSSProperties>;
     menuRef: LNodeRef;
 };
 export declare const useContextMenu: (props: UseContextMenuProps) => UseContextMenu;

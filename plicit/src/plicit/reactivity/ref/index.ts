@@ -100,18 +100,3 @@ export const unref = <T = any>(x: T | Ref<T>): T => {
 type RefState<T = any> = {
   subscribers: RefSubscriber<T>[];
 };
-
-type EffectFun<T = any> = () => T;
-
-export const watchRef = <T = any>(
-  fun: EffectFun<T>,
-  deps: ReactiveDep[] = [],
-) => {
-  deps.forEach((dep) => {
-    deepSubscribe(dep, {
-      onSet: () => {
-        fun();
-      },
-    });
-  });
-};

@@ -1,9 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.watchRef = exports.unref = exports.isRef = exports.ref = void 0;
+exports.unref = exports.isRef = exports.ref = void 0;
 const proxy_1 = require("../proxy");
 const types_1 = require("../../types");
-const subscribe_1 = require("../subscribe");
 const signal_1 = require("../signal");
 const ref = (initial, options = {}) => {
     const state = (0, proxy_1.proxy)({
@@ -73,14 +72,4 @@ const unref = (x) => {
     return x;
 };
 exports.unref = unref;
-const watchRef = (fun, deps = []) => {
-    deps.forEach((dep) => {
-        (0, subscribe_1.deepSubscribe)(dep, {
-            onSet: () => {
-                fun();
-            },
-        });
-    });
-};
-exports.watchRef = watchRef;
 //# sourceMappingURL=index.js.map

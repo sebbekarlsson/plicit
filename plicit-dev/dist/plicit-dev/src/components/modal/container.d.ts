@@ -1,1 +1,1 @@
-export declare const ModalContainer: () => () => any;
+export declare const ModalContainer: () => any;

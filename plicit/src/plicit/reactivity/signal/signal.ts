@@ -19,27 +19,22 @@ export const GSignal: GlobalSignalState = oldG || {
 };
 // @ts-ignore
 window.GSignal = GSignal;
-const nextId = () => {
-  const n = GSignal.idCounter;
-  GSignal.idCounter = GSignal.idCounter + 1;
-  return `${n}`;
-};
 
 export type SignalOptions = {
   isEffect?: boolean;
   isComputed?: boolean;
   throttle?: number;
   debounce?: number;
-  uid?: string;
   autoDiffCheck?: boolean;
+  immediate?: boolean;
 };
 
 type Fun<T = any> = () => T;
+type AsyncFun<T = any> = () => Promise<T>;
 
 export type SignalEventPayload = {};
 
 export type Signal<T = any> = Trackable & {
-  uid: string;
   node: SignalNode<T>;
   set: (fun: ((old: T) => T) | T) => void;
   get: () => T;
@@ -66,7 +61,6 @@ export const signal = <T = any>(
   initial: Fun<T> | T,
   options: SignalOptions = {},
 ): Signal<T> => {
-  const uid = options.uid || nextId();
   const init = isFunction(initial) ? initial : () => initial;
 
   const triggerFun = () => {
@@ -78,13 +72,17 @@ export const signal = <T = any>(
 
     GSignal.current = undefined;
 
-    sig.watchers.forEach((watcher) => watcher(sig.node._value));
+    sig.watchers.forEach((watcher) => {
+      watcher(sig.node._value)
+    });
 
     if (options.isEffect) {
       return;
     }
 
-    sig.trackedEffects.forEach((fx) => fx());
+    sig.trackedEffects.forEach((fx) => {
+      fx();
+    });
   };
 
   const track = () => {
@@ -120,7 +118,6 @@ export const signal = <T = any>(
     isComputed: options.isComputed,
     isEffect: options.isEffect,
     sym: "Signal",
-    uid: uid,
     node: {
       _value: isFunction(initial) ? null : initial,
       fun: init,
@@ -166,6 +163,47 @@ export const computedSignal = <T = any>(
   init: Fun<T>,
   options: SignalOptions = { isComputed: true },
 ): Signal<T> => signal<T>(init, { ...options, isComputed: true });
+
+
+type Unpromise<T = any> = Awaited<T>;
+
+
+export type ComputedAsyncSignalStatus = "idle" | "pending" | "error" | "resolved";
+export const computedAsyncSignal = <T = any>(
+  init: AsyncFun<T>,
+  options: SignalOptions = { isComputed: true },
+): { data: Signal<Unpromise<T> | undefined>, status: Signal<ComputedAsyncSignalStatus>, update: () => Promise<void> } => {
+  const sig = signal<Unpromise<T> | undefined>(undefined);
+  const status = signal<ComputedAsyncSignalStatus>('idle');
+
+  const update = async () => {
+    status.set('pending');
+    try {
+      const resp = await init();
+      sig.set(resp);
+      status.set('resolved');
+    } catch (e) {
+      console.error(e);
+      status.set('error');
+    }
+  }
+
+  const refresh = async () => {
+    if (GSignal.current && !GSignal.current.trackedEffects.includes(update)) {
+      GSignal.current.trackedEffects.push(update);
+    }
+
+    GSignal.currentEffect = update;
+    update();
+    GSignal.currentEffect = undefined;
+  }
+
+  if (options.immediate !== false) {
+    refresh().catch(e => console.error(e));
+  }
+
+  return { data: sig, status, update: refresh };
+} 
 
 export const effectSignal = <T = any>(
   init: Fun<T>,

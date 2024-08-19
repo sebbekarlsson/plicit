@@ -1,4 +1,4 @@
-import { computed, lnode, ref } from "plicit";
+import { computedSignal, lnode, signal } from "plicit";
 import {
   IRoute,
   IRouteConfig,
@@ -21,13 +21,13 @@ const getCachedPath = () => {
   return window.location.pathname
 }
 
-const router = ref<IRouter>({
+const router = signal<IRouter>({
   routes: [],
   current: {
-    nav: ref<RouterNavigationAction>({
+    nav: signal<RouterNavigationAction>({
       path: getCachedPath(),
       props: {},
-    }, { deep: false }),
+    }),
   },
   history: [],
 });
@@ -42,30 +42,34 @@ const createRoute = (props: IRouteConfig): IRoute => {
 
 
 export const createRouter = (props: IRouterConfig) => {
-  router.value = {
-    ...router.value,
-    routes: props.routes.map((route) => ref<IRoute>(createRoute(route), { deep: false })),
-  };
+  router.set((old) => ({
+    ...old,
+    routes: props.routes.map((route) => signal<IRoute>(createRoute(route)))
+  }))
   return router;
 };
 
 export const useRouter = () => {
   const push = (navig: RouterNavigationAction | string) => {
-    const nav = typeof navig === 'string' ? { path: navig, props: {} } : navig;
-    if (router.value.current.nav.value.path === nav.path) return;
+    const nav: RouterNavigationAction = typeof navig === 'string' ? { path: navig, props: {} } : navig;
+    if (router.get().current.nav.get().path === nav.path) return;
 
     window.history.replaceState({}, window.document.title,nav.path);
-    
-    router.value.history.push(nav);
-    router.value.current.nav.value = nav;
+
+    const nextNav = signal<RouterNavigationAction>(nav);
+    router.set((old) => {
+      return {...old, history: [...old.history, nav], current: { nav: nextNav }};
+    })
     sessionStorage.setItem(cacheKey, nav.path);
   };
 
   const back = () => {
-    if (router.value.history.length <= 0) return;
-    const last = router.value.history[router.value.history.length - 1];
-    router.value.current.nav.value = last;
-    router.value.history = router.value.history.slice(0, -1);
+    if (router.get().history.length <= 0) return;
+    const last = router.get().history[router.get().history.length - 1];
+    router.get().current.nav.set(last);
+
+    
+    router.set((old) => ({ ...old, history: old.history.slice(0, -1) }));
   };
 
   return { router, push, back };
@@ -74,10 +78,10 @@ export const useRouter = () => {
 
 export type RouterMatch = {route: IRoute | null, parent: IRoute | null };
 const findMatchingRoute = (path: string): RouterMatch | null => {
-  const routes = router.value.routes;
+  const routes = router.get().routes;
   if (!path.includes('/') || path === '/') return  { route: routes.find(
-    (it) => it.value.path === router.value.current.nav.value.path,
-  )?.value || null, parent: null };
+    (it) => it.get().path === router.get().current.nav.get().path,
+  )?.get() || null, parent: null };
   const stack = path.split('/').filter(it => it.length > 0 && it !== '');
 
 
@@ -100,19 +104,19 @@ const findMatchingRoute = (path: string): RouterMatch | null => {
 
 
   for (const route of routes) {
-    const found = traverse(route.value, 0);
-    if (found) return {route: found, parent: route.value };
+    const found = traverse(route.get(), 0);
+    if (found) return {route: found, parent: route.get() };
   }
 
   return null;
 }
 
 export const useRoute = () => {
-  const route = computed<RouterMatch>(
+  const route = computedSignal<RouterMatch>(
     () => {
 
       
-      const matched = findMatchingRoute(router.value.current.nav.value.path);
+      const matched = findMatchingRoute(router.get().current.nav.get().path);
       //const matched = router.value.routes.find(
       //  (it) => it.value.path === router.value.current.nav.value.path,
       //);
@@ -128,21 +132,20 @@ export const useRoute = () => {
         }
       }
     },
-    [router, router.value.current.nav],
   );
 
-  const current = computed<IRoute>((): IRoute => {
-      const matched = router.value.routes.find(
-        (it) => it.value.path === router.value.current.nav.value.path,
+  const current = computedSignal<IRoute>((): IRoute => {
+      const matched = router.get().routes.find(
+        (it) => it.get().path === router.get().current.nav.get().path,
       );
 
-      if (matched && matched.value) return matched.value;
+      if (matched && matched.peek()) return matched.get();
 
       return {
         path: '/404',
         component: () => lnode('div', { innerHTML: '404' })
       }
-  }, [router, router.value.current.nav])
+  })
 
   return { current, match: route };
 };

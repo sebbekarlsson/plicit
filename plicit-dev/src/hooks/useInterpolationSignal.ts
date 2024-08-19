@@ -6,6 +6,7 @@ export type InterpolationSignalRunArgs = {
   duration?: number;
   from?: number;
   to: number;
+  callback?: (value: number) => any;
 };
 
 export type UseInterpolationSignalProps = {
@@ -37,11 +38,18 @@ export const useInterpolationSignal = (
         const elapsed = (time - timeStarted) / 1000;
         if (elapsed >= duration) {
           resolve();
+          if (args.callback) {
+            args.callback(endValue);
+          }
           value.set(() => endValue);
           return;
         }
         const f = clamp(elapsed / duration, 0, 1);
-        value.set(() => lerp(startValue, endValue, f));
+        const nextValue = lerp(startValue, endValue, f);
+        if (args.callback) {
+          args.callback(nextValue);
+        }
+        value.set(() => nextValue);
         timer = requestAnimationFrame(loop);
       };
       timer = requestAnimationFrame(loop);

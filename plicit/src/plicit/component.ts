@@ -1,27 +1,24 @@
 import { ELNodeType, isLNode, lnode, LNode, LNodeAttributes, lnodeX } from "./lnode";
 import { ENodeEvent } from "./nodeEvents";
 import {
-  isRef,
   isSignal,
-  MaybeRef,
   MaybeSignal,
   Signal,
 } from "./reactivity";
-import { popScope, pushScope, trackCurrentScope, withCurrentScope } from "./scope";
+import { popScope, pushScope, withCurrentScope } from "./scope";
 import { Dict } from "./types";
 
 export type UnwrappableComponent =
   | Component
-  | MaybeRef<LNode>
   | Signal<LNode>
   | MaybeSignal<LNode>
   | string;
 
-export type UnwrappedComponent = MaybeRef<LNode> | MaybeSignal<LNode>;
+export type UnwrappedComponent = MaybeSignal<LNode>;
 
 export type Component<T extends Dict = Dict> = (
   props?: T & LNodeAttributes,
-) => MaybeRef<LNode> | Component | Signal<LNode> | MaybeSignal<LNode> | string;
+) =>  Component | Signal<LNode> | MaybeSignal<LNode> | string;
 
 export const isComponent = (x: any): x is Component =>
   !!x && typeof x === "function";
@@ -30,18 +27,13 @@ export const isComponent = (x: any): x is Component =>
 export const unwrapComponentTree = (
   component: UnwrappableComponent,
   propagatedAttribs: LNodeAttributes = {},
-): MaybeRef<LNode> | MaybeSignal<LNode> => {
+): MaybeSignal<LNode> => {
   
   const unwrap = (
     component: UnwrappableComponent,
     attribs: LNodeAttributes = {},
     depth: number = 0,
   ) => {
-    if (isLNode(component)) {
-      return component;
-    }
-    if (isSignal(component)) return lnodeX(ELNodeType.SIGNAL, { ...attribs, signal: component });
-    if (isRef(component)) return component;
     if (isComponent(component)) {
       pushScope();
       const next = component({...attribs, component});
@@ -61,6 +53,10 @@ export const unwrapComponentTree = (
       popScope();
       return ret;
     }
+    if (isLNode(component)) {
+      return component;
+    }
+    if (isSignal(component)) return lnodeX(ELNodeType.SIGNAL, { ...attribs, signal: component }); 
     if (typeof component === 'string' || typeof component === 'number') {
       return lnode('span', { text: component + '', nodeType: ELNodeType.TEXT_ELEMENT });
     }
@@ -73,9 +69,6 @@ export const unwrapComponentTree = (
 export const unwrapChild = (child: UnwrappableComponent): LNode => { 
   if (isSignal<LNode>(child)) {
     return unwrapChild(child.get());
-  }
-  if (isRef<LNode>(child)) {
-    return unwrapChild(child.value);
   }
   if (isComponent(child)) {
     return unwrapChild(child({}));

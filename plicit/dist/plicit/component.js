@@ -9,13 +9,6 @@ const isComponent = (x) => !!x && typeof x === "function";
 exports.isComponent = isComponent;
 const unwrapComponentTree = (component, propagatedAttribs = {}) => {
     const unwrap = (component, attribs = {}, depth = 0) => {
-        if ((0, lnode_1.isLNode)(component)) {
-            return component;
-        }
-        if ((0, reactivity_1.isSignal)(component))
-            return (0, lnode_1.lnodeX)(lnode_1.ELNodeType.SIGNAL, { ...attribs, signal: component });
-        if ((0, reactivity_1.isRef)(component))
-            return component;
         if ((0, exports.isComponent)(component)) {
             (0, scope_1.pushScope)();
             const next = component({ ...attribs, component });
@@ -33,6 +26,11 @@ const unwrapComponentTree = (component, propagatedAttribs = {}) => {
             (0, scope_1.popScope)();
             return ret;
         }
+        if ((0, lnode_1.isLNode)(component)) {
+            return component;
+        }
+        if ((0, reactivity_1.isSignal)(component))
+            return (0, lnode_1.lnodeX)(lnode_1.ELNodeType.SIGNAL, { ...attribs, signal: component });
         if (typeof component === 'string' || typeof component === 'number') {
             return (0, lnode_1.lnode)('span', { text: component + '', nodeType: lnode_1.ELNodeType.TEXT_ELEMENT });
         }
@@ -44,9 +42,6 @@ exports.unwrapComponentTree = unwrapComponentTree;
 const unwrapChild = (child) => {
     if ((0, reactivity_1.isSignal)(child)) {
         return (0, exports.unwrapChild)(child.get());
-    }
-    if ((0, reactivity_1.isRef)(child)) {
-        return (0, exports.unwrapChild)(child.value);
     }
     if ((0, exports.isComponent)(child)) {
         return (0, exports.unwrapChild)(child({}));

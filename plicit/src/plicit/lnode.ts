@@ -17,23 +17,19 @@ import {
 } from "./types";
 import { ENodeEvent } from "./nodeEvents";
 import {
-  isRef,
   isSignal,
-  MaybeRef,
+  MaybeSignal,
   pget,
-  Ref,
   signal,
   Signal,
-  unref,
   watchSignal,
 } from "./reactivity";
-import { ReactiveDep, unwrapReactiveDep, deepSubscribe } from "./reactivity";
+import { ReactiveDep, deepSubscribe } from "./reactivity";
 import { withCurrentScope } from "./scope";
-import { unique } from "./utils";
 
-export type LNodeChild = MaybeRef<LNode> | Component | Signal<LNode>;
+export type LNodeChild = Component | MaybeSignal<LNode>;
 
-export type LNodeRef = Ref<LNode | undefined>;
+export type LNodeRef = Signal<LNode | undefined>;//Ref<LNode | undefined>;
 
 export enum ELNodeType {
   ELEMENT = "ELEMENT",
@@ -48,7 +44,7 @@ export enum ELNodeType {
 }
 
 type WithSignals<T> = {
-  [Prop in keyof T]: T[Prop] extends Ref | Signal | ((...args: any[]) => void)
+  [Prop in keyof T]: T[Prop] extends Signal | ((...args: any[]) => void)
     ? T[Prop]
     : T[Prop] | Signal<T[Prop]>;
 };
@@ -65,7 +61,7 @@ export type LNodeAttributesBase = {
   onMounted?: (node: LNode) => any;
   onLoaded?: (node: LNode) => any;
   isRoot?: boolean;
-  ref?: LNodeRef;
+  ref?: Signal<LNode | undefined>;
   class?: string;
   component?: Component;
   _component?: Component;
@@ -255,7 +251,7 @@ export class LNode {
     if (!old) throw new Error(`Expected an existing element.`);
 
     const next = unwrapComponentTree(other);
-    let unreffed = unref(next);
+    let unreffed = pget(next);
 
     if (isSignal(unreffed)) {
       unreffed = unreffed.get();
@@ -295,7 +291,6 @@ export class LNode {
     this.el = undefined;
     const next = this.render();
     if (next !== this.el) {
-      console.log("muck");
       this.el.replaceWith(next);
     }
     this.setElement(next);
@@ -304,7 +299,8 @@ export class LNode {
 
   updateRef() {
     if (this.attributes.ref) {
-      this.attributes.ref.value = this;
+      this.attributes.ref.set(this);
+      //this.attributes.ref.value = this;
     }
   }
 
@@ -448,34 +444,19 @@ export class LNode {
     throw new Error(`Node did not have an element when it was expected.`);
   }
 
-  private onReceiveChild(child: LNodeChild, childIndex: number) {
-    if (isRef(child)) {
-      child._deps.forEach((d) => {
-        const un = unwrapReactiveDep(d);
-        if (isRef(un)) {
-          un.subscribe({
-            onGet: (_target, key) => {
-              if (key === "value") {
-                unref(child).invalidate();
-              }
-            },
-            onSet: (_target, key) => {
-              if (key === "value") {
-                this.appendChild(child, childIndex);
-              }
-            },
-            onTrigger: () => {
-              this.appendChild(child, childIndex);
-            },
-          });
-        }
-      });
-    }
-  }
-
   patchChildWithNode(index: number, newNode: LNode) {
     const thisEl = this.el;
     if (!thisEl) return;
+
+    if (!isLNode(newNode)) {
+
+      if (Array.isArray(newNode)) {
+        const childs = newNode as Array<LNode>;
+        childs.forEach((child, i) => this.appendChild(child, index + i));
+        return;
+      }
+      throw new Error(`NOT A NODE`)
+    }
 
     const myChild = isElementWithChildren(thisEl)
       ? Array.from(thisEl.children)[index]
@@ -519,7 +500,7 @@ export class LNode {
     if (isSignal<LNode>(child)) {
       this.addGC(
         watchSignal(child, (next) => {
-          this.patchChildWithNode(childIndex, next);
+          this.patchChildWithNode(childIndex, unwrapComponentTree(next as any) as any);
         }),
       );
       child = child.get();
@@ -537,7 +518,6 @@ export class LNode {
 
     if (!this.children.includes(child)) {
       this.children.push(child);
-      this.onReceiveChild(child, childIndex);
     }
 
     if (isLNode(unreffed)) {
@@ -585,7 +565,7 @@ export class LNode {
       ) {
         el.innerHTML = "";
         // @ts-ignore
-        el.innerText = unref(this.attributes.text) + "";
+        el.innerText = pget(this.attributes.text) + "";
       }
     }
 
@@ -665,9 +645,9 @@ export class LNode {
 
     this.emit({ type: ENodeEvent.LOADED, payload: {} });
 
-    withCurrentScope((scope) => {
-      console.log({ scope });
-    });
+    //withCurrentScope((scope) => {
+    //  console.log({ scope });
+    //});
 
     return el;
   }

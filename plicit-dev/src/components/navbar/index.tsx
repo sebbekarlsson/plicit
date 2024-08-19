@@ -1,4 +1,4 @@
-import { ljsx, LNodeRef, ref } from "plicit";
+import { ljsx, LNodeRef, ref, signal } from "plicit";
 import { useModals } from "../modal/hook";
 import { Button } from "../button";
 import { useToasts } from "../toast/hook";
@@ -9,7 +9,7 @@ export const NavBar = () => {
   const modals = useModals();
   const toasts = useToasts();
 
-  const elRef: LNodeRef = ref(undefined);
+  const elRef: LNodeRef = signal(undefined);
 
   const ctxMenu = useContextMenu({
     triggerRef: elRef,

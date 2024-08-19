@@ -1,16 +1,16 @@
 import {
-  computed,
+  computedSignal,
   CSSProperties,
   isHTMLElement,
   LNodeRef,
-  Ref,
-  ref,
+  Signal,
   signal,
-  watchRef,
+  watchSignal,
 } from "plicit";
 import { IContextMenu, IContextMenuConfig } from "../types";
 import { AABB, getAABBSize, VEC2 } from "tsmathutil";
 import { useInterpolationSignal } from "../../../hooks/useInterpolationSignal";
+import { useElementBounds } from "../../../hooks/useElementBounds";
 
 const HOVER_TIMEOUT_LEAVE_MENU = 90;
 const HOVER_TIMEOUT_LEAVE_TRIGGER = 100;
@@ -25,13 +25,13 @@ export type UseContextMenuProps = {
 export type UseContextMenu = {
   setOpen: (open: boolean) => void;
   toggleOpen: () => void;
-  menu: Ref<IContextMenu>;
-  style: Ref<CSSProperties>;
+  menu: Signal<IContextMenu>;
+  style: Signal<CSSProperties>;
   menuRef: LNodeRef;
 };
 
 export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
-  const menu = ref<IContextMenu>({
+  const menu = signal<IContextMenu>({
     ...props.menu,
     pos: VEC2(0, 0),
     open: false,
@@ -45,36 +45,25 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
   const mouseIsOnMenu = signal<boolean>(false);
   const mouseIsOnTrigger = signal<boolean>(false);
 
-  const menuRef: LNodeRef = ref(undefined);
+  const menuRef: LNodeRef = signal(undefined);
 
-  const triggerEl = computed((): HTMLElement | null => {
-    const trigger = props.triggerRef.value;
+  const triggerEl = computedSignal((): HTMLElement | null => {
+    const trigger = props.triggerRef.get();
     if (!trigger) return null;
     const el = trigger.el;
     if (!isHTMLElement(el)) return null;
     return el;
-  }, [props.triggerRef]);
+  });
 
-  const menuEl = computed((): HTMLElement | null => {
-    const node = menuRef.value;
+  const menuEl = computedSignal((): HTMLElement | null => {
+    const node = menuRef.get();
     if (!node) return null;
     const el = node.el;
     if (!isHTMLElement(el)) return null;
     return el;
-  }, [menuRef]);
+  });
 
-  const triggerBounds = computed((): AABB => {
-    const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
-    const el = triggerEl.value;
-    if (!el) return empty;
-    const box = el.getBoundingClientRect();
-    const p = VEC2(box.x, box.y);
-    const size = VEC2(box.width, box.height);
-    return {
-      min: p,
-      max: p.add(size),
-    };
-  }, [mouseIsOnMenu, mouseIsOnTrigger]);
+  const triggerBounds = useElementBounds(props.triggerRef); 
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -88,20 +77,20 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
         from: interp.value.get(),
       });
     }
-    menu.value = {
-      ...menu.value,
-      open,
-    };
+    menu.set((old) => {
+      return {...old, open};
+    })
   };
 
   const toggleOpen = () => {
-    setOpen(!menu.value.open);
+    setOpen(!menu.get().open);
   };
 
-  const style = computed((): CSSProperties => {
-    const p = triggerBounds.value.min.clone();
-    p.y = triggerBounds.value.max.y;
-    const size = getAABBSize(triggerBounds.value);
+  const style = computedSignal((): CSSProperties => {
+    const trigBounds = triggerBounds.bounds.get();
+    const p = trigBounds.min.clone();
+    p.y = trigBounds.max.y;
+    const size = getAABBSize(trigBounds);
     const anim = interp.value.get();
     return {
       position: "fixed",
@@ -111,7 +100,7 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
       minWidth: size.x + "px",
       background: "white",
       opacity: anim * 100 + "%",
-      ...(menu.value.open || anim > 0.001
+      ...(menu.get().open || anim > 0.001
         ? {
             display: "block",
           }
@@ -121,7 +110,7 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
             opacity: "0%",
           }),
     };
-  }, [menu, triggerBounds, interp.value]);
+  });
 
   let leaveTriggerTimer: Timer | null = null;
   let leaveMenuTimer: Timer | null = null;
@@ -169,19 +158,17 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     }, HOVER_TIMEOUT_LEAVE_MENU);
   };
 
-  watchRef(() => {
-    const el = triggerEl.value;
+  watchSignal(triggerEl, (el) => {
     if (!el) return;
     el.addEventListener("mouseenter", onMouseEnterTrigger);
     el.addEventListener("mouseleave", onMouseLeaveTrigger);
-  }, [triggerEl]);
+  });
 
-  watchRef(() => {
-    const el = menuEl.value;
+  watchSignal(menuEl, (el) => {
     if (!el) return;
     el.addEventListener("mouseenter", onMouseEnterMenu);
     el.addEventListener("mouseleave", onMouseLeaveMenu);
-  }, [menuEl]);
+  });
 
   return {
     menu,

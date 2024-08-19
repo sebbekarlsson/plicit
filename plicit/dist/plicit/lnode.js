@@ -9,7 +9,6 @@ const types_1 = require("./types");
 const nodeEvents_1 = require("./nodeEvents");
 const reactivity_1 = require("./reactivity");
 const reactivity_2 = require("./reactivity");
-const scope_1 = require("./scope");
 var ELNodeType;
 (function (ELNodeType) {
     ELNodeType["ELEMENT"] = "ELEMENT";
@@ -124,7 +123,7 @@ class LNode {
         if (!old)
             throw new Error(`Expected an existing element.`);
         const next = (0, component_1.unwrapComponentTree)(other);
-        let unreffed = (0, reactivity_1.unref)(next);
+        let unreffed = (0, reactivity_1.pget)(next);
         if ((0, reactivity_1.isSignal)(unreffed)) {
             unreffed = unreffed.get();
         }
@@ -156,7 +155,6 @@ class LNode {
         this.el = undefined;
         const next = this.render();
         if (next !== this.el) {
-            console.log("muck");
             this.el.replaceWith(next);
         }
         this.setElement(next);
@@ -164,7 +162,8 @@ class LNode {
     }
     updateRef() {
         if (this.attributes.ref) {
-            this.attributes.ref.value = this;
+            this.attributes.ref.set(this);
+            //this.attributes.ref.value = this;
         }
     }
     emit(event) {
@@ -285,34 +284,18 @@ class LNode {
             return this.el;
         throw new Error(`Node did not have an element when it was expected.`);
     }
-    onReceiveChild(child, childIndex) {
-        if ((0, reactivity_1.isRef)(child)) {
-            child._deps.forEach((d) => {
-                const un = (0, reactivity_2.unwrapReactiveDep)(d);
-                if ((0, reactivity_1.isRef)(un)) {
-                    un.subscribe({
-                        onGet: (_target, key) => {
-                            if (key === "value") {
-                                (0, reactivity_1.unref)(child).invalidate();
-                            }
-                        },
-                        onSet: (_target, key) => {
-                            if (key === "value") {
-                                this.appendChild(child, childIndex);
-                            }
-                        },
-                        onTrigger: () => {
-                            this.appendChild(child, childIndex);
-                        },
-                    });
-                }
-            });
-        }
-    }
     patchChildWithNode(index, newNode) {
         const thisEl = this.el;
         if (!thisEl)
             return;
+        if (!(0, exports.isLNode)(newNode)) {
+            if (Array.isArray(newNode)) {
+                const childs = newNode;
+                childs.forEach((child, i) => this.appendChild(child, index + i));
+                return;
+            }
+            throw new Error(`NOT A NODE`);
+        }
         const myChild = (0, types_1.isElementWithChildren)(thisEl)
             ? Array.from(thisEl.children)[index]
             : null;
@@ -354,7 +337,7 @@ class LNode {
     appendChild(child, childIndex) {
         if ((0, reactivity_1.isSignal)(child)) {
             this.addGC((0, reactivity_1.watchSignal)(child, (next) => {
-                this.patchChildWithNode(childIndex, next);
+                this.patchChildWithNode(childIndex, (0, component_1.unwrapComponentTree)(next));
             }));
             child = child.get();
         }
@@ -367,7 +350,6 @@ class LNode {
         const el = this.getElementOrThrow();
         if (!this.children.includes(child)) {
             this.children.push(child);
-            this.onReceiveChild(child, childIndex);
         }
         if ((0, exports.isLNode)(unreffed)) {
             unreffed.parent.set(this);
@@ -409,7 +391,7 @@ class LNode {
                 !(0, types_1.isSVGSVGElement)(el)) {
                 el.innerHTML = "";
                 // @ts-ignore
-                el.innerText = (0, reactivity_1.unref)(this.attributes.text) + "";
+                el.innerText = (0, reactivity_1.pget)(this.attributes.text) + "";
             }
         }
         const style = this.attributes.style;
@@ -465,9 +447,9 @@ class LNode {
             this.appendChild(child, i);
         }
         this.emit({ type: nodeEvents_1.ENodeEvent.LOADED, payload: {} });
-        (0, scope_1.withCurrentScope)((scope) => {
-            console.log({ scope });
-        });
+        //withCurrentScope((scope) => {
+        //  console.log({ scope });
+        //});
         return el;
     }
 }

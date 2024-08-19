@@ -1,4 +1,4 @@
-import { Component, computed } from "plicit";
+import { Component, computed, computedSignal, ELNodeType } from "plicit";
 import { useToasts } from "./hook";
 import { Toast } from ".";
 
@@ -7,7 +7,6 @@ export const ToastContainer: Component = () => {
 
   return () => (
     <div
-      deps={[toasts.toasts]}
       style={{
         width: "100vw",
         height: "100vh",
@@ -21,8 +20,14 @@ export const ToastContainer: Component = () => {
         alignItems: "center",
       }}
     >
-      {toasts.toasts.value.map((toast, i) => {
-        return <Toast deps={[toast]} toast={toast} key={`toast-${i}`} />;
+      {computedSignal(() => {
+        return (
+          <div nodeType={ELNodeType.FRAGMENT}>
+            {toasts.toasts.get().map((toast, i) => {
+              return <Toast toast={toast} key={`toast-${i}`} />;
+            })}
+          </div>
+        );
       })}
     </div>
   );

@@ -1,5 +1,4 @@
 export type Trackable = {
-    uid: string;
     trigger: () => any;
     tracked: Trackable[];
     trackedEffects: Array<() => any>;

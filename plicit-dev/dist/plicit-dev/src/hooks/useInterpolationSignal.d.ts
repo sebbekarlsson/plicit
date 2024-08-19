@@ -3,6 +3,7 @@ export type InterpolationSignalRunArgs = {
     duration?: number;
     from?: number;
     to: number;
+    callback?: (value: number) => any;
 };
 export type UseInterpolationSignalProps = {
     initial?: number;

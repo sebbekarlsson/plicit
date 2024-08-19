@@ -2,55 +2,59 @@ import {
   clamp,
   Component,
   computed,
+  computedSignal,
+  CSSProperties,
   lerp,
   MaybeRef,
+  MaybeSignal,
+  pget,
   smoothstep,
   unref,
 } from "plicit";
 import { InternalToast, useToasts } from "./hook";
 
 type ToastProps = {
-  toast: MaybeRef<InternalToast>;
+  toast: MaybeSignal<InternalToast>;
 };
 
 export const Toast: Component<ToastProps> = (props) => {
-  const toast = computed(() => unref(props.toast), [() => props.toast]);
+  const toast = computedSignal(() => pget(props.toast));
 
-  const interp = computed(
-    () => toast.value.animation.value.value,
-    [toast.value.animation.value],
+  const interp = computedSignal(
+    () => toast.get().animation.value.get(),
   );
-  const opacity = computed(() => clamp(interp.value, 0, 1), [interp]);
+  const opacity = computedSignal(() => clamp(interp.get(), 0, 1));
 
-  const offsetBottom = computed(() => {
-    const f = smoothstep(0, 0.96, interp.value);
+  const offsetBottom = computedSignal(() => {
+    const f = smoothstep(0, 0.96, interp.get());
     return lerp(-16 * 4, 16 * 3, f);
-  }, [interp]);
+  });
 
   const handleClose = () => {
     const toasts = useToasts();
-    toasts.pop(toast.value.uid);
+    toasts.pop(toast.get().uid);
   };
 
-  return () => (
+  return (
     <div
-      deps={[interp]}
       class="max-w-xs bg-primary-200 text-sm text-gray-800 rounded-xl shadow-lg"
       role="alert"
       tabindex="-1"
-      style={{
+      style={computedSignal(():CSSProperties  => (
+        {
         position: "fixed",
-        bottom: `${offsetBottom.value}px`,
-        left: 0,
-        right: 0,
+        bottom: `${offsetBottom.get()}px`,
+        left: '0px',
+        right: '0px',
         marginLeft: "auto",
         marginRight: "auto",
-        opacity: `${opacity.value * 100}%`,
+        opacity: `${opacity.get() * 100}%`,
         pointerEvents: "all",
-      }}
+      }
+      ))}
     >
       <div class="flex p-4 items-center">
-        <div>{toast.value.message}</div>
+        <div>{toast.get().message}</div>
         <div class="ms-auto text-gray-900">
           <button
             on={{

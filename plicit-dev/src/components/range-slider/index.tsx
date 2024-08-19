@@ -3,21 +3,19 @@ import {
   computed,
   computedSignal,
   effectSignal,
-  isHTMLElement,
   LNodeRef,
-  MaybeRef,
-  ref,
+  MaybeSignal,
+  pget,
   signal,
-  unref,
 } from "plicit";
-import { AABB, clamp, getAABBSize, remap, VEC2, Vector } from "tsmathutil";
+import { clamp, remap, VEC2, Vector } from "tsmathutil";
 import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
 import { useElementBounds } from "../../hooks/useElementBounds";
 import { useTooltip } from "../tooltip/hooks/useTooltip";
 import { Tooltip } from "../tooltip";
 
 type RangeSliderProps = {
-  value: MaybeRef<number>;
+  value: MaybeSignal<number>;
   onChange?: (value: number) => any;
 };
 
@@ -30,8 +28,8 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     }
   };
 
-  const knobRef: LNodeRef = ref(undefined);
-  const wrapper: LNodeRef = ref(undefined);
+  const knobRef: LNodeRef = signal(undefined);
+  const wrapper: LNodeRef = signal(undefined);
   const mouse = useMousePositionSignal();
   const dragging = signal<boolean>(false);
   const knobPosition = signal<Vector>(VEC2(0, 0));
@@ -39,7 +37,6 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   const wrapperBounds = useElementBounds(wrapper);
 
-  
   const trackRange = computed(() => {
     const bounds = wrapperBounds.bounds.get();
     const trackLength = bounds.max.x - bounds.min.x;
@@ -60,7 +57,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   queueMicrotask(() => {
     setTimeout(() => {
-      knobPosition.set(VEC2(getInverseComputedValue(unref(props.value)), 0));
+      knobPosition.set(VEC2(getInverseComputedValue(pget(props.value)), 0));
     }, 0);
   });
 

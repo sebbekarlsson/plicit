@@ -6,7 +6,7 @@ import {
   onMounted,
   onUnmounted,
   signal,
-  watchRef,
+  watchSignal,
 } from "plicit";
 import { AABB, VEC2 } from "tsmathutil";
 
@@ -36,7 +36,7 @@ export const useElementBounds = (
   const bounds = computedSignal<AABB>(() => {
     counter.get();
     const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
-    const node = elRef.value;
+    const node = elRef.get();
     if (!node) return empty;
     const el = node.el;
     if (!el || !isHTMLElement(el)) return empty;
@@ -54,8 +54,8 @@ export const useElementBounds = (
   let lastEl: HTMLElement | null = null;
   let lastObs: ResizeObserver | null = null;
 
-  watchRef(() => {
-    const node = elRef.value;
+  watchSignal(elRef, () => {
+    const node = elRef.get();
     if (!node) return;
     const el = node.el;
     if (!el || !isHTMLElement(el)) return;
@@ -83,7 +83,7 @@ export const useElementBounds = (
     lastObs = obs;
 
     obs.observe(el);
-  }, [elRef]);
+  });
 
   window.addEventListener("resize", update);
   window.addEventListener("wheel", update);

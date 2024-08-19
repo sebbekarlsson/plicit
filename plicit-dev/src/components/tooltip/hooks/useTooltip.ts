@@ -1,4 +1,4 @@
-import { computedSignal, CSSProperties, isHTMLElement, LNodeChild, LNodeRef, pget, ref, signal, Signal, smoothstep, watchRef, watchSignal } from "plicit"
+import { computedSignal, CSSProperties, isHTMLElement, LNodeChild, LNodeRef, pget, ref, signal, Signal, smoothstep, watchSignal } from "plicit"
 import { ITooltipConfig } from "../types"
 import { useElementBounds } from "../../../hooks/useElementBounds";
 import { useInterpolationSignal } from "../../../hooks/useInterpolationSignal";
@@ -16,7 +16,7 @@ export type UseTooltip = {
 }
 
 export const useTooltip = (props: UseTooltipProps): UseTooltip => {
-  const toolRef: LNodeRef = ref(undefined);
+  const toolRef: LNodeRef = signal(undefined);
   const toolBounds = useElementBounds(toolRef);
   const triggerBounds = useElementBounds(props.triggerRef);
   const isActive = signal<boolean>(false);
@@ -60,12 +60,12 @@ export const useTooltip = (props: UseTooltipProps): UseTooltip => {
     }
   })
   
-  watchRef(() => {
-    const el = props.triggerRef.value?.el;
+  watchSignal(props.triggerRef, (trigger) => {
+    const el = trigger.el;
     if (!el || !isHTMLElement(el)) return;
     el.addEventListener('mouseenter', onMouseEnterTrigger);
     el.addEventListener('mouseleave', onMouseLeaveTrigger);
-  }, [props.triggerRef]);
+  });
 
 
   const selfSize = computedSignal(() => {
