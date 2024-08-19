@@ -159,23 +159,28 @@ export class LNode {
     this.type = pget(this.attributes.nodeType || this.type);
     this.isRoot = pget(this.attributes.isRoot) || false;
 
-   // const deps = pget(this.attributes.deps || []);
-   // for (let i = 0; i < deps.length; i++) {
-   //   const dep = deps[i];
-   //   const nextUnsubs = deepSubscribe(
-   //     dep,
-   //     {
-   //       onSet: () => {
-   //         this.invalidate();
-   //       },
-   //       onTrigger: () => {
-   //         this.invalidate();
-   //       },
-   //     },
-   //     -1,
-   //   );
-   //   nextUnsubs.forEach((unsub) => this.addGC(unsub));
-   // }
+   const deps = pget(this.attributes.deps || []);
+   for (let i = 0; i < deps.length; i++) {
+     const dep = deps[i];
+     if (isSignal(dep)) {
+       this.addGC(watchSignal(dep, () => {
+         this.invalidate();
+       }));
+     }
+     //const nextUnsubs = deepSubscribe(
+     //  dep,
+     //  {
+     //    onSet: () => {
+     //      this.invalidate();
+     //    },
+     //    onTrigger: () => {
+     //      this.invalidate();
+     //    },
+     //  },
+     //  -1,
+     //);
+     //nextUnsubs.forEach((unsub) => this.addGC(unsub));
+   }
   }
 
   addGC(unsub: () => void) {
@@ -578,7 +583,7 @@ export class LNode {
                 "style",
                 typeof styleValue === "string"
                   ? styleValue
-                  : cssPropsToString(styleValue),
+                  : cssPropsToString(styleValue)
               );
             },
             { immediate: true },

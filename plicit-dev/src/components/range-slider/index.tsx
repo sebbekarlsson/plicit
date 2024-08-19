@@ -115,9 +115,10 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
   };
 
   const Knob = () => {
-    return () => (
+    return (
       <div
         ref={knobRef}
+        deps={[knobPosition]}
         on={{
           mousedown: (ev: MouseEvent) => {
             ev.preventDefault();
@@ -135,19 +136,20 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
           },
         }}
         class="aspect-[1/1] bg-primary-500 absolute rounded-full cursor-grab"
-        style={{
-          height: KNOB_SIZE + 'px',
-          left: knobPosition.get().x + "px",
-          top: "0px",
-          bottom: "0px",
-          margin: "auto",
-          zIndex: 2,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          filter: "drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.5))",
-        }}
-        deps={[knobPosition]}
+        style={computedSignal(() => {
+          return {
+            height: KNOB_SIZE + 'px',
+            left: knobPosition.get().x + "px",
+            top: "0px",
+            bottom: "0px",
+            margin: "auto",
+            zIndex: 2,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            filter: "drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.5))",
+          }
+        })}
       >
         <div
           class="h-[60%] aspect-[1/1] bg-white rounded-full"

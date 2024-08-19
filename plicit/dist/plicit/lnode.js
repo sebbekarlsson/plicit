@@ -43,23 +43,28 @@ class LNode {
         this.key = (0, reactivity_1.pget)(this.attributes.key || "");
         this.type = (0, reactivity_1.pget)(this.attributes.nodeType || this.type);
         this.isRoot = (0, reactivity_1.pget)(this.attributes.isRoot) || false;
-        // const deps = pget(this.attributes.deps || []);
-        // for (let i = 0; i < deps.length; i++) {
-        //   const dep = deps[i];
-        //   const nextUnsubs = deepSubscribe(
-        //     dep,
-        //     {
-        //       onSet: () => {
-        //         this.invalidate();
-        //       },
-        //       onTrigger: () => {
-        //         this.invalidate();
-        //       },
-        //     },
-        //     -1,
-        //   );
-        //   nextUnsubs.forEach((unsub) => this.addGC(unsub));
-        // }
+        const deps = (0, reactivity_1.pget)(this.attributes.deps || []);
+        for (let i = 0; i < deps.length; i++) {
+            const dep = deps[i];
+            if ((0, reactivity_1.isSignal)(dep)) {
+                this.addGC((0, reactivity_1.watchSignal)(dep, () => {
+                    this.invalidate();
+                }));
+            }
+            //const nextUnsubs = deepSubscribe(
+            //  dep,
+            //  {
+            //    onSet: () => {
+            //      this.invalidate();
+            //    },
+            //    onTrigger: () => {
+            //      this.invalidate();
+            //    },
+            //  },
+            //  -1,
+            //);
+            //nextUnsubs.forEach((unsub) => this.addGC(unsub));
+        }
     }
     addGC(unsub) {
         if (this.unsubs.includes(unsub))
