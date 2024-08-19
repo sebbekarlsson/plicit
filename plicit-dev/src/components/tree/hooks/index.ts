@@ -1,42 +1,42 @@
-import { computed, isRef, MaybeRef, Ref, ref, unref } from "plicit";
+import { computedSignal, isSignal, MaybeSignal, pget, signal, Signal } from "plicit";
 import { ITree } from "../types";
 
 export type UseTreeProps<T = any> = {
-  root: MaybeRef<ITree<T>>;
+  root: MaybeSignal<ITree<T>>;
 };
 
 export type UseTree<T = any> = {
-  root: Ref<ITree<T>>;
-  selectedId: Ref<number>;
+  root: Signal<ITree<T>>;
+  selectedId: Signal<number>;
   select: (id: number) => void;
 };
 
 export const useTree = <T = any>(props: UseTreeProps<T>): UseTree => {
-  const root = computed(() => unref(props.root), [props.root]);
-  const nodes = computed(() => {
-    const items: MaybeRef<ITree<T>>[] = [];
-    const traverse = (node: MaybeRef<ITree<T>>) => {
+  const root = computedSignal(() => pget(props.root));
+  const nodes = computedSignal(() => {
+    const items: MaybeSignal<ITree<T>>[] = [];
+    const traverse = (node: MaybeSignal<ITree<T>>) => {
       items.push(node);
-      const n = unref(node);
+      const n = pget(node);
       n.children.forEach((child) => traverse(child));
     };
-    traverse(root);
+    traverse(root.get());
     return items;
-  }, [root]);
-  const selectedId = ref<number>(-1);
+  });
+  const selectedId = signal<number>(-1);
 
   const select = (id: number) => {
-    selectedId.value = id;
+    selectedId.set(id);
 
-    nodes.value.forEach((node) => {
-      if (isRef(node)) {
-        node.value.selected = false;
+    nodes.get().forEach((node) => {
+      if (isSignal(node)) {
+        node.set(x => ({...x, selected: false}));
       }
     });
 
-    const node = nodes.value.find((it) => unref(it).id === id);
-    if (node && isRef(node)) {
-      node.value.selected = true;
+    const node = nodes.get().find((it) => pget(it).id === id);
+    if (node && isSignal(node)) {
+      node.set((n) => ({...n, selected: true}))
     }
   };
 

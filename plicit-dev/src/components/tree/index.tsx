@@ -1,18 +1,19 @@
-import { Component, computed, ref, unref } from "plicit";
+import { Component, computedSignal, pget, signal } from "plicit";
 import { ITreeProps } from "./types";
 
 export const Tree: Component<ITreeProps> = (props) => {
-  const root = computed(() => unref(props.root), [props.root]);
-  const expanded = ref<boolean>(false);
-  //const isSelected = computed(() => props.hook ? props.hook.selectedId.value === root.value.id : false, [root, props.hook?.selectedId]);
+  const root = computedSignal(() => pget(props.root));
+  const expanded = signal<boolean>(false);
 
   const handleClick = () => {
+
+    const rootNode = root.get();
     if (props.hook) {
-      props.hook.select(root.value.id);
+      props.hook.select(rootNode.id);
     }
     
-    if (root.value.children.length <= 0) return;
-    expanded.value = !expanded.value;
+    if (rootNode.children.length <= 0) return;
+    expanded.set(x => !x);
   }
 
   
@@ -21,25 +22,26 @@ export const Tree: Component<ITreeProps> = (props) => {
       <div on={{
         click: handleClick
       }}>
-        {root.value.render ? (
-          () => <root.value.render node={root} />
-        ) : (
-          <div>{root.value.name}</div>
-        )}
+        {() => {
+          const rootNode = root.get();
+          if (rootNode.render) return <rootNode.render node={root} />;
+          return <div>{rootNode.name}</div>
+        }}
       </div>
-      {() => (
-        <div class="pl-4 border-l border-gray-200" deps={[expanded]}>
-          {expanded.value ? (
+      {() => {
+        const rootNode = root.get();
+        return <div class="pl-4 border-l border-gray-200" deps={[expanded]}>
+          {expanded.get() ? (
             <div class="space-y-3">
-              {root.value.children.map((child) => {
+              {rootNode.children.map((child) => {
                 return (
-                  <Tree deps={[child]} hook={props.hook} root={child} key={`tree-node-${unref(child).id}`} />
+                  <Tree deps={[child]} hook={props.hook} root={child} key={`tree-node-${pget(child).id}`} />
                 );
               })}
             </div>
           ) : null}
         </div>
-      )}
+      }}
     </div>
   );
 };

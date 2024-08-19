@@ -1,6 +1,6 @@
-import { Component, LNodeAttributes } from "plicit";
+import { Component, LNodeAttributes, MaybeSignal } from "plicit";
 type InputFieldProps = LNodeAttributes & {
-    value: string;
+    value: MaybeSignal<string>;
     onChange?: (x: string) => void;
 };
 export declare const InputField: Component<InputFieldProps>;

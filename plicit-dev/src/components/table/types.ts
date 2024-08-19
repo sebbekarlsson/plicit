@@ -1,4 +1,4 @@
-import { Component, LNode, MaybeRef, MaybeSignal, Signal } from "plicit";
+import { Component, LNode, Signal } from "plicit";
 
 export type ITableColumn = {
   label: string;

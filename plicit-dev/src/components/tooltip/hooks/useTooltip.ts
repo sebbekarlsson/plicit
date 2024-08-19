@@ -1,4 +1,4 @@
-import { computedSignal, CSSProperties, isHTMLElement, LNodeChild, LNodeRef, pget, ref, signal, Signal, smoothstep, watchSignal } from "plicit"
+import { computedSignal, CSSProperties, isHTMLElement, LNodeChild, LNodeRef, pget, signal, Signal, smoothstep, watchSignal } from "plicit"
 import { ITooltipConfig } from "../types"
 import { useElementBounds } from "../../../hooks/useElementBounds";
 import { useInterpolationSignal } from "../../../hooks/useInterpolationSignal";

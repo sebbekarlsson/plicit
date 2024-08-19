@@ -22,15 +22,9 @@ export function ljsx(
   let children = childs
     .map((child) => remapChild(child))
     .flat()
-    .filter(
-      (it) => isLNode(it) || isComponent(it) || isSignal(it),
-    );
+    .filter((it) => isLNode(it) || isComponent(it) || isSignal(it));
 
 
-  if (!children || children.length <= 0 && Array.isArray(attribs.children)) {
-    children = attribs.children as any[];
-  }
-  
   if (typeof tag === "string") {
     return lnode(tag, { ...attribs, __depth: depth + 1, children: children });
   }

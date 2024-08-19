@@ -1,26 +1,26 @@
-import { Component, computed, computedAsync, computedSignal, CSSProperties, isHTMLElement, isSVGElement, LNode, pget, ref, signal } from "plicit";
+import { Component, computedAsyncSignal, computedSignal, CSSProperties, isHTMLElement, isSVGElement, LNode, pget, signal } from "plicit";
 import { IIconProps } from "./types";
 import { isAsyncFunction } from "plicit/src/plicit/is";
 
 export const Icon: Component<IIconProps> = (props) => {
 
 
-  const element = ref<HTMLSpanElement | null>(null);
+  const element = signal<HTMLSpanElement | null>(null);
 
-  const awaitedSource = computedAsync(async () => {
+  const awaitedSource = computedAsyncSignal(async () => {
     if (isAsyncFunction(props.icon.src)) {
       const resp = await props.icon.src();
       if (!resp) return null;
       if (resp.default) return resp.default;
     }
     return props.icon.src;
-  }, [props.icon], { deep: false });
+  });
 
 
-  const svgElement = ref<SVGSVGElement | SVGElement | null>(null); 
+  const svgElement = signal<SVGSVGElement | SVGElement | null>(null); 
 
-  computed(() => {
-    const svg = svgElement.value;
+  computedSignal(() => {
+    const svg = svgElement.get();
     if (!svg) return;
 
     if (props.icon.size) {
@@ -47,16 +47,16 @@ export const Icon: Component<IIconProps> = (props) => {
         }
       })
     }
-  }, [svgElement]);
+  });
 
   const handleLoaded = (node: LNode) => {
     const el = node.el;
     if (!el) return;
     if (isHTMLElement(el)) {
-      element.value = el;
+      element.set(el);
       const first = el.firstChild;
       if (isSVGElement(first)) {
-        svgElement.value = first;
+        svgElement.set(first);
       }
     }
   }
@@ -73,7 +73,7 @@ export const Icon: Component<IIconProps> = (props) => {
 
   return <div class={props.class} style={style}>
     {
-      () => <span onLoaded={handleLoaded} deps={[awaitedSource.data]} innerHTML={awaitedSource.data.value || ''}/>
+      computedSignal(() => <span onLoaded={handleLoaded} innerHTML={awaitedSource.data.get() || ''}/>)
     }
   </div>
 } 

@@ -161,22 +161,12 @@ const App: Component = () => {
 };
 
 
-const Stuff: Component = () => {
-  return computedSignal(() => <div style={{
-    width: '200px',
-    height: '200px',
-    background: 'green'
-  }}/>)
-}
-
-
 const AppDebug: Component = () => {
   const counter = signal<number>(0);
   
   return <div>
     <Button on={{ click: () => counter.set(x => x + 1) }}>Press Me</Button>
-    { computedSignal(() => <div>{counter.get()}</div>) }
-    <Stuff/>
+    <span>{ computedSignal(() => counter.get()) }</span>
   </div>;
 }
 

@@ -1,6 +1,5 @@
 import {
   Component,
-  computed,
   computedSignal,
   CSSProperties,
   lerp,

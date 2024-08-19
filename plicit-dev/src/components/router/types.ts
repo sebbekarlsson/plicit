@@ -1,4 +1,4 @@
-import { AsyncFun, Component, Dict, Ref, Signal } from "plicit";
+import { AsyncFun, Component, Dict, Signal } from "plicit";
 
 export type RouterNavigationAction = {
   path: string;

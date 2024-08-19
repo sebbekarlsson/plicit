@@ -1,4 +1,4 @@
-import { computed, computedSignal, ref, signal } from "plicit";
+import { computedSignal, signal } from "plicit";
 import { useFakeDatabase } from "../../hooks/useFakeDatabase";
 import { ITable, ITableRow } from "../table/types";
 import { InputField } from "../input-field";

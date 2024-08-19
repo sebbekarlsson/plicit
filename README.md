@@ -41,27 +41,11 @@ setup(App, document.getElementById("app"));
 > For more information, take a look at this [sample project](./plicit-dev) which is using webpack.
 
 ## Explicit Reactivity
-While implicit reactivity is supported, this framework aims to provide full control over
+While some implicit reactivity is supported, this framework aims to provide full control over
 the reactivity by giving you the ability to be explicit about it.
 
-### Explicit Example
-```tsx
-const Counter = () => {
-  const count = ref<number>(0);
-  
-  return (
-    <div>
-      <span>The counter is </span>
-      {() => <span deps={[count]}>{count.value}</span>}
-      <button on={{ click: () => count.value = count.value + 1 }}>increment</button>
-    </div>
-  )
-}
-```
-> Here, we have explicitly defined that only one of the `<span>` elements should react to changes  
-> by explicitly providing the dependencies (`deps`).
 
-### Implicit Example
+### Explicit Example
 ```tsx
 const Counter = () => {
   const count = signal<number>(0)
@@ -75,11 +59,10 @@ const Counter = () => {
   )
 }
 ```
-> Here, we are still explicitly saying the only one of the `<span>` elements should react to changes. 
+> Here, we are explicitly saying the only one of the `<span>` elements should react to changes. 
 > However, the dependencies are __automatically__ tracked.
 
 ---
 
 To summarize, we explicitly define an element to be reactive by wrapping it in a function.  
-Dependencies of a `ref` are manually tracked.  
 Dependencies of a `signal` are automatically tracked.

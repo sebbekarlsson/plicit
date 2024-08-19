@@ -83,6 +83,7 @@ export declare class LNode {
     cleanup(): void;
     destroy(): void;
     getChildCount(): number;
+    getChildElementNode(index: number): ChildNode;
     getChildNodes(): LNode[];
     toObject(): any;
     patchWith(other: LNodeChild): void;

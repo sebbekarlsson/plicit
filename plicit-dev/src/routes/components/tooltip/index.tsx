@@ -1,4 +1,4 @@
-import { ref, signal } from "plicit"
+import { signal } from "plicit"
 import { Button } from "../../../components/button"
 import { useTooltip } from "../../../components/tooltip/hooks/useTooltip"
 import { PageContent } from "../../../layouts/page-content"

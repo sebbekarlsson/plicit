@@ -1,4 +1,4 @@
-import { Component, computed, computedSignal, ELNodeType } from "plicit";
+import { Component, computedSignal, ELNodeType } from "plicit";
 import { useToasts } from "./hook";
 import { Toast } from ".";
 

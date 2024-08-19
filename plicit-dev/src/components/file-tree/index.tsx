@@ -1,4 +1,4 @@
-import { Component, computed, ref, unref, type Ref } from "plicit";
+import { Component, signal, Signal } from "plicit";
 import { EFileType, FSNode } from "./types";
 import { ITree } from "../tree/types";
 import { Tree } from "../tree";
@@ -42,25 +42,22 @@ const getIcon = (node: FSNode): IconPrimitive => {
   }
 }
 
-const createTree = (root: FSNode): Ref<ITree<FSNode>> => {
+const createTree = (root: FSNode): Signal<ITree<FSNode>> => {
   let count: number = 0;
   
-  const create = (node: FSNode, id: number, depth: number = 0): Ref<ITree<FSNode>> => {
-    return ref({
+  const create = (node: FSNode, id: number, depth: number = 0): Signal<ITree<FSNode>> => {
+    return signal<ITree<FSNode>>({
       name: node.name,
       id: id,
       data: node,
       children: (node.children || []).map(child => create(child, count++, depth + 1)),
 
-      render: (x) => {
+      render: (_x) => {
         return <div  class="select-none text-gray-600 cursor-pointer hover:text-blue-500" style={{
           display: 'grid',
           gridTemplateColumns: `${NODE_SIZE} max-content`,
           gap: '0.5rem',
           alignItems: 'center',
-          ...(unref(x.node).selected ? {
-            background: 'red'
-          } : {})
         }}>
           <Icon class="text-gray-300" icon={getIcon(node)}/>
           <div class="text-xs">{node.name}</div>

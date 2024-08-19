@@ -1,6 +1,5 @@
 import {
   Component,
-  computed,
   computedSignal,
   effectSignal,
   LNodeRef,
@@ -37,22 +36,22 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   const wrapperBounds = useElementBounds(wrapper);
 
-  const trackRange = computed(() => {
+  const trackRange = computedSignal(() => {
     const bounds = wrapperBounds.bounds.get();
     const trackLength = bounds.max.x - bounds.min.x;
     return { min: 0, max: trackLength - KNOB_SIZE };
-  }, [wrapperBounds.bounds]);
+  });
 
   const getComputedValue = () => {
     const pos = knobPosition.get();
-    const v = remap(pos.x, trackRange.value, { min: 0, max: 100 });
+    const v = remap(pos.x, trackRange.get(), { min: 0, max: 100 });
     return v;
   };
 
   const outputValue = computedSignal(() => getComputedValue());
 
   const getInverseComputedValue = (value: number) => {
-    return remap(value, { min: 0, max: 100 }, trackRange.value);
+    return remap(value, { min: 0, max: 100 }, trackRange.get());
   };
 
   queueMicrotask(() => {
@@ -65,7 +64,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     const mousePos = mouse.pos.get();
     const localPos = mousePos.sub(wrapperBounds.bounds.get().min).sub(clickPos.get());
     if (dragging.get()) {
-      const x = clamp(localPos.x, 0, trackRange.value.max);
+      const x = clamp(localPos.x, 0, trackRange.get().max);
       knobPosition.set(VEC2(x, 0));
       handleChange(getComputedValue());
     }
@@ -93,7 +92,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
   const fraction = computedSignal(() => {
     const pos = knobPosition.get();
     wrapperBounds.bounds.get()
-    return remap(pos.x, trackRange.value, { min: 0, max: 1 });
+    return remap(pos.x, trackRange.get(), { min: 0, max: 1 });
   });
 
   const Rail = () => {

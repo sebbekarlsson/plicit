@@ -1,14 +1,14 @@
-import { Component, CS, isSignal, ref, Signal, watchSignal } from "plicit";
+import { Component, isSignal, signal, Signal, watchSignal } from "plicit";
 import { Icon } from "../icon";
 
 export const CodeBlock: Component<{ value: string | Signal<string>; title: string }> = (props) => {
-  const val = ref<string>(isSignal(props.value) ? props.value.get() : props.value);
+  const val = signal<string>(isSignal(props.value) ? props.value.get() : props.value);
 
 
   if (isSignal(props.value)) {
     const sig = props.value as Signal<string>;
     watchSignal(sig, () => {
-      val.value = sig.get();
+      val.set(sig.get());
     })
   }
   
@@ -32,8 +32,8 @@ export const CodeBlock: Component<{ value: string | Signal<string>; title: strin
         }}/>
       </div>
     </div>
-    {(() => <pre class="bg-gray-800 text-primary-100 min-h-[1rem] max-h-[320px] w-full py-2 px-2 max-w-[100%] overflow-auto" deps={[val]}>
-      {val.value}
+    {(() => <pre class="bg-gray-800 text-primary-100 min-h-[1rem] max-h-[320px] w-full py-2 px-2 max-w-[100%] overflow-auto">
+      {val.get()}
     </pre>)}
   </div>
 }

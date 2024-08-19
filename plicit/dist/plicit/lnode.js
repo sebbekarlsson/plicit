@@ -8,7 +8,6 @@ const element_1 = require("./element");
 const types_1 = require("./types");
 const nodeEvents_1 = require("./nodeEvents");
 const reactivity_1 = require("./reactivity");
-const reactivity_2 = require("./reactivity");
 var ELNodeType;
 (function (ELNodeType) {
     ELNodeType["ELEMENT"] = "ELEMENT";
@@ -44,19 +43,23 @@ class LNode {
         this.key = (0, reactivity_1.pget)(this.attributes.key || "");
         this.type = (0, reactivity_1.pget)(this.attributes.nodeType || this.type);
         this.isRoot = (0, reactivity_1.pget)(this.attributes.isRoot) || false;
-        const deps = (0, reactivity_1.pget)(this.attributes.deps || []);
-        for (let i = 0; i < deps.length; i++) {
-            const dep = deps[i];
-            const nextUnsubs = (0, reactivity_2.deepSubscribe)(dep, {
-                onSet: () => {
-                    this.invalidate();
-                },
-                onTrigger: () => {
-                    this.invalidate();
-                },
-            }, -1);
-            nextUnsubs.forEach((unsub) => this.addGC(unsub));
-        }
+        // const deps = pget(this.attributes.deps || []);
+        // for (let i = 0; i < deps.length; i++) {
+        //   const dep = deps[i];
+        //   const nextUnsubs = deepSubscribe(
+        //     dep,
+        //     {
+        //       onSet: () => {
+        //         this.invalidate();
+        //       },
+        //       onTrigger: () => {
+        //         this.invalidate();
+        //       },
+        //     },
+        //     -1,
+        //   );
+        //   nextUnsubs.forEach((unsub) => this.addGC(unsub));
+        // }
     }
     addGC(unsub) {
         if (this.unsubs.includes(unsub))
@@ -93,16 +96,13 @@ class LNode {
         const childNodes = this.getChildNodes();
         return Math.max(attr.length, childNodes.length);
     }
+    getChildElementNode(index) {
+        if (!this.el)
+            return null;
+        return this.el.childNodes.item(index) || null;
+    }
     getChildNodes() {
         return this.childNodes;
-        //const other = (pget(this.attributes.children) || [])
-        //  .map((it) => pget(unwrapComponentTree(it)))
-        //  .filter((it) => isLNode(it));
-        //return unique([
-        //  ...this.childNodes,
-        //  ...this.children.map((it) => pget(unwrapComponentTree(it))),
-        //  ...other,
-        //]);
     }
     toObject() {
         return {
@@ -296,9 +296,10 @@ class LNode {
             }
             throw new Error(`NOT A NODE`);
         }
-        const myChild = (0, types_1.isElementWithChildren)(thisEl)
-            ? Array.from(thisEl.children)[index]
-            : null;
+        const myChild = this.getChildElementNode(index);
+        //const myChild = isElementWithChildren(thisEl)
+        //  ? Array.from(thisEl.children)[index]
+        //  : null;
         const nextEl = newNode.render();
         const oldNode = this.children[index]
             ? (0, reactivity_1.pget)((0, component_1.unwrapComponentTree)(this.children[index]))
@@ -326,7 +327,7 @@ class LNode {
         }
         else {
             if ((0, types_1.isElementWithChildren)(thisEl)) {
-                const childs = Array.from(thisEl.children);
+                const childs = Array.from(thisEl.childNodes);
                 if (childs.length <= 0) {
                     thisEl.appendChild(nextEl);
                     this.addChildNode(newNode);
@@ -407,6 +408,12 @@ class LNode {
             else {
                 this.setAttribute("style", typeof style === "string" ? style : (0, css_1.cssPropsToString)(style));
             }
+        }
+        const attrValue = this.attributes.value;
+        if ((0, reactivity_1.isSignal)(attrValue)) {
+            this.addGC((0, reactivity_1.watchSignal)(attrValue, (val) => {
+                this.setAttribute('value', val);
+            }, { immediate: true }));
         }
         const clazz = this.attributes.class;
         if (clazz && !(0, types_1.isText)(el)) {

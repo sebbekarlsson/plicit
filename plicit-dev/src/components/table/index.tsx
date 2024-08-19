@@ -1,4 +1,4 @@
-import { Component, computed, computedSignal, pget, unique, unref } from "plicit";
+import { Component, computedSignal, unique } from "plicit";
 import { ITableProps, ITableRow } from "./types";
 
 const TableRow: Component<{ row: ITableRow; head?: boolean }> = (props) => {
