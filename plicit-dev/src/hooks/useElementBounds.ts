@@ -15,6 +15,7 @@ type Timer = ReturnType<typeof setInterval>;
 export type UseElementBoundsOptions = {
   debounce?: number;
   interval?: number;
+  updateOnScroll?: boolean;
 };
 
 export const useElementBounds = (
@@ -52,18 +53,19 @@ export const useElementBounds = (
     : refresh;
 
   let lastEl: HTMLElement | null = null;
-  let lastObs: ResizeObserver | null = null;
 
-  watchSignal(elRef, () => {
-    const node = elRef.get();
+  const obs = new ResizeObserver(() => {
+    refresh();
+  });
+
+  watchSignal(elRef, (node) => {
     if (!node) return;
     const el = node.el;
     if (!el || !isHTMLElement(el)) return;
 
     if (el !== lastEl) {
-      if (lastObs) {
-        lastObs.disconnect();
-      }
+      obs.disconnect();
+      obs.observe(el);
 
       if (lastEl) {
         lastEl.removeEventListener("mousedown", update);
@@ -76,18 +78,14 @@ export const useElementBounds = (
       lastEl = el;
       update();
     }
-
-    const obs = new ResizeObserver(() => {
-      refresh();
-    });
-    lastObs = obs;
-
-    obs.observe(el);
   });
 
   window.addEventListener("resize", update);
-  window.addEventListener("wheel", update);
-  window.addEventListener("scroll", update);
+
+  if (options.updateOnScroll !== false) {
+    //window.addEventListener("wheel", update);
+    window.addEventListener("scrollend", update, true);
+  }
 
   let interval: Timer | null = null;
 
@@ -105,8 +103,10 @@ export const useElementBounds = (
     clearInterval(interval);
     interval = null;
     window.removeEventListener("resize", update);
-    window.removeEventListener("wheel", update);
-    window.removeEventListener("scroll", update);
+    if (options.updateOnScroll !== false) {
+      //window.removeEventListener("wheel", update);
+      window.removeEventListener("scrollend", update, true);
+    }
   };
 
   onUnmounted(() => {

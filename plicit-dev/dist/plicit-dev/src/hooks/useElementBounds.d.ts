@@ -3,6 +3,7 @@ import { AABB } from "tsmathutil";
 export type UseElementBoundsOptions = {
     debounce?: number;
     interval?: number;
+    updateOnScroll?: boolean;
 };
 export declare const useElementBounds: (elRef: LNodeRef, options?: UseElementBoundsOptions) => {
     bounds: import("plicit").Signal<AABB>;

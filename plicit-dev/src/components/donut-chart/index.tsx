@@ -1,7 +1,11 @@
 import { Component, computedSignal, LNodeRef, signal, watchSignal } from "plicit";
 import { IDonutChartProps } from "./types";
-import { clamp, sum, VEC3, VEC31, Vector } from "tsmathutil";
+import { clamp, getAABBSize, sum, VEC2, VEC3, VEC31, Vector } from "tsmathutil";
 import { useElementHover } from "../../hooks/useElementHover";
+import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
+import { useTooltip } from "../tooltip/hooks/useTooltip";
+import { Tooltip } from "../tooltip";
+import { useElementBounds } from "../../hooks/useElementBounds";
 
 type Shape = {
   label: string;
@@ -28,13 +32,22 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
   const textLengths = computedSignal(() => texts.get().map((t) => t.length));
   const maxTextLength = computedSignal(() => Math.max(...textLengths.get()));
   const svgRef: LNodeRef = signal(undefined);
-  //const svgBound = useElementBounds(svgRef);
-  //const svgCenter = computedSignal(() => {
-  //  const bound = svgBound.bounds.get();
-  //  const pos = VEC2(bound.min.x, bound.min.y);
-  //  const size = getAABBSize(bound);
-  //  return pos.add(size.scale(0.5));
-  //});
+  const maskRef: LNodeRef = signal(undefined);
+  const hoverMask = useElementHover(maskRef, { svg: true });
+
+  
+
+  const svgBound = useElementBounds(svgRef, { debounce: 30 });
+  const svgCenter = computedSignal(() => {
+    const bound = svgBound.bounds.get();
+    const pos = VEC2(bound.min.x, bound.min.y);
+    const size = getAABBSize(bound);
+    return pos.add(size.scale(0.5));
+  });
+
+
+  
+  
   const fontSize = computedSignal(
     () =>
       clamp(
@@ -133,7 +146,32 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
           }),
   );
 
-  const maskRef: LNodeRef = signal(undefined);
+  const activeShapeIndex = signal<number>(0);
+
+  const tooltip = useTooltip({
+    triggerRef: svgRef,
+    body: () => {
+      return computedSignal(() => {
+        const shape = shapes.get()[activeShapeIndex.get()];
+        return <div class="p-4 text-white" style={{
+          background: shape.fill
+        }}>
+          <div class="grid grid-cols-[max-content,max-content] gap-2">
+            <span>
+              { shape.label }
+            </span>
+            <span>
+              { shape.value.toFixed(3) }
+            </span>
+          </div>
+        </div>;
+      });
+    },
+    centerX: true,
+    centerY: true,
+    targetPosition: svgCenter
+  })
+
   return (
     <div class="w-full h-full relative select-none">
       <svg
@@ -205,9 +243,21 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
           {shapes.get().map((shape, i) => {
             const hover = useElementHover(shape.ref);
 
+            const isHovering = computedSignal(() => {
+              const isHoveringMask = hoverMask.get();
+              const isHoveringShape = hover.get();
+              return !isHoveringMask && isHoveringShape;
+            });
+
+            watchSignal(isHovering, (isHover) => {
+              if (isHover) {
+                activeShapeIndex.set(i);
+              }
+            })
+
 
             const fill = computedSignal(() => {
-              if (hover.get()) {
+              if (isHovering.get()) {
                 return Vector.fromColor(shape.fill).scale(1.0 / 255).add(VEC3(0.2, 0.2, 0.2)).run(x => Math.min(x, 1.0)).scale(255).toRGB(4);
               }
               return shape.fill;
@@ -222,9 +272,11 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
                 d={shape.path.d}
                 fill={fill}
                 watch={['fill']}
+                class="cursor-pointer"
               ></path>
             ) : (
               <circle
+                class="cursor-pointer"
                 ref={shape.ref}
                 key={i}
                 cx={radius.get() + padding.get()}
@@ -237,6 +289,7 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
         </g>
         {props.showLabelsOnSlices && <use href="#labels" />}
       </svg>
+      <Tooltip hook={tooltip}/>
     </div>
   );
 };

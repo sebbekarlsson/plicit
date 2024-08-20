@@ -1,25 +1,43 @@
 import { isHTMLElement, LNodeRef, signal, watchSignal } from "plicit";
+import { useSVGPointCheck } from "./useSVGPointCheck";
+import { useMousePositionSignal } from "./useMousePositionSignal";
 
-export const useElementHover = (elRef: LNodeRef) => {
+export type UseElementHoverOptions = {
+  svg?: boolean;
+};
+
+export const useElementHover = (
+  elRef: LNodeRef,
+  options: UseElementHoverOptions = {},
+) => {
   const hover = signal<boolean>(false);
-  
-  const onMouseEnter = () => {
-    hover.set(true);
+
+  if (options.svg) {
+    const mouse = useMousePositionSignal();
+    const svgHover = useSVGPointCheck(elRef, mouse.pos);
+    watchSignal(
+      svgHover,
+      (val) => {
+        hover.set(val);
+      },
+      { immediate: true },
+    );
+  } else {
+    const onMouseEnter = () => {
+      hover.set(true);
+    };
+
+    const onMouseLeave = () => {
+      hover.set(false);
+    };
+    watchSignal(elRef, (node) => {
+      const el = node.el;
+      if (!el) return;
+      if (!isHTMLElement(el)) return;
+      el.addEventListener("mouseenter", onMouseEnter);
+      el.addEventListener("mouseleave", onMouseLeave);
+    });
   }
-
-  const onMouseLeave = () => {
-    hover.set(false);
-  }
-
-
-  watchSignal(elRef, (node) => {
-    const el = node.el;
-    if (!el) return;
-    if (!isHTMLElement(el)) return;
-    el.addEventListener('mouseenter', onMouseEnter);
-    el.addEventListener('mouseleave', onMouseLeave);
-  })
-
 
   return hover;
-}
+};

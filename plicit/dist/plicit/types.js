@@ -97,7 +97,7 @@ exports.isSVGPolylineElement = isSVGPolylineElement;
 const isAnySVGElement = (x) => {
     if (typeof x !== "object")
         return false;
-    return ((0, exports.isHTMLElement)(x) && exports.SVG_NAMES.includes((x.tagName || "").toLowerCase()));
+    return ((0, exports.isHTMLElement)(x) && exports.SVG_NAMES.map(it => it.toLowerCase()).includes((x.tagName || "").toLowerCase()));
 };
 exports.isAnySVGElement = isAnySVGElement;
 const isComment = (x) => {

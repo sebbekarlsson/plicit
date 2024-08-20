@@ -1,4 +1,16 @@
-import { Component, ljsx, CS, S, computedSignal, signal, range, stringGenerator } from "plicit";
+import {
+  Component,
+  ljsx,
+  CS,
+  S,
+  computedSignal,
+  signal,
+  range,
+  stringGenerator,
+  MaybeSignal,
+  pget,
+  isFloat,
+} from "plicit";
 import { Card } from "../../components/card";
 import { Counter } from "../../components/counter";
 import { ItemList } from "../../components/item-list";
@@ -14,7 +26,8 @@ import { InputField } from "../../components/input-field";
 import { twColor } from "../../utils/style";
 import { DonutSlice } from "../../components/donut-chart/types";
 import { DonutChart } from "../../components/donut-chart";
-import { hashu32f_v1, noise2D, VEC3 } from "tsmathutil";
+import { hashu32_v1, noise2D, toUint32 } from "tsmathutil";
+import { Button } from "../../components/button";
 
 const RangeItem: Component<{ label: string; value: number }> = (props) => {
   const state = S<number>(props.value);
@@ -83,28 +96,40 @@ const TableDemo: Component = () => {
   );
 };
 
-const MyDonut: Component = () => {
-  const strGen = stringGenerator();
+const MyDonut: Component<{ seed: MaybeSignal<number> }> = (props) => {
   const N = 4;
-  const seed = Math.random()*10.381782*(1.0 + Math.random());
-  const slices: DonutSlice[] = range(N).map((i): DonutSlice => {
-    const ni = i / N;
-    const value = noise2D(ni, ni, seed, 4, 3);
+  const seed = computedSignal(
+    () => Math.random() * 10.381782 * (1.0 + Math.random()) + pget(props.seed),
+  );
+  const strGen = computedSignal(() => stringGenerator(seed.get()));
+  const colors = [
+    twColor("primary-500"),
+    twColor("primary-900"),
+    twColor("cyan-500"),
+    twColor("purple-500"),
+  ];
+  const slices = computedSignal((): DonutSlice[] => {
+    const gen = strGen.get();
+    const s = seed.get();
+    return range(N).map((i): DonutSlice => {
+      const ni = i / N;
+      const value = noise2D(ni, ni, s, 4, 300.0123) * 1000;
+      const color = colors[i % colors.length];
 
-    const r = hashu32f_v1(value+seed);
-    const g = hashu32f_v1(r+value+seed);
-    const b = hashu32f_v1(r+g+value+seed);
-    return {
-      value: value,
-      label: strGen.nextWord(3, 6),
-      color: VEC3(r, g, b).scale(255).toRGB(4)
-    }
-  }) 
+      return {
+        value: value,
+        label: gen.nextWord(3, 6),
+        color: color,
+      };
+    });
+  });
 
   return (
     <div class="w-full h-full flex items-center justify-center">
       <div class="w-[200px]">
-        <DonutChart data={slices} size={100} padding={0.3} />
+        {computedSignal(() => (
+          <DonutChart data={slices.get()} size={199} padding={0.3} />
+        ))}
       </div>
     </div>
   );
@@ -124,7 +149,46 @@ export const HomeRoute: Component = () => {
           }}
         >
           <Card title="Donut" subtitle="Donut Chart">
-            <MyDonut />
+            {() => {
+              const seed1 = signal<number>(5013.5823);
+              const seed2 = signal<number>(4848.0948);
+
+              const randomize = () => {
+                seed1.set((old) => toUint32(old + hashu32_v1(old)));
+                seed2.set((old) => toUint32(old + hashu32_v1(old)));
+              };
+
+              return (
+                <div class="w-full h-full flex flex-col">
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      width: "100%",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <MyDonut seed={seed1} />
+                    </div>
+                    <div>
+                      <MyDonut seed={seed2} />
+                    </div>
+                  </div>
+                  <div
+                    class="flex-none h-[4rem]"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "max-content",
+                      justifyContent: "end",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Button on={{ click: randomize }}>Randomize</Button>
+                  </div>
+                </div>
+              );
+            }}
           </Card>
           <Card title="Graph" subtitle="Line Graph">
             <div class="h-[256px]">

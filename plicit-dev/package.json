@@ -32,6 +32,6 @@
     "workbox-webpack-plugin": "^7.1.0"
   },
   "dependencies": {
-    "tsmathutil": "^1.0.0"
+    "tsmathutil": "^1.0.3"
   }
 }

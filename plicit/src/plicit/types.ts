@@ -115,7 +115,7 @@ export const isSVGPolylineElement = (x: any): x is SVGPolylineElement => {
 export const isAnySVGElement = (x: any): boolean => {
   if (typeof x !== "object") return false;
   return (
-    isHTMLElement(x) && SVG_NAMES.includes((x.tagName || "").toLowerCase())
+    isHTMLElement(x) && SVG_NAMES.map(it => it.toLowerCase()).includes((x.tagName || "").toLowerCase())
   );
 };
 
