@@ -1,5 +1,4 @@
-import { signal, Signal } from "../../../../plicit/src"
-import { useInterpolationSignal } from "../../hooks/useInterpolationSignal";
+import { signal, Signal, useInterpolation } from "../../../../plicit/src"
 import { IModal, IModalConfig } from "./types"
 
 export type UseModals = {
@@ -12,7 +11,7 @@ const modals = signal<Signal<IModal>[]>([]);
 
 export const useModals = (): UseModals => {
   const push = async (modalCfg: IModalConfig) => {
-    const animation = useInterpolationSignal({
+    const animation = useInterpolation({
       initial: 0,
       duration: 0.25
     });

@@ -1,11 +1,8 @@
-import { Component, computedSignal, LNodeRef, signal, watchSignal } from "plicit";
+import { Component, computedSignal, LNodeRef, signal, useElementBounds, useElementHover, watchSignal } from "plicit";
 import { IDonutChartProps } from "./types";
 import { clamp, getAABBSize, sum, VEC2, VEC3, VEC31, Vector } from "tsmathutil";
-import { useElementHover } from "../../hooks/useElementHover";
-import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
 import { useTooltip } from "../tooltip/hooks/useTooltip";
 import { Tooltip } from "../tooltip";
-import { useElementBounds } from "../../hooks/useElementBounds";
 
 type Shape = {
   label: string;

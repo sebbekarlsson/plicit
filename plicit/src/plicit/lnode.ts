@@ -713,3 +713,6 @@ export const none = () =>
   });
 export const isLNode = (x: any): x is LNode =>
   x !== null && !!x && typeof x === "object" && x._lnode === "lnode";
+
+
+export const unwrapElement = (sig: MaybeSignal<LNode>) => (pget(sig)?.el as (HTMLElement | undefined));

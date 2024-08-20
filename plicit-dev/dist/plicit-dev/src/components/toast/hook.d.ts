@@ -1,9 +1,8 @@
-import { Signal } from "plicit";
+import { Signal, UseInterpolation } from "plicit";
 import { ToastObject } from "./types";
-import { UseInterpolationSignal } from "../../hooks/useInterpolationSignal";
 type Timer = ReturnType<typeof setTimeout>;
 export type InternalToast = ToastObject & {
-    animation: UseInterpolationSignal;
+    animation: UseInterpolation;
     uid: string;
     timer: Timer | null;
 };

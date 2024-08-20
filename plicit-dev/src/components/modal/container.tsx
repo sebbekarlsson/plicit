@@ -4,9 +4,9 @@ import {
   CSSProperties,
   lerp,
   signal,
+  useInterpolation,
   watchSignal,
 } from "../../../../plicit/src";
-import { useInterpolationSignal } from "../../hooks/useInterpolationSignal";
 import { useModals } from "./hook";
 import { ljsx } from "plicit";
 
@@ -15,7 +15,7 @@ export const ModalContainer = () => {
   const didStart = signal<boolean>(false);
 
   const modalCount = computedSignal(() => modals.modals.get().length);
-  const interp = useInterpolationSignal({
+  const interp = useInterpolation({
     duration: 0.25,
     initial: 0,
   });

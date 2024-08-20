@@ -1,11 +1,7 @@
 import {
   Component,
-  UnwrappableComponent,
-  UnwrappedComponent,
 } from "./component";
-import { isLNode, LNode } from "./lnode";
-import { ENodeEvent } from "./nodeEvents";
-import { proxy } from "./reactivity";
+import { LNode } from "./lnode";
 
 export type ComponentHook = (node?: LNode) => any;
 
@@ -25,7 +21,7 @@ export type ComponentScope = {
 };
 
 export const createComponentScope = (): ComponentScope => {
-  return proxy({
+  return ({
     onMounted: [],
     onUnmounted: [],
     onBeforeUnmount: [],

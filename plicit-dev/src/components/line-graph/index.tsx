@@ -7,6 +7,9 @@ import {
   onMounted,
   onUnmounted,
   signal,
+  useElementBounds,
+  useElementHover,
+  useMousePosition,
 } from "plicit";
 import {
   AABB,
@@ -21,14 +24,11 @@ import {
   remap,
   VEC2,
 } from "tsmathutil";
-import { useElementBounds } from "../../hooks/useElementBounds";
 import { Line, linesFromPoints, pathFromPoints } from "./utils";
-import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
 import { twColor } from "../../utils/style";
 import { Tooltip } from "../tooltip";
 import { useTooltip } from "../tooltip/hooks/useTooltip";
 import { GraphPointData, LineGraphProps } from "./types";
-import { useElementHover } from "../../hooks/useElementHover";
 
 const N = 300;
 const OCT = 5;
@@ -40,7 +40,7 @@ const PRIMARY_COLOR = twColor("primary-500");
 export const LineGraph: Component<LineGraphProps> = (props) => {
   const wrapperRef: LNodeRef = signal(undefined);
   const svgBounds = useElementBounds(wrapperRef);
-  const mouse = useMousePositionSignal();
+  const mouse = useMousePosition();
   const hover = useElementHover(wrapperRef);
 
   const SEED = (Math.random() * 103.39129) * (1.0 + Math.random());
@@ -340,6 +340,9 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
     targetPosition: intersectionGlobal,
     centerX: true,
     centerY: true,
+    smooth: {
+      speed: 10
+    },
     placement: "top",
     spacing: 16,
     body: () => {

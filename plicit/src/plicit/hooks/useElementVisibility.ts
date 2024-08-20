@@ -1,9 +1,10 @@
-import { isComment, isText, LNodeNativeElement, LNodeRef, signal, watchSignal } from "plicit";
+import { LNodeNativeElement, LNodeRef } from "../lnode";
+import { signal, watchSignal } from "../reactivity";
+import { isComment, isText } from "../types";
 
 export const useElementVisibility = (elRef: LNodeRef) => {
-
   const visible = signal<boolean>(false);
-  
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {

@@ -7,12 +7,12 @@ import {
   signal,
   Signal,
   smoothstep,
+  useInterpolation,
   watchSignal,
 } from "plicit";
 import { ISideMenuItem, ISideMenuProps } from "./types";
 import { useRoute, useRouter } from "../router/hooks";
 import { Icon } from "../icon";
-import { useInterpolationSignal } from "../../hooks/useInterpolationSignal";
 
 const SectionBanner: Component<{
   item: ISideMenuItem;
@@ -41,7 +41,7 @@ const MenuItem: Component<{
   const router = useRouter();
   const route = useRoute();
 
-  const interp = useInterpolationSignal({
+  const interp = useInterpolation({
     duration: 0.25,
     initial: 0,
   });
@@ -163,7 +163,7 @@ const MenuSection: Component<{
 }> = (props) => {
   const { isClosed, item: sec } = props;
 
-  const interp = useInterpolationSignal({
+  const interp = useInterpolation({
     duration: 0.25,
     initial: 1.0,
   });

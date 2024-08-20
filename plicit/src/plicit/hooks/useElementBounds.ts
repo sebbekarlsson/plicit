@@ -1,14 +1,9 @@
-import {
-  computedSignal,
-  debounce,
-  isHTMLElement,
-  LNodeRef,
-  onMounted,
-  onUnmounted,
-  signal,
-  watchSignal,
-} from "plicit";
 import { AABB, VEC2 } from "tsmathutil";
+import { LNodeRef } from "../lnode";
+import { isHTMLElement } from "../types";
+import { signal, watchSignal } from "../reactivity";
+import { debounce } from "../utils";
+import { onMounted, onUnmounted } from "../scope";
 
 type Timer = ReturnType<typeof setInterval>;
 
@@ -22,8 +17,6 @@ export const useElementBounds = (
   elRef: LNodeRef,
   options: UseElementBoundsOptions = {},
 ) => {
-  const counter = signal<number>(0);
-
   const calcAABB = (el: HTMLElement): AABB => {
     const box = el.getBoundingClientRect();
     const pos = VEC2(box.x, box.y);
@@ -34,18 +27,24 @@ export const useElementBounds = (
     };
   };
 
-  const bounds = computedSignal<AABB>(() => {
-    counter.get();
-    const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
+  const getElement = (): HTMLElement | null => {
     const node = elRef.get();
-    if (!node) return empty;
+    if (!node) return null;
     const el = node.el;
-    if (!el || !isHTMLElement(el)) return empty;
-    return calcAABB(el);
-  });
+    if (!el || !isHTMLElement(el)) return null;
+    return el;
+  };
+
+  const empty: AABB = { min: VEC2(0, 0), max: VEC2(1, 1) };
+  const bounds = signal<AABB>(empty);
 
   const refresh = () => {
-    counter.set((x) => x + 1);
+    requestAnimationFrame(() => {
+      const el = getElement();
+      if (!el) return;
+      const nextBounds = calcAABB(el);
+      bounds.set(nextBounds);
+    });
   };
 
   const update = options.debounce

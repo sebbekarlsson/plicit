@@ -25,4 +25,5 @@ __exportStar(require("./plicit/is"), exports);
 __exportStar(require("./plicit/css"), exports);
 __exportStar(require("./plicit/setup"), exports);
 __exportStar(require("./plicit/components/slot"), exports);
+__exportStar(require("./plicit/hooks"), exports);
 //# sourceMappingURL=index.js.map

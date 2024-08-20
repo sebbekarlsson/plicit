@@ -1,10 +1,9 @@
-import { CSSProperties, Signal } from "plicit";
-import { UseInterpolationSignal } from "../../../hooks/useInterpolationSignal";
+import { CSSProperties, Signal, UseInterpolation } from "plicit";
 export type UseSideMenu = {
     isOpen: Signal<boolean>;
     setOpen: (open: boolean) => void;
     toggleOpen: () => void;
-    animation: UseInterpolationSignal;
+    animation: UseInterpolation;
     style: Signal<CSSProperties>;
 };
 export declare const useSideMenu: () => UseSideMenu;

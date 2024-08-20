@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isLNode = exports.none = exports.lnodeX = exports.lnode = exports.LNode = exports.ELNodeType = void 0;
+exports.unwrapElement = exports.isLNode = exports.none = exports.lnodeX = exports.lnode = exports.LNode = exports.ELNodeType = void 0;
 const event_1 = require("./event");
 const component_1 = require("./component");
 const css_1 = require("./css");
@@ -498,4 +498,6 @@ const none = () => (0, exports.lnode)("span", {
 exports.none = none;
 const isLNode = (x) => x !== null && !!x && typeof x === "object" && x._lnode === "lnode";
 exports.isLNode = isLNode;
+const unwrapElement = (sig) => (0, reactivity_1.pget)(sig)?.el;
+exports.unwrapElement = unwrapElement;
 //# sourceMappingURL=lnode.js.map

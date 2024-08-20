@@ -1,6 +1,8 @@
-import { isHTMLElement, LNodeRef, signal, watchSignal } from "plicit";
+import { isHTMLElement } from "tsmathutil";
+import { LNodeRef } from "../lnode";
+import { signal, watchSignal } from "../reactivity";
+import { useMousePosition } from "./useMousePosition";
 import { useSVGPointCheck } from "./useSVGPointCheck";
-import { useMousePositionSignal } from "./useMousePositionSignal";
 
 export type UseElementHoverOptions = {
   svg?: boolean;
@@ -13,7 +15,7 @@ export const useElementHover = (
   const hover = signal<boolean>(false);
 
   if (options.svg) {
-    const mouse = useMousePositionSignal();
+    const mouse = useMousePosition();
     const svgHover = useSVGPointCheck(elRef, mouse.pos);
     watchSignal(
       svgHover,

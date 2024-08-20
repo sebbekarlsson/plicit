@@ -1,14 +1,10 @@
-import { computedSignal, signal, Signal, stringGenerator } from "plicit";
+import { computedSignal, signal, Signal, stringGenerator, useInterpolation, UseInterpolation } from "plicit";
 import { ToastObject } from "./types";
-import {
-  UseInterpolationSignal,
-  useInterpolationSignal,
-} from "../../hooks/useInterpolationSignal";
 
 type Timer = ReturnType<typeof setTimeout>;
 
 export type InternalToast = ToastObject & {
-  animation: UseInterpolationSignal;
+  animation: UseInterpolation;
   uid: string;
   timer: Timer | null;
 };
@@ -25,7 +21,7 @@ const stringGen = stringGenerator();
 
 export const useToasts = (): UseToasts => {
   const push = (toast: ToastObject) => {
-    const animation = useInterpolationSignal({
+    const animation = useInterpolation({
       initial: 0,
       duration: 1,
     });

@@ -9,3 +9,4 @@ export * from './plicit/is';
 export * from './plicit/css';
 export * from './plicit/setup';
 export * from './plicit/components/slot';
+export * from './plicit/hooks';

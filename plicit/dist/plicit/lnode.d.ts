@@ -105,4 +105,5 @@ export declare const lnode: (name: string, attributes?: LNodeAttributes) => LNod
 export declare const lnodeX: (nodeType: ELNodeType, attributes?: LNodeAttributes) => LNode;
 export declare const none: () => LNode;
 export declare const isLNode: (x: any) => x is LNode;
+export declare const unwrapElement: (sig: MaybeSignal<LNode>) => HTMLElement;
 export {};

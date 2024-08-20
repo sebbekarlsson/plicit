@@ -1,5 +1,5 @@
-import { signal } from "plicit"
-import { VEC2, Vector } from "tsmathutil"
+import { VEC2, Vector } from "tsmathutil";
+import { signal } from "../reactivity";
 
 const pos = signal<Vector>(VEC2(0, 0));
 
@@ -7,24 +7,22 @@ const onMouseMove = (event: MouseEvent) => {
   const x = event.x;
   const y = event.y;
   pos.set(() => VEC2(x, y));
-}
+};
 
 let didAddEventListener: boolean = false;
 
-export const useMousePositionSignal = () => {
-
-
+export const useMousePosition = () => {
   if (!didAddEventListener) {
-    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener("mousemove", onMouseMove);
     didAddEventListener = true;
   }
 
   const destroy = () => {
-    window.removeEventListener('mousemove', onMouseMove);
-  }
+    window.removeEventListener("mousemove", onMouseMove);
+  };
 
   return {
     pos,
-    destroy
-  }
-}
+    destroy,
+  };
+};

@@ -6,10 +6,10 @@ import {
   MaybeSignal,
   pget,
   signal,
+  useElementBounds,
+  useMousePosition,
 } from "plicit";
 import { clamp, remap, VEC2, Vector } from "tsmathutil";
-import { useMousePositionSignal } from "../../hooks/useMousePositionSignal";
-import { useElementBounds } from "../../hooks/useElementBounds";
 import { useTooltip } from "../tooltip/hooks/useTooltip";
 import { Tooltip } from "../tooltip";
 
@@ -29,7 +29,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   const knobRef: LNodeRef = signal(undefined);
   const wrapper: LNodeRef = signal(undefined);
-  const mouse = useMousePositionSignal();
+  const mouse = useMousePosition();
   const dragging = signal<boolean>(false);
   const knobPosition = signal<Vector>(VEC2(0, 0));
   const clickPos = signal<Vector>(VEC2(0, 0));
@@ -165,6 +165,9 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
     triggerRef: knobRef,
     active: dragging,
     text: 'Hello!',
+    smooth: {
+      speed: 10
+    },
     body: () => {
       return <div class="w-full">
         <div class="h-[2rem] w-full bg-primary-500 text-white flex items-center px-4 text-sm font-medium">Slider</div>

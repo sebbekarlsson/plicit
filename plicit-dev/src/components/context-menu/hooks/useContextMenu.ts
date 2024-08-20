@@ -5,12 +5,12 @@ import {
   LNodeRef,
   Signal,
   signal,
+  useElementBounds,
+  useInterpolation,
   watchSignal,
 } from "plicit";
 import { IContextMenu, IContextMenuConfig } from "../types";
-import { AABB, getAABBSize, VEC2 } from "tsmathutil";
-import { useInterpolationSignal } from "../../../hooks/useInterpolationSignal";
-import { useElementBounds } from "../../../hooks/useElementBounds";
+import { getAABBSize, VEC2 } from "tsmathutil";
 
 const HOVER_TIMEOUT_LEAVE_MENU = 90;
 const HOVER_TIMEOUT_LEAVE_TRIGGER = 100;
@@ -37,7 +37,7 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     open: false,
   });
 
-  const interp = useInterpolationSignal({
+  const interp = useInterpolation({
     duration: 0.15,
     initial: 0,
   });

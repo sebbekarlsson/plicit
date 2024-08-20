@@ -1,5 +1,4 @@
-import { computedSignal, CSSProperties, lerp, Signal, signal, smoothstep } from "plicit"
-import { UseInterpolationSignal, useInterpolationSignal } from "../../../hooks/useInterpolationSignal";
+import { computedSignal, CSSProperties, lerp, Signal, signal, smoothstep, useInterpolation, UseInterpolation } from "plicit"
 
 const isOpen = signal<boolean>(true);
 
@@ -7,11 +6,11 @@ export type UseSideMenu = {
   isOpen: Signal<boolean>;
   setOpen: (open: boolean) => void;
   toggleOpen: () => void;
-  animation: UseInterpolationSignal;
+  animation: UseInterpolation;
   style: Signal<CSSProperties>;
 }
 
-const interp = useInterpolationSignal({
+const interp = useInterpolation({
   duration: 0.5,
   initial: 1
 })

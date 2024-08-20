@@ -1,9 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onUnmounted = exports.onBeforeUnmount = exports.onMounted = exports.trackCurrentScope = exports.withCurrentScope = exports.popScope = exports.pushScope = exports.GScope = exports.createComponentScope = void 0;
-const reactivity_1 = require("./reactivity");
 const createComponentScope = () => {
-    return (0, reactivity_1.proxy)({
+    return ({
         onMounted: [],
         onUnmounted: [],
         onBeforeUnmount: [],

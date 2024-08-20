@@ -1,5 +1,4 @@
-import { Component, LNode } from "../../../../plicit/src";
-import { UseInterpolationSignal } from "../../hooks/useInterpolationSignal";
+import { Component, LNode, UseInterpolation } from "plicit";
 
 
 
@@ -12,5 +11,5 @@ export type IModalConfig = {
 export type IModal = {
   title: string;
   body: LNode | Component;
-  animation: UseInterpolationSignal;
+  animation: UseInterpolation;
 }
