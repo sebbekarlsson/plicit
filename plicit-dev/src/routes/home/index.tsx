@@ -9,7 +9,6 @@ import {
   stringGenerator,
   MaybeSignal,
   pget,
-  isFloat,
 } from "plicit";
 import { Card } from "../../components/card";
 import { Counter } from "../../components/counter";
@@ -118,20 +117,16 @@ const MyDonut: Component<{ seed: MaybeSignal<number> }> = (props) => {
 
       return {
         value: value,
-        label: gen.nextWord(3, 6),
+        label: gen.nextWord(3, 9),
         color: color,
       };
     });
   });
 
   return (
-    <div class="w-full h-full flex items-center justify-center">
-      <div class="w-[200px]">
-        {computedSignal(() => (
+        computedSignal(() => (
           <DonutChart data={slices.get()} size={199} padding={0.3} />
-        ))}
-      </div>
-    </div>
+        ))
   );
 };
 
@@ -151,29 +146,15 @@ export const HomeRoute: Component = () => {
           <Card title="Donut" subtitle="Donut Chart">
             {() => {
               const seed1 = signal<number>(5013.5823);
-              const seed2 = signal<number>(4848.0948);
 
               const randomize = () => {
                 seed1.set((old) => toUint32(old + hashu32_v1(old)));
-                seed2.set((old) => toUint32(old + hashu32_v1(old)));
               };
 
               return (
                 <div class="w-full h-full flex flex-col">
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      width: "100%",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div>
-                      <MyDonut seed={seed1} />
-                    </div>
-                    <div>
-                      <MyDonut seed={seed2} />
-                    </div>
+                  <div>
+                    <MyDonut seed={seed1} />
                   </div>
                   <div
                     class="flex-none h-[4rem]"

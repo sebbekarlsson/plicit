@@ -62,7 +62,9 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   effectSignal(() => {
     const mousePos = mouse.pos.get();
-    const localPos = mousePos.sub(wrapperBounds.bounds.get().min).sub(clickPos.get());
+    const localPos = mousePos
+      .sub(wrapperBounds.bounds.get().min)
+      .sub(clickPos.get());
     if (dragging.get()) {
       const x = clamp(localPos.x, 0, trackRange.get().max);
       knobPosition.set(VEC2(x, 0));
@@ -91,26 +93,28 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
 
   const fraction = computedSignal(() => {
     const pos = knobPosition.get();
-    wrapperBounds.bounds.get()
+    wrapperBounds.bounds.get();
     return remap(pos.x, trackRange.get(), { min: 0, max: 1 });
   });
 
   const Rail = () => {
     return computedSignal(() => {
       const f = fraction.get();
-      return <div
-        class="bg-primary-300 h-full absolute rounded-full shadow-inner"
-        id="RAIL"
-        style={{
-          left: "0px",
-          top: "0px",
-          bottom: "0px",
-          marginTop: "auto",
-          marginBottom: "auto",
-          zIndex: 2,
-          width: (f * 100) + "%",
-        }}
-      />
+      return (
+        <div
+          class="bg-primary-300 h-full absolute rounded-full shadow-inner"
+          id="RAIL"
+          style={{
+            left: "0px",
+            top: "0px",
+            bottom: "0px",
+            marginTop: "auto",
+            marginBottom: "auto",
+            zIndex: 2,
+            width: f * 100 + "%",
+          }}
+        />
+      );
     });
   };
 
@@ -138,7 +142,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
         class="aspect-[1/1] bg-primary-500 absolute rounded-full cursor-grab"
         style={computedSignal(() => {
           return {
-            height: KNOB_SIZE + 'px',
+            height: KNOB_SIZE + "px",
             left: knobPosition.get().x + "px",
             top: "0px",
             bottom: "0px",
@@ -148,7 +152,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
             justifyContent: "center",
             alignItems: "center",
             filter: "drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.5))",
-          }
+          };
         })}
       >
         <div
@@ -164,19 +168,25 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
   const tooltipHook = useTooltip({
     triggerRef: knobRef,
     active: dragging,
-    text: 'Hello!',
+    text: "Hello!",
     smooth: {
-      speed: 10
+      speed: 10,
     },
     body: () => {
-      return <div class="w-full">
-        <div class="h-[2rem] w-full bg-primary-500 text-white flex items-center px-4 text-sm font-medium">Slider</div>
-        <div class="p-4 w-full">
-          { computedSignal(() => <div class="font-semibold">{outputValue.get().toFixed(1)}</div>) }
+      return (
+        <div class="w-full">
+          <div class="h-[2rem] w-full bg-primary-500 text-white flex items-center px-4 text-sm font-medium">
+            Slider
+          </div>
+          <div class="p-4 w-full">
+            {computedSignal(() => (
+              <div class="font-semibold">{outputValue.get().toFixed(1)}</div>
+            ))}
+          </div>
         </div>
-      </div>;
-    } 
-  })
+      );
+    },
+  });
 
   return (
     <div
@@ -189,7 +199,7 @@ export const RangeSlider: Component<RangeSliderProps> = (props) => {
       <Rail />
       <Track />
       <Knob />
-      <Tooltip hook={tooltipHook}/>
+      <Tooltip hook={tooltipHook} />
     </div>
   );
 };

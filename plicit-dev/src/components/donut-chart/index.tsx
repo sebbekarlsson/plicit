@@ -1,8 +1,17 @@
-import { Component, computedSignal, LNodeRef, signal, useElementBounds, useElementHover, watchSignal } from "plicit";
+import {
+  Component,
+  computedSignal,
+  LNodeRef,
+  signal,
+  useElementBounds,
+  useElementHover,
+  watchSignal,
+} from "plicit";
 import { IDonutChartProps } from "./types";
 import { clamp, getAABBSize, sum, VEC2, VEC3, VEC31, Vector } from "tsmathutil";
 import { useTooltip } from "../tooltip/hooks/useTooltip";
 import { Tooltip } from "../tooltip";
+import { Grid } from "../../routes/components/grid";
 
 type Shape = {
   label: string;
@@ -32,8 +41,6 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
   const maskRef: LNodeRef = signal(undefined);
   const hoverMask = useElementHover(maskRef, { svg: true });
 
-  
-
   const svgBound = useElementBounds(svgRef, { debounce: 30 });
   const svgCenter = computedSignal(() => {
     const bound = svgBound.bounds.get();
@@ -42,9 +49,6 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
     return pos.add(size.scale(0.5));
   });
 
-
-  
-  
   const fontSize = computedSignal(
     () =>
       clamp(
@@ -150,143 +154,178 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
     body: () => {
       return computedSignal(() => {
         const shape = shapes.get()[activeShapeIndex.get()];
-        return <div class="p-4 text-white" style={{
-          background: shape.fill
-        }}>
-          <div class="grid grid-cols-[max-content,max-content] gap-2">
-            <span>
-              { shape.label }
-            </span>
-            <span>
-              { shape.value.toFixed(3) }
-            </span>
+        return (
+          <div
+            class="p-4 text-white"
+            style={{
+              background: shape.fill,
+            }}
+          >
+            <div class="grid grid-cols-[max-content,max-content] gap-2">
+              <span>{shape.label}</span>
+              <span>{shape.value.toFixed(3)}</span>
+            </div>
           </div>
-        </div>;
+        );
       });
     },
     centerX: true,
     centerY: true,
-    targetPosition: svgCenter
-  })
+    targetPosition: svgCenter,
+  });
 
   return (
     <div class="w-full h-full relative select-none">
-      <svg
-        width={`max(100%, ${props.size}px)`}
-        height={"100%"}
-        viewBox={`${-inset.get()} ${-inset.get()} ${props.size + 2 * inset.get()} ${props.size + 2 * inset.get()}`}
-        ref={svgRef}
+      <Grid
+        columns="max-content max-content"
+        alignItems="center"
+        gap="1rem"
+        class="w-full"
       >
-        <defs>
-          <mask id="mymask">
-            <circle
-              cx={radius.get() + padding.get()}
-              cy={radius.get() + padding.get()}
-              r={radius.get()}
-              fill="white"
-            />
-            <circle
-              cx={radius.get() + padding.get()}
-              cy={radius.get() + padding.get()}
-              r={radius.get() * Math.max(0.0, 1.0 - thickness)}
-              ref={maskRef}
-              fill="black"
-            />
-          </mask>
+        <div
+          class="flex items-center justify-center"
+          style={{ width: `${props.size}px` }}
+        >
+          <svg
+            width={`max(100%, ${props.size}px)`}
+            height={"100%"}
+            viewBox={`${-inset.get()} ${-inset.get()} ${props.size + 2 * inset.get()} ${props.size + 2 * inset.get()}`}
+            ref={svgRef}
+          >
+            <defs>
+              <mask id="mymask">
+                <circle
+                  cx={radius.get() + padding.get()}
+                  cy={radius.get() + padding.get()}
+                  r={radius.get()}
+                  fill="white"
+                />
+                <circle
+                  cx={radius.get() + padding.get()}
+                  cy={radius.get() + padding.get()}
+                  r={radius.get() * Math.max(0.0, 1.0 - thickness)}
+                  ref={maskRef}
+                  fill="black"
+                />
+              </mask>
 
-          {props.showLabelsOnSlices && (
-            <symbol id="labels">
+              {props.showLabelsOnSlices && (
+                <symbol id="labels">
+                  {shapes.get().map((shape, i) => {
+                    const midPercent =
+                      (offsets.get()[i][1] - shape.value / 2) / total.get();
+                    const [labelX, labelY] =
+                      getCoordinatesForPercent(midPercent);
+                    return (
+                      <text
+                        style={{
+                          pointerEvents: "none",
+                        }}
+                        key={i}
+                        x={
+                          radius.get() +
+                          padding.get() +
+                          Number(!shape.circle) * (labelX * 0.8)
+                        }
+                        y={
+                          radius.get() +
+                          padding.get() +
+                          Number(!shape.circle) * (labelY * 0.8)
+                        }
+                        fill={"black"}
+                        text-anchor={
+                          shape.circle
+                            ? "middle"
+                            : midPercent > 0.5
+                              ? "middle"
+                              : midPercent > 0.1
+                                ? "start"
+                                : "middle"
+                        }
+                        font-family="Inter"
+                        font-size={fontSize.get()}
+                      >
+                        {shape.label}
+                      </text>
+                    );
+                  })}
+                </symbol>
+              )}
+            </defs>
+            <g mask="url(#mymask)">
               {shapes.get().map((shape, i) => {
-                const midPercent =
-                  (offsets.get()[i][1] - shape.value / 2) / total.get();
-                const [labelX, labelY] = getCoordinatesForPercent(midPercent);
-                return (
-                  <text
-                    style={{
-                      pointerEvents: 'none'
-                    }}
+                const hover = useElementHover(shape.ref);
+
+                const isHovering = computedSignal(() => {
+                  const isHoveringMask = hoverMask.get();
+                  const isHoveringShape = hover.get();
+                  return !isHoveringMask && isHoveringShape;
+                });
+
+                watchSignal(isHovering, (isHover) => {
+                  if (isHover) {
+                    activeShapeIndex.set(i);
+                  }
+                });
+
+                const fill = computedSignal(() => {
+                  if (isHovering.get()) {
+                    return Vector.fromColor(shape.fill)
+                      .scale(1.0 / 255)
+                      .add(VEC3(0.2, 0.2, 0.2))
+                      .run((x) => Math.min(x, 1.0))
+                      .scale(255)
+                      .toRGB(4);
+                  }
+                  return shape.fill;
+                });
+
+                return shape.path ? (
+                  <path
+                    ref={shape.ref}
                     key={i}
-                    x={
-                      radius.get() +
-                      padding.get() +
-                      Number(!shape.circle) * (labelX * 0.8)
-                    }
-                    y={
-                      radius.get() +
-                      padding.get() +
-                      Number(!shape.circle) * (labelY * 0.8)
-                    }
-                    fill={"black"}
-                    text-anchor={
-                      shape.circle
-                        ? "middle"
-                        : midPercent > 0.5
-                          ? "middle"
-                          : midPercent > 0.1
-                            ? "start"
-                            : "middle"
-                    }
-                    font-family="Inter"
-                    font-size={fontSize.get()}
-                  >
-                    {shape.label}
-                  </text>
+                    d={shape.path.d}
+                    fill={fill}
+                    watch={["fill"]}
+                    class="cursor-pointer"
+                  ></path>
+                ) : (
+                  <circle
+                    class="cursor-pointer"
+                    ref={shape.ref}
+                    key={i}
+                    cx={radius.get() + padding.get()}
+                    cy={radius.get() + padding.get()}
+                    r={radius.get()}
+                    fill={shape.fill}
+                  ></circle>
                 );
               })}
-            </symbol>
-          )}
-        </defs>
-        <g mask="url(#mymask)">
-          {shapes.get().map((shape, i) => {
-            const hover = useElementHover(shape.ref);
-
-            const isHovering = computedSignal(() => {
-              const isHoveringMask = hoverMask.get();
-              const isHoveringShape = hover.get();
-              return !isHoveringMask && isHoveringShape;
-            });
-
-            watchSignal(isHovering, (isHover) => {
-              if (isHover) {
-                activeShapeIndex.set(i);
-              }
-            })
-
-
-            const fill = computedSignal(() => {
-              if (isHovering.get()) {
-                return Vector.fromColor(shape.fill).scale(1.0 / 255).add(VEC3(0.2, 0.2, 0.2)).run(x => Math.min(x, 1.0)).scale(255).toRGB(4);
-              }
-              return shape.fill;
-            })
-            
-            
-            
-            return shape.path ? (
-              <path
-                ref={shape.ref}
-                key={i}
-                d={shape.path.d}
-                fill={fill}
-                watch={['fill']}
-                class="cursor-pointer"
-              ></path>
-            ) : (
-              <circle
-                class="cursor-pointer"
-                ref={shape.ref}
-                key={i}
-                cx={radius.get() + padding.get()}
-                cy={radius.get() + padding.get()}
-                r={radius.get()}
-                fill={shape.fill}
-              ></circle>
-            );
-          })}
-        </g>
-        {props.showLabelsOnSlices && <use href="#labels" />}
-      </svg>
-      <Tooltip hook={tooltip}/>
+            </g>
+            {props.showLabelsOnSlices && <use href="#labels" />}
+          </svg>
+        </div>
+        <div>
+          <div class="space-y-4">
+            {shapes.get().map((shape) => {
+              return <Grid columns="max-content max-content" alignItems="center" gap="1rem">
+                <div>
+                  <div style={{
+                    background: shape.fill,
+                    width: '0.75rem',
+                    aspectRatio: '1 / 1',
+                    borderRadius: '100%'
+                  }}/>
+                </div>
+                <div class="text-sm font-medium text-gray-600">
+                  {shape.label}
+                </div>
+              </Grid>;
+            })}
+          </div>
+        </div>
+      </Grid>
+      <Tooltip hook={tooltip} />
     </div>
   );
 };

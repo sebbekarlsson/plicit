@@ -22,11 +22,6 @@ export const router = createRouter({
       component: PeopleRoute
     },
     {
-      path: '/performance',
-      name: 'Performance',
-      component: async () => (await import('./routes/performance')).default
-    },
-    {
       path: '/components',
       name: 'Components',
       component: (_props) => {
