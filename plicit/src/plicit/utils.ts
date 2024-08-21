@@ -1,4 +1,5 @@
 import { isConsonant, isVowel } from "./is";
+import { Dict } from "./types";
 
 export const range = (n: number): number[] =>
   n <= 0 || typeof n !== "number" || isNaN(n) || !isFinite(n)
@@ -194,4 +195,32 @@ export const sleep = (time: number) => {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, time);
   })
+}
+
+export const smartJoin = (arr: string[], delim: string) => {
+  let result: string = '';
+
+  const join = (a: string, b: string, delim: string) => {
+    if (a.endsWith(delim) && b.startsWith(delim)) return a + b.slice(1);
+    if ((a.endsWith(delim) && !b.startsWith(delim)) || (!a.endsWith(delim) && b.startsWith(delim))) return a + b;
+    return `${a}${delim}${b}`;
+  }
+
+  for (let i = 0; i < arr.length; i+= 2) {
+    const a = arr[i];
+    const b = arr[i+1] || '';
+    result += join(a, b, delim);
+  }
+
+  return result;
+}
+
+export const omit = <T extends Dict>(obj: T, keys: string[]): T => {
+  const next = {...obj};
+
+  for (const key of keys) {
+    delete next[key];
+  }
+
+  return next;
 }

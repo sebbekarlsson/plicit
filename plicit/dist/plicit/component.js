@@ -21,6 +21,7 @@ const unwrapComponentTree = (component, propagatedAttribs = {}) => {
                     scope.onMounted.forEach(fun => ret.addEventListener(nodeEvents_1.ENodeEvent.MOUNTED, () => fun(ret)));
                     scope.onBeforeUnmount.forEach(fun => ret.addEventListener(nodeEvents_1.ENodeEvent.BEFORE_UNMOUNT, () => fun(ret)));
                     scope.onUnmounted.forEach(fun => ret.addEventListener(nodeEvents_1.ENodeEvent.UNMOUNTED, () => fun(ret)));
+                    ret.component = component;
                 }
             });
             (0, scope_1.popScope)();

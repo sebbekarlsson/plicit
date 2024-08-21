@@ -28,7 +28,7 @@ export const ItemList = () => {
         {() => (
           <InputField
             onChange={(next) => {
-              nextItem.set(next);
+              nextItem.set(next + '');
             }}
             type="text"
             placeholder="Name your item..."

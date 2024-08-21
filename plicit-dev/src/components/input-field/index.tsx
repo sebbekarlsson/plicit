@@ -1,8 +1,8 @@
-import { Component, LNodeAttributes, MaybeSignal, ljsx } from "plicit";
+import { Component, LNodeAttributes, MaybeSignal, isSignal, ljsx } from "plicit";
 
 type InputFieldProps = LNodeAttributes & {
-  value: MaybeSignal<string>;
-  onChange?: (x: string) => void;
+  value: MaybeSignal<string | number | null | undefined>;
+  onChange?: (x: string | number | null | undefined) => void;
 };
 
 export const InputField: Component<InputFieldProps> = (props) => {
@@ -13,6 +13,10 @@ export const InputField: Component<InputFieldProps> = (props) => {
         value={props.value || ""}
         on={{
           input: (ev: InputEvent) => {
+            if (isSignal(props.value)) {
+              const target = ev.target as HTMLInputElement;
+              props.value.set(target.value);
+            }
             queueMicrotask(() => {
               const target = ev.target as HTMLInputElement;
               if (props.onChange) {

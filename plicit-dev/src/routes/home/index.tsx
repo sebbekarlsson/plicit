@@ -86,7 +86,7 @@ const TableDemo: Component = () => {
         <InputField
           value=""
           type="text"
-          onChange={(val) => query.set(val)}
+          onChange={(val) => query.set(val + '')}
           placeholder="Search..."
         />
       </div>

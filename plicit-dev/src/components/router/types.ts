@@ -1,4 +1,5 @@
 import { AsyncFun, Component, Dict, Signal } from "plicit";
+import { IconPrimitive } from "../icon/types";
 
 export type RouterNavigationAction = {
   path: string;
@@ -11,6 +12,7 @@ export type IRoute = {
   path: string;
   component: Component | AsyncFun<Component>;
   children?: IRoute[];
+  icon?: IconPrimitive;
 }
 
 export type IRouteConfig = Omit<IRoute, 'children'> & {

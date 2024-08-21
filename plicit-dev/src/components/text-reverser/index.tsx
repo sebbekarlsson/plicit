@@ -5,7 +5,7 @@ export const TextReverser: Component = () => {
   const inputValue = signal<string>(() => '');
   const reversedValue = computedSignal(() => Array.from(inputValue.get()).reverse().join(''));
 
-  const inputField =  computedSignal(() => <InputField placeholder="Enter something" value={inputValue.get()} onChange={(v) => inputValue.set(() => v)}/>);
+  const inputField =  computedSignal(() => <InputField placeholder="Enter something" value={inputValue.get()} onChange={(v) => inputValue.set(() => v + '')}/>);
   
   const display = computedSignal(() => {
     const val = reversedValue.get();

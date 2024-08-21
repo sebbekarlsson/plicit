@@ -1,3 +1,4 @@
+import { Dict } from "./types";
 export declare const range: (n: number) => number[];
 export declare const unique: <T>(arr: T[]) => T[];
 export declare const lerp: (vFrom: number, vTo: number, scale: number) => number;
@@ -25,3 +26,5 @@ export declare const throttle: <R, A extends any[]>(fn: (...args: A) => R, delay
 export declare const debounce: <F extends (...args: Parameters<F>) => ReturnType<F>>(func: F, waitFor: number) => ((...args: Parameters<F>) => void);
 export declare const micro: <T = any>(fun: () => T) => Promise<T>;
 export declare const sleep: (time: number) => Promise<void>;
+export declare const smartJoin: (arr: string[], delim: string) => string;
+export declare const omit: <T extends Dict>(obj: T, keys: string[]) => T;

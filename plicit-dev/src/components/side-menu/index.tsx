@@ -108,7 +108,7 @@ const MenuItem: Component<{
     if (!props.item.items) return {};
     const f = interp.value.get();
     const sf = smoothstep(0.0, 1.0, f);
-    const h = lerp(0, 2.7 * (props.item.items || []).length, sf);
+    const h = lerp(0, 2.7 * (props?.item?.items || []).length, sf);
     const opacity = lerp(0.0, 100, sf * sf * sf);
 
     return {
@@ -126,6 +126,7 @@ const MenuItem: Component<{
     <div class={"w-full cursor-pointer transition-all"}>
       {computedSignal(() => (
         <div
+          title={props.item.path || ''}
           on={{ click: () => handleClick(props.item) }}
           class={
             "w-full h-[2.7rem] hover:bg-primary-500 transition-colors" +
@@ -185,7 +186,7 @@ const MenuSection: Component<{
   const style = computedSignal<CSSProperties>(() => {
     const f = interp.value.get();
     const sf = smoothstep(0.0, 1.0, f);
-    const h = lerp(0, 2.7 * sec.items.length, sf);
+    const h = lerp(0, 2.7 * (sec?.items || []).length, sf);
     const opacity = lerp(0.0, 100, sf * sf * sf);
 
     return {

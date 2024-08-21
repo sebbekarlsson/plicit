@@ -38,7 +38,7 @@ export const PeopleTable = () => {
 
   return () => <div class="flex flex-col h-full w-full">
     <div class="h-[4rem] flex-none flex items-start">
-      <InputField value="" type="text" onChange={(val) => query.set(val)} placeholder="Search..."/>
+      <InputField value="" type="text" onChange={(val) => query.set(val + '')} placeholder="Search..."/>
     </div>
     <Table table={table}/> 
   </div> 

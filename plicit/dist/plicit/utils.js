@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sleep = exports.micro = exports.debounce = exports.throttle = exports.stringGenerator = exports.numberGenerator = exports.hashu32 = exports.toUint32 = exports.smoothstep = exports.fract = exports.clamp = exports.lerp = exports.unique = exports.range = void 0;
+exports.omit = exports.smartJoin = exports.sleep = exports.micro = exports.debounce = exports.throttle = exports.stringGenerator = exports.numberGenerator = exports.hashu32 = exports.toUint32 = exports.smoothstep = exports.fract = exports.clamp = exports.lerp = exports.unique = exports.range = void 0;
 const is_1 = require("./is");
 const range = (n) => n <= 0 || typeof n !== "number" || isNaN(n) || !isFinite(n)
     ? []
@@ -153,4 +153,29 @@ const sleep = (time) => {
     });
 };
 exports.sleep = sleep;
+const smartJoin = (arr, delim) => {
+    let result = '';
+    const join = (a, b, delim) => {
+        if (a.endsWith(delim) && b.startsWith(delim))
+            return a + b.slice(1);
+        if ((a.endsWith(delim) && !b.startsWith(delim)) || (!a.endsWith(delim) && b.startsWith(delim)))
+            return a + b;
+        return `${a}${delim}${b}`;
+    };
+    for (let i = 0; i < arr.length; i += 2) {
+        const a = arr[i];
+        const b = arr[i + 1] || '';
+        result += join(a, b, delim);
+    }
+    return result;
+};
+exports.smartJoin = smartJoin;
+const omit = (obj, keys) => {
+    const next = { ...obj };
+    for (const key of keys) {
+        delete next[key];
+    }
+    return next;
+};
+exports.omit = omit;
 //# sourceMappingURL=utils.js.map

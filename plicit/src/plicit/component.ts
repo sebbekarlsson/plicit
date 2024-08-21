@@ -48,6 +48,7 @@ export const unwrapComponentTree = (
           scope.onMounted.forEach(fun => ret.addEventListener(ENodeEvent.MOUNTED, () => fun(ret)));
           scope.onBeforeUnmount.forEach(fun => ret.addEventListener(ENodeEvent.BEFORE_UNMOUNT, () => fun(ret)));
           scope.onUnmounted.forEach(fun => ret.addEventListener(ENodeEvent.UNMOUNTED, () => fun(ret)));
+          ret.component = component;
         }
       })
       popScope();
