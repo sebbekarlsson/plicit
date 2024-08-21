@@ -1,11 +1,8 @@
 import { Component } from "plicit";
-import { PageContent } from "../../../layouts/page-content";
 import { Button } from "../../../components/button";
 
 const view: Component = () => {
-  return <PageContent>
-    <Button>Button</Button>
-  </PageContent>; 
+  return  <Button>Button</Button>
 };
 
 export default view;

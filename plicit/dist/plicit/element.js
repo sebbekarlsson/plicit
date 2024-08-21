@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.patchElements = exports.getElementsDiff = exports.getElementsAttributesDiff = exports.getElementAttributes = exports.setElementAttribute = void 0;
+exports.setElementChild = exports.patchElements = exports.getElementsDiff = exports.getElementsAttributesDiff = exports.getElementAttributes = exports.setElementAttribute = void 0;
 const types_1 = require("./types");
 const setElementAttribute = (el, key, value) => {
     try {
@@ -56,4 +56,23 @@ const patchElements = (old, nextEl, options = {}) => {
     }
 };
 exports.patchElements = patchElements;
+const setElementChild = (parent, child, index) => {
+    if (index < 0)
+        return;
+    if (parent.contains(child))
+        return;
+    if (parent.childNodes.length <= 0) {
+        parent.appendChild(child);
+        return;
+    }
+    const childNodes = Array.from(parent.childNodes);
+    if (index < childNodes.length - 1) {
+        const after = childNodes[index + 1];
+        parent.insertBefore(child, after);
+        return;
+    }
+    const before = childNodes[index - 1];
+    parent.insertBefore(child, before);
+};
+exports.setElementChild = setElementChild;
 //# sourceMappingURL=element.js.map

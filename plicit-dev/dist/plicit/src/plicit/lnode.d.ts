@@ -1,7 +1,7 @@
 import { EventEmitter, EventSubscriber, PlicitEvent } from "./event";
 import { Component } from "./component";
 import { CSSProperties } from "./css";
-import { NativeElement, NativeElementListeners } from "./types";
+import { ElementClass, NativeElement, NativeElementListeners } from "./types";
 import { ENodeEvent } from "./nodeEvents";
 import { MaybeSignal, Signal } from "./reactivity";
 import { ReactiveDep } from "./reactivity";
@@ -34,7 +34,7 @@ export type LNodeAttributesBase = {
     watch?: string[];
     isRoot?: boolean;
     ref?: Signal<LNode | undefined>;
-    class?: string;
+    class?: ElementClass;
     component?: Component;
     _component?: Component;
     signal?: Signal;
@@ -76,6 +76,9 @@ export declare class LNode {
     unsubs: Array<() => void>;
     constructor(name: string, attributes?: LNodeAttributes);
     addGC(unsub: () => void): void;
+    teleport(newParent: LNode): void;
+    setChild(index: number, child: LNode): void;
+    removeChild(index: number): void;
     addChildNode(node: LNode): void;
     emitBeforeUnmount(): void;
     emitUnmounted(): void;
@@ -105,5 +108,5 @@ export declare const lnode: (name: string, attributes?: LNodeAttributes) => LNod
 export declare const lnodeX: (nodeType: ELNodeType, attributes?: LNodeAttributes) => LNode;
 export declare const none: () => LNode;
 export declare const isLNode: (x: any) => x is LNode;
-export declare const unwrapElement: (sig: MaybeSignal<LNode>) => HTMLElement;
+export declare const unwrapElement: (sig: MaybeSignal<LNode>) => HTMLElement | undefined;
 export {};

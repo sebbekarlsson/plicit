@@ -1,3 +1,4 @@
+import { Signal } from "./reactivity";
 export type Dict<T = any> = {
     [key: string]: T;
 };
@@ -33,3 +34,4 @@ export declare const isSVGPathElement: (x: any) => x is SVGPathElement;
 export declare const isSVGPolylineElement: (x: any) => x is SVGPolylineElement;
 export declare const isAnySVGElement: (x: any) => boolean;
 export declare const isComment: (x: any) => x is Comment;
+export type ElementClass = string | string[] | Array<string | Signal<string>>;

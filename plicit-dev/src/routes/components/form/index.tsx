@@ -1,50 +1,93 @@
-import { watchSignal } from "plicit";
-import { useForm } from "../../../components/form/hooks/useForm";
+import { computedSignal } from "plicit";
+import {
+  useForm,
+} from "../../../components/form/hooks/useForm";
 import { InputField } from "../../../components/input-field";
-import { PageContent } from "../../../layouts/page-content";
+import { CodeBlock } from "../../../components/code-block";
+import { Form } from "../../../components/form";
 
-type Person = {
-  firstname: string;
-  lastname: string;
-  age: number;
+type PersonForm = {
+  person: {
+    firstname: string;
+    lastname: string;
+    age: number;
+  };
+
+  dog: {
+    name: string;
+    age: number;
+  };
 };
 
 export default () => {
-  const form = useForm<Person>({
+  const form = useForm<PersonForm>({
     schema: {
-      firstname: {
-        $type: "string",
-        $value: "",
+      person: { 
+        $groups: [
+          {
+            $style: {
+              width: '100%',
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              alignItems: "center",
+              gap: '1rem'
+            },
+            $fields: ['firstname', 'lastname']
+          },
+          {
+            $fields: ['age']
+          }
+        ],
+        firstname: {
+          $label: "First Name",
+          $type: "text",
+          $value: "",
+          $placeholder: 'John'
+        },
+        lastname: {
+          $label: "Last Name",
+          $type: "text",
+          $value: "",
+          $placeholder: 'Doe'
+        },
+        age: {
+          $label: "Age",
+          $type: "number",
+          $value: undefined,
+        },
       },
-      lastname: {
-        $type: "string",
-        $value: "",
-      },
-      age: {
-        $type: "number",
-        $value: 0,
+      dog: {
+        $label: "Dog",
+        name: {
+          $label: "Name",
+          $type: "text",
+          $value: "",
+          $placeholder: 'Boo'
+        },
+        age: {
+          $label: "Age",
+          $type: "number",
+          $value: undefined,
+        },
       },
     },
     components: {
-      string: (props) => <InputField type="text" value={props.value}/>,
-      number: (props) => <InputField type="number" value={props.value}/>
-    }
+      text: (props) => {
+        console.log({props})
+        return <InputField {...props} />;
+      },
+      number: (props) => <InputField {...props} />,
+    },
   });
 
-
-  watchSignal(form.state, (it) => {
-    console.log(it);
-  })
+  const stateString = computedSignal(() =>
+    JSON.stringify(form.state.get(), undefined, 2),
+  );
 
   return (
-    <PageContent>
-      <div class="space-y-4">
-        {Object.entries(form.fields).map(([key, field]) => {
-          const Comp = field.$component;
-          if (!Comp) return <div>Error: missing component for {key}</div>;
-          return <Comp value={field.$value}/>
-        })}
-      </div>
-    </PageContent>
+    <div class="space-y-4 w-full h-full">
+      <Form hook={form}/>
+      <CodeBlock title="State" value={stateString} />
+    </div>
   );
 };

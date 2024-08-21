@@ -1,3 +1,5 @@
+import { insertAt } from "tsmathutil";
+import { LNodeNativeElement } from "./lnode";
 import { ElementWithAttributes, isAnySVGElement } from "./types";
 
 export const setElementAttribute = (
@@ -78,3 +80,24 @@ export const patchElements = (
     return old;
   }
 };
+
+
+export const setElementChild = (parent: LNodeNativeElement, child: LNodeNativeElement, index: number) => {
+  if (index < 0) return;
+  if (parent.contains(child)) return;
+  if (parent.childNodes.length <= 0) {
+    parent.appendChild(child);
+    return;
+  }
+
+  const childNodes = Array.from(parent.childNodes);
+
+  if (index < childNodes.length-1) {
+    const after = childNodes[index+1];
+    parent.insertBefore(child, after);
+    return;
+  }
+
+  const before = childNodes[index-1];
+  parent.insertBefore(child, before); 
+}

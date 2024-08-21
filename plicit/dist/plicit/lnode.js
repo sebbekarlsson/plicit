@@ -8,6 +8,7 @@ const element_1 = require("./element");
 const types_1 = require("./types");
 const nodeEvents_1 = require("./nodeEvents");
 const reactivity_1 = require("./reactivity");
+const constants_1 = require("./constants");
 var ELNodeType;
 (function (ELNodeType) {
     ELNodeType["ELEMENT"] = "ELEMENT";
@@ -60,25 +61,38 @@ class LNode {
                     this.invalidate();
                 }));
             }
-            //const nextUnsubs = deepSubscribe(
-            //  dep,
-            //  {
-            //    onSet: () => {
-            //      this.invalidate();
-            //    },
-            //    onTrigger: () => {
-            //      this.invalidate();
-            //    },
-            //  },
-            //  -1,
-            //);
-            //nextUnsubs.forEach((unsub) => this.addGC(unsub));
         }
     }
     addGC(unsub) {
         if (this.unsubs.includes(unsub))
             return;
         this.unsubs.push(unsub);
+    }
+    teleport(newParent) {
+        const parent = this.parent.get();
+        if (!parent) {
+            console.warn(`Cannot teleport a root node.`);
+            return;
+        }
+        parent.removeChild(parent.childNodes.indexOf(this));
+        const newParentEl = newParent.getElementOrRender();
+        newParentEl.appendChild(this.getElementOrRender());
+    }
+    setChild(index, child) {
+        if (this.childNodes[index] === child)
+            return;
+        const childEl = child.getElementOrRender();
+        const thisEl = this.getElementOrRender();
+        (0, element_1.setElementChild)(thisEl, childEl, index);
+    }
+    removeChild(index) {
+        const node = this.childNodes[index];
+        if (!node)
+            return;
+        if (node.el && this.el && this.el.contains(node.el)) {
+            this.el.removeChild(node.el);
+        }
+        this.childNodes = this.childNodes.filter((it) => it !== node);
     }
     addChildNode(node) {
         if (this.childNodes.includes(node))
@@ -409,13 +423,13 @@ class LNode {
                 el.innerText = (0, reactivity_1.pget)(this.attributes.text) + "";
             }
         }
-        const watchedAttributes = (0, reactivity_1.pget)(this.attributes.watch) || [];
+        const watchedAttributes = [...((0, reactivity_1.pget)(this.attributes.watch) || []), ...constants_1.DEFAULT_WATCHED_NODE_PROPS];
         for (const key of watchedAttributes) {
             const attrib = this.attributes[key];
             if ((0, reactivity_1.isSignal)(attrib)) {
-                (0, reactivity_1.watchSignal)(attrib, (value) => {
+                this.addGC((0, reactivity_1.watchSignal)(attrib, (value) => {
                     this.setAttribute(key, value);
-                }, { immediate: true });
+                }, { immediate: true }));
             }
         }
         const style = this.attributes.style;
@@ -432,22 +446,18 @@ class LNode {
                 this.setAttribute("style", typeof style === "string" ? style : (0, css_1.cssPropsToString)(style));
             }
         }
-        const attrValue = this.attributes.value;
-        if ((0, reactivity_1.isSignal)(attrValue)) {
-            this.addGC((0, reactivity_1.watchSignal)(attrValue, (val) => {
-                this.setAttribute("value", val);
-            }, { immediate: true }));
-        }
         const clazz = this.attributes.class;
-        if (clazz && !(0, types_1.isText)(el)) {
-            if ((0, reactivity_1.isSignal)(clazz)) {
-                this.addGC((0, reactivity_1.watchSignal)(clazz, () => {
-                    const classValue = (0, reactivity_1.pget)(clazz);
-                    this.setAttribute("class", classValue);
-                }, { immediate: true }));
-            }
-            else {
-                this.setAttribute("class", clazz);
+        if (!(0, types_1.isText)(el)) {
+            if (clazz) {
+                if ((0, reactivity_1.isSignal)(clazz)) {
+                    this.addGC((0, reactivity_1.watchSignal)(clazz, () => {
+                        const classValue = (0, reactivity_1.pget)(clazz);
+                        this.setAttribute("class", (0, css_1.mergeClasses)(classValue));
+                    }, { immediate: true }));
+                }
+                else {
+                    this.setAttribute("class", (0, css_1.mergeClasses)(clazz));
+                }
             }
         }
         for (const [key, value] of Object.entries(this.attributes.on || {})) {
@@ -459,7 +469,9 @@ class LNode {
                 if (INTERNAL_ATTRIBUTES.includes(key)) {
                     continue;
                 }
-                if (!(typeof value == "string" || typeof value === "number"))
+                if (!(typeof value == "string" ||
+                    typeof value === "number" ||
+                    typeof value === "boolean"))
                     continue;
                 this.setAttribute(key, value + "");
             }

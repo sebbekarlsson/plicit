@@ -1,8 +1,9 @@
 import { EventEmitter, EventSubscriber, PlicitEvent } from "./event";
 import { Component, isComponent, unwrapComponentTree } from "./component";
-import { CSSProperties, cssPropsToString } from "./css";
-import { patchElements } from "./element";
+import { CSSProperties, cssPropsToString, mergeClasses } from "./css";
+import { patchElements, setElementChild } from "./element";
 import {
+  ElementClass,
   isComment,
   isElementWithChildren,
   isHTMLElement,
@@ -25,6 +26,7 @@ import {
   watchSignal,
 } from "./reactivity";
 import { ReactiveDep } from "./reactivity";
+import { DEFAULT_WATCHED_NODE_PROPS } from "./constants";
 
 export type LNodeChild = Component | MaybeSignal<LNode>;
 
@@ -61,7 +63,7 @@ export type LNodeAttributesBase = {
   watch?: string[];
   isRoot?: boolean;
   ref?: Signal<LNode | undefined>;
-  class?: string;
+  class?: ElementClass;
   component?: Component;
   _component?: Component;
   signal?: Signal;
@@ -180,25 +182,41 @@ export class LNode {
           }),
         );
       }
-      //const nextUnsubs = deepSubscribe(
-      //  dep,
-      //  {
-      //    onSet: () => {
-      //      this.invalidate();
-      //    },
-      //    onTrigger: () => {
-      //      this.invalidate();
-      //    },
-      //  },
-      //  -1,
-      //);
-      //nextUnsubs.forEach((unsub) => this.addGC(unsub));
     }
   }
 
   addGC(unsub: () => void) {
     if (this.unsubs.includes(unsub)) return;
     this.unsubs.push(unsub);
+  }
+
+  teleport(newParent: LNode) {
+    const parent = this.parent.get();
+    if (!parent) {
+      console.warn(`Cannot teleport a root node.`);
+      return;
+    }
+    parent.removeChild(parent.childNodes.indexOf(this));
+    const newParentEl = newParent.getElementOrRender();
+    newParentEl.appendChild(this.getElementOrRender());
+  }
+
+  setChild(index: number, child: LNode) {
+    if (this.childNodes[index] === child) return;
+    const childEl = child.getElementOrRender();
+    const thisEl = this.getElementOrRender();
+    setElementChild(thisEl, childEl, index);
+  }
+
+  removeChild(index: number) {
+    const node = this.childNodes[index];
+    if (!node) return;
+
+    if (node.el && this.el && this.el.contains(node.el)) {
+      this.el.removeChild(node.el);
+    }
+
+    this.childNodes = this.childNodes.filter((it) => it !== node);
   }
 
   addChildNode(node: LNode) {
@@ -586,17 +604,17 @@ export class LNode {
       }
     }
 
-    const watchedAttributes = pget(this.attributes.watch) || [];
+    const watchedAttributes = [...(pget(this.attributes.watch) || []), ...DEFAULT_WATCHED_NODE_PROPS];
     for (const key of watchedAttributes) {
       const attrib = this.attributes[key];
       if (isSignal(attrib)) {
-        watchSignal(
+        this.addGC(watchSignal(
           attrib,
           (value) => {
             this.setAttribute(key, value);
           },
           { immediate: true },
-        );
+        ));
       }
     }
 
@@ -626,34 +644,23 @@ export class LNode {
       }
     }
 
-    const attrValue = this.attributes.value;
-    if (isSignal(attrValue)) {
-      this.addGC(
-        watchSignal(
-          attrValue,
-          (val) => {
-            this.setAttribute("value", val);
-          },
-          { immediate: true },
-        ),
-      );
-    }
-
     const clazz = this.attributes.class;
-    if (clazz && !isText(el)) {
-      if (isSignal(clazz)) {
-        this.addGC(
-          watchSignal(
-            clazz,
-            () => {
-              const classValue = pget(clazz);
-              this.setAttribute("class", classValue);
-            },
-            { immediate: true },
-          ),
-        );
-      } else {
-        this.setAttribute("class", clazz);
+    if (!isText(el)) {
+      if (clazz) {
+        if (isSignal(clazz)) {
+          this.addGC(
+            watchSignal(
+              clazz,
+              () => {
+                const classValue = pget(clazz);
+                this.setAttribute("class", mergeClasses(classValue));
+              },
+              { immediate: true },
+            ),
+          );
+        } else {
+          this.setAttribute("class", mergeClasses(clazz));
+        }
       }
     }
 
@@ -667,7 +674,14 @@ export class LNode {
         if (INTERNAL_ATTRIBUTES.includes(key)) {
           continue;
         }
-        if (!(typeof value == "string" || typeof value === "number")) continue;
+        if (
+          !(
+            typeof value == "string" ||
+            typeof value === "number" ||
+            typeof value === "boolean"
+          )
+        )
+          continue;
         this.setAttribute(key, value + "");
       }
     }
@@ -714,5 +728,5 @@ export const none = () =>
 export const isLNode = (x: any): x is LNode =>
   x !== null && !!x && typeof x === "object" && x._lnode === "lnode";
 
-
-export const unwrapElement = (sig: MaybeSignal<LNode>) => (pget(sig)?.el as (HTMLElement | undefined));
+export const unwrapElement = (sig: MaybeSignal<LNode>) =>
+  pget(sig)?.el as HTMLElement | undefined;

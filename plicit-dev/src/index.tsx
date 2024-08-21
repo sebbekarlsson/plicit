@@ -21,18 +21,15 @@ const App: Component = () => {
   return (
     <div class="w-full h-full flex flex-col">
       <NavBar />
-      <div class="h-full w-full grid grid-cols-[max-content,1fr]">
+      <div class="h-full flex-1 w-full grid grid-cols-[max-content,1fr]">
         <SideMenu menu={SIDE_MENU} hook={sideMenuHook} />
         <div
           class="overflow-auto"
           style={{
-            height: "auto",
-            maxHeight: "calc(100% - 4rem)",
+            maxHeight: "calc(100svh - 4rem)",
           }}
         >
-          <div class="w-full h-full">
             <MainRouter />
-          </div>
         </div>
       </div>
       <ModalContainer />

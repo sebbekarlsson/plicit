@@ -1,8 +1,7 @@
 import { RangeSlider } from "../../../components/range-slider"
-import { PageContent } from "../../../layouts/page-content"
 
 export default () => {
-  return <PageContent>
+  return <div>
     <RangeSlider value={0} />
-  </PageContent>
+  </div>
 }

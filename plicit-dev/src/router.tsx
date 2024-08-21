@@ -1,6 +1,5 @@
 import { computedSignal, smartJoin } from "plicit";
 import { createRouter, useRoute } from "./components/router/hooks";
-import { FilesRoute } from "./routes/files";
 import { HomeRoute } from "./routes/home";
 import { PeopleRoute } from "./routes/people";
 import { ISideMenu, ISideMenuItem } from "./components/side-menu/types";
@@ -19,7 +18,7 @@ export const router = createRouter({
       path: "/",
       name: "index",
       component: (_props) => {
-        return (props) => <div>{props.children || _props?.children}</div>;
+        return (props) => <div class="w-full h-full">{props.children || _props?.children}</div>;
       },
       children: [
         {
@@ -28,16 +27,6 @@ export const router = createRouter({
           component: HomeRoute,
           icon: {
             src: async () => import("./assets/icons/dashboard.svg"),
-            fill: "currentColor",
-            size: "1rem",
-          },
-        },
-        {
-          path: "files",
-          name: "Files",
-          component: FilesRoute,
-          icon: {
-            src: async () => import("./assets/icons/files.svg"),
             fill: "currentColor",
             size: "1rem",
           },
@@ -61,14 +50,12 @@ export const router = createRouter({
       component: (_props) => {
         const route = useRoute();
         return (props) => (
-          <div class="w-full h-full">
+          <div class="w-full h-full p-4">
             {() =>
               computedSignal(() => (
-                <div class="p-4">
-                  <h1 class="text-lg font-semibold">
+                  <h1 class="text-lg font-semibold h-[3rem]">
                     {route.match?.get()?.route?.name || "EE"}
                   </h1>
-                </div>
               ))
             }
             {props?.children}
@@ -126,6 +113,22 @@ export const router = createRouter({
             (await import("./routes/components/form")).default,
         },
       ],
+    },
+    {
+      path: '/examples',
+      name: 'Examples',
+      component: (_props) => {
+        return (props) => <div class="w-full h-full">{props.children || _props?.children}</div>;
+      },
+      children: [
+        {
+          path: 'drag-drop',
+          name: 'Drag & Drop',
+          icon: COMPONENT_ICON,
+          component:  async () =>
+            (await import("./routes/examples/drag-drop")).default 
+        }
+      ]
     },
   ],
 });

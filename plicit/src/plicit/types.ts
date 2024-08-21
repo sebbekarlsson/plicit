@@ -1,3 +1,5 @@
+import { MaybeSignal, Signal } from "./reactivity";
+
 export type Dict<T = any> = { [key: string]: T };
 
 export type Indexable<T = any> = Dict<T> | Array<T>;
@@ -124,3 +126,6 @@ export const isComment = (x: any): x is Comment => {
   if (typeof x !== "object") return false;
   return typeof x.appendData === "function";
 };
+
+
+export type ElementClass = string | string[] | Array<string | Signal<string>>;

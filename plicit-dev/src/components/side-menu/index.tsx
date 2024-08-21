@@ -221,7 +221,7 @@ export const SideMenu: Component<ISideMenuProps> = (props) => {
 
   return (
     <div
-      class="h-full bg-primary-950 border-primary-500 text-white select-none"
+      class="h-full max-h-[100vh] overflow-hidden bg-primary-950 border-primary-500 text-white select-none"
       style={props.hook.style}
     >
       {() => (

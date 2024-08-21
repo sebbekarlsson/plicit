@@ -16,7 +16,6 @@ import { ItemList } from "../../components/item-list";
 import { RangeSlider } from "../../components/range-slider";
 import { TextReverser } from "../../components/text-reverser";
 import { Hero } from "../../components/hero";
-import { PageContent } from "../../layouts/page-content";
 import { LineGraph } from "../../components/line-graph";
 import { Table } from "../../components/table";
 import { ITableRow, ITable } from "../../components/table/types";
@@ -134,7 +133,7 @@ export const HomeRoute: Component = () => {
   return (
     <div class="w-full h-full">
       <Hero title="Plicit" subtitle="Explicitly Reactive" />
-      <PageContent>
+      <div class="p-4">
         <div
           class="h-full w-full"
           style={{
@@ -200,7 +199,7 @@ export const HomeRoute: Component = () => {
             <TextReverser />
           </Card>
         </div>
-      </PageContent>
+      </div>
     </div>
   );
 };

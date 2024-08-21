@@ -14,11 +14,13 @@ let didAddEventListener: boolean = false;
 export const useMousePosition = () => {
   if (!didAddEventListener) {
     window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("drag", onMouseMove);
     didAddEventListener = true;
   }
 
   const destroy = () => {
     window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("drag", onMouseMove);
   };
 
   return {

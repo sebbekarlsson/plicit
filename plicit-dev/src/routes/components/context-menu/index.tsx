@@ -1,5 +1,4 @@
 import { LNodeRef, signal } from "plicit";
-import { PageContent } from "../../../layouts/page-content"
 import { useContextMenu } from "../../../components/context-menu/hooks/useContextMenu";
 import { Button } from "../../../components/button";
 import { ContextMenu } from "../../../components/context-menu";
@@ -24,8 +23,8 @@ export default () => {
     }
   });
   
-  return <PageContent>
+  return <div>
     <Button ref={elRef}>With Menu</Button>
     <ContextMenu hook={ctxMenu}/>
-  </PageContent>
+  </div>
 }
