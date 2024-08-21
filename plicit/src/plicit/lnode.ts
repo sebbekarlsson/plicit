@@ -18,17 +18,21 @@ import {
 } from "./types";
 import { ENodeEvent } from "./nodeEvents";
 import {
+    AsyncSignal,
   isSignal,
+  MaybeAsyncSignal,
   MaybeSignal,
   pget,
   signal,
   Signal,
+  watchAsyncSignal,
   watchSignal,
 } from "./reactivity";
 import { ReactiveDep } from "./reactivity";
 import { DEFAULT_WATCHED_NODE_PROPS } from "./constants";
+import { isAsyncSignal } from "./reactivity/signal/asyncSignal";
 
-export type LNodeChild = Component | MaybeSignal<LNode>;
+export type LNodeChild = Component | MaybeSignal<LNode> | MaybeAsyncSignal<LNode>;
 
 export type LNodeRef = Signal<LNode | undefined>; //Ref<LNode | undefined>;
 
@@ -40,7 +44,8 @@ export enum ELNodeType {
   COMMENT = "COMMENT",
   SLOT = "SLOT",
   COMPONENT = "COMPONENT",
-  SIGNAL = "COMPONENT",
+  SIGNAL = "SIGNAL",
+  ASYNC_SIGNAL = "ASYNC_SIGNAL"
 }
 
 type WithSignals<T> = {
@@ -67,6 +72,8 @@ export type LNodeAttributesBase = {
   component?: Component;
   _component?: Component;
   signal?: Signal;
+  asyncSignal?: AsyncSignal<LNode>;
+  asyncFallback?: LNodeChild;
   [key: string]: any;
 };
 
@@ -423,6 +430,24 @@ export class LNode {
               sig,
               (next) => {
                 if (!this.el) return;
+                next.invalidate();
+                this.patchWith(next);
+                next.cleanup();
+              },
+              { immediate: true },
+            ),
+          );
+          return sig.get().getElementOrRender();
+        }
+      } else if (this.type === ELNodeType.ASYNC_SIGNAL && this.attributes.asyncSignal) {
+        const sig = this.attributes.asyncSignal;
+        if (isAsyncSignal<LNode>(sig)) {
+          this.addGC(
+            watchAsyncSignal(
+              sig,
+              (next) => {
+                if (!this.el) return;
+                if (!next) return;
                 next.invalidate();
                 this.patchWith(next);
                 next.cleanup();

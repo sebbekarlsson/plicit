@@ -18,4 +18,7 @@ __exportStar(require("./signal"), exports);
 __exportStar(require("./constants"), exports);
 __exportStar(require("./types"), exports);
 __exportStar(require("./event"), exports);
+__exportStar(require("./computed"), exports);
+__exportStar(require("./effect"), exports);
+__exportStar(require("./watch"), exports);
 //# sourceMappingURL=index.js.map

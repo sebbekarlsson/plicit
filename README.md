@@ -1,6 +1,16 @@
 # Plicit
 A framework for building web user interfaces with explicitly defined reactivity
 
+#### Some unique features:
+ * You have full control over the reactivity.  
+   > You decide if a singe property / attribute should be reactive, or if an entire component should be reactive.
+ * Reactivity is separated from the rendering.  
+   > You can use reactivity "outside" of the component hierarchy.
+ * Asynchronous components and synchronous components are treated the same.  
+   > You don't need to treat async components in some special way... ( No **\<Suspense\>** needed! )
+
+---
+
 ## Getting Started
 First, install:
 ```bash
@@ -40,12 +50,14 @@ setup(App, document.getElementById("app"));
 ```
 > For more information, take a look at this [sample project](./plicit-dev) which is using webpack.
 
-## Explicit Reactivity
+## Reactivity
+
+### Explicit Reactivity
 While some implicit reactivity is supported, this framework aims to provide full control over
 the reactivity by giving you the ability to be explicit about it.
 
 
-### Explicit Example
+An example:
 ```tsx
 const Counter = () => {
   const count = signal<number>(0)
@@ -66,3 +78,49 @@ const Counter = () => {
 
 To summarize, we explicitly define an element to be reactive by wrapping it in a function.  
 Dependencies of a `signal` are automatically tracked.
+
+
+### Asynchronous Reactivity
+Plicit has been developed with asynchronicity in mind.  
+Components can be async, as well as VDOM children.
+
+#### Async Components
+```tsx
+const HelloWorld = async () => {
+  await sleep(1000); // or do an API request or something :)
+  return <div>Hello world!</div>;
+}
+
+const App = () => {
+  return <div>
+    <HelloWorld/>
+  </div>
+}
+```
+> Here, the `<HelloWorld>` component with begin rendering once the `sleep()` promise has been resolved.
+
+You can also define a "placeholder" to render while the component is loading:
+```tsx
+const App = () => {
+  return <div>
+    <HelloWorld asyncFallback={() => <span>Please wait...</span>}/>
+  </div>
+}
+```
+> Here's a good place to put a spinner or some other cool animation!
+
+#### Async VDOM children
+```tsx
+const App = () => {
+  return <div>
+    {
+      asyncSignal(async () => {
+        await sleep(1000);
+        return <div>Hello world!</div>
+      }, { fallback: () => <span>Please wait...</span> })
+    }
+  </div>
+}
+```
+> This will give you a similar result as the previous example,  
+> but instead of an async component, we're using an async signal.

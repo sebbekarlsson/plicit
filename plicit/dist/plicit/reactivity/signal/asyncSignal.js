@@ -1,39 +1,55 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signal = exports.isSignal = void 0;
+exports.asyncSignal = exports.isAsyncSignal = void 0;
 const is_1 = require("../../is");
 const utils_1 = require("../../utils");
 const constants_1 = require("./constants");
 const effect_1 = require("./effect");
 const scope_1 = require("./scope");
 const utils_2 = require("./utils");
-const isSignal = (x) => {
+const isAsyncSignal = (x) => {
     if (!x)
         return false;
     if (typeof x !== "object")
         return false;
-    return x.sym === "Signal";
+    return x.sym === "AsyncSignal";
 };
-exports.isSignal = isSignal;
-const signal = (initial, options = {}) => {
-    const init = (0, is_1.isFunction)(initial) ? initial : () => initial;
+exports.isAsyncSignal = isAsyncSignal;
+const asyncSignal = (initial, options = {}) => {
+    const init = (0, is_1.isFunction)(initial) ? initial : async () => initial;
+    const callInit = async () => {
+        sig.state = constants_1.ESignalState.LOADING;
+        try {
+            const ret = await init();
+            sig.state = constants_1.ESignalState.RESOLVED;
+            return ret;
+        }
+        catch (e) {
+            console.error(e);
+            sig.state = constants_1.ESignalState.ERROR;
+        }
+        return null;
+    };
     const triggerFun = () => {
-        if (options.isComputed) {
-            sig._value = init();
-        }
-        else {
-            init();
-        }
-        scope_1.GSignal.current = undefined;
-        sig.watchers.forEach((watcher) => {
-            watcher(sig._value);
-        });
-        if (options.isEffect) {
-            return;
-        }
-        sig.trackedEffects.forEach((fx) => {
-            fx();
-        });
+        const trig = async () => {
+            if (options.isComputed) {
+                sig._value = await callInit();
+            }
+            else {
+                callInit();
+            }
+            scope_1.GSignal.current = undefined;
+            sig.watchers.forEach((watcher) => {
+                watcher(sig._value);
+            });
+            if (options.isEffect) {
+                return;
+            }
+            sig.trackedEffects.forEach((fx) => {
+                fx();
+            });
+        };
+        trig().catch(e => console.error(e));
     };
     const track = () => {
         const current = scope_1.GSignal.current;
@@ -57,25 +73,21 @@ const signal = (initial, options = {}) => {
     const sig = {
         isComputed: options.isComputed,
         isEffect: options.isEffect,
-        sym: "Signal",
+        fallback: options.fallback,
+        sym: "AsyncSignal",
         _value: (0, is_1.isFunction)(initial) ? null : initial,
-        fun: init,
+        fun: callInit,
         state: constants_1.ESignalState.UNINITIALIZED,
         trigger,
-        peek: () => sig._value || init(),
         tracked: [],
         trackedEffects: [],
         watchers: [],
         get: () => {
-            if (sig.state === constants_1.ESignalState.UNINITIALIZED || sig._value === null) {
-                sig._value = init();
-                sig.state = constants_1.ESignalState.INITIALIZED;
-            }
             track();
-            return sig._value;
+            return sig._value || sig.fallback;
         },
-        set: (fun) => {
-            const nextValue = (0, is_1.isFunction)(fun) ? fun(sig._value) : fun;
+        set: async (fun) => {
+            const nextValue = (0, is_1.isFunction)(fun) ? (await fun(sig._value)) : fun;
             if (options.autoDiffCheck !== false &&
                 (0, utils_2.canBeAutoDiffed)(sig._value, nextValue) &&
                 nextValue === sig._value) {
@@ -91,5 +103,5 @@ const signal = (initial, options = {}) => {
     });
     return sig;
 };
-exports.signal = signal;
-//# sourceMappingURL=signal.js.map
+exports.asyncSignal = asyncSignal;
+//# sourceMappingURL=asyncSignal.js.map

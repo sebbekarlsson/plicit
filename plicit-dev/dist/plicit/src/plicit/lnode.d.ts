@@ -3,9 +3,9 @@ import { Component } from "./component";
 import { CSSProperties } from "./css";
 import { ElementClass, NativeElement, NativeElementListeners } from "./types";
 import { ENodeEvent } from "./nodeEvents";
-import { MaybeSignal, Signal } from "./reactivity";
+import { AsyncSignal, MaybeAsyncSignal, MaybeSignal, Signal } from "./reactivity";
 import { ReactiveDep } from "./reactivity";
-export type LNodeChild = Component | MaybeSignal<LNode>;
+export type LNodeChild = Component | MaybeSignal<LNode> | MaybeAsyncSignal<LNode>;
 export type LNodeRef = Signal<LNode | undefined>;
 export declare enum ELNodeType {
     ELEMENT = "ELEMENT",
@@ -15,7 +15,8 @@ export declare enum ELNodeType {
     COMMENT = "COMMENT",
     SLOT = "SLOT",
     COMPONENT = "COMPONENT",
-    SIGNAL = "COMPONENT"
+    SIGNAL = "SIGNAL",
+    ASYNC_SIGNAL = "ASYNC_SIGNAL"
 }
 type WithSignals<T> = {
     [Prop in keyof T]: T[Prop] extends Signal | ((...args: any[]) => void) ? T[Prop] : T[Prop] | Signal<T[Prop]>;
@@ -38,6 +39,8 @@ export type LNodeAttributesBase = {
     component?: Component;
     _component?: Component;
     signal?: Signal;
+    asyncSignal?: AsyncSignal<LNode>;
+    asyncFallback?: LNodeChild;
     [key: string]: any;
 };
 export type LNodeAttributes = WithSignals<LNodeAttributesBase>;

@@ -1,14 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.unwrapChild = exports.unwrapComponentTree = exports.isComponent = void 0;
+exports.unwrapComponentTree = exports.isComponent = exports.isAsyncComponent = void 0;
+const pending_signal_1 = require("./components/pending-signal");
+const is_1 = require("./is");
 const lnode_1 = require("./lnode");
 const nodeEvents_1 = require("./nodeEvents");
 const reactivity_1 = require("./reactivity");
+const asyncSignal_1 = require("./reactivity/signal/asyncSignal");
 const scope_1 = require("./scope");
-const isComponent = (x) => !!x && typeof x === "function";
+const isAsyncComponent = (x) => !!x && (0, is_1.isAsyncFunction)(x);
+exports.isAsyncComponent = isAsyncComponent;
+const isComponent = (x) => !!x && typeof x === "function" && !(0, exports.isAsyncComponent)(x);
 exports.isComponent = isComponent;
 const unwrapComponentTree = (component, propagatedAttribs = {}) => {
     const unwrap = (component, attribs = {}, depth = 0) => {
+        if ((0, exports.isAsyncComponent)(component)) {
+            return unwrap((0, asyncSignal_1.asyncSignal)(async () => await component(attribs), { isComputed: true, fallback: unwrap((0, reactivity_1.pget)(attribs.asyncFallback || pending_signal_1.PendingSignal)) }), attribs, 0);
+        }
         if ((0, exports.isComponent)(component)) {
             (0, scope_1.pushScope)();
             const next = component({ ...attribs, component });
@@ -32,6 +40,8 @@ const unwrapComponentTree = (component, propagatedAttribs = {}) => {
         }
         if ((0, reactivity_1.isSignal)(component))
             return (0, lnode_1.lnodeX)(lnode_1.ELNodeType.SIGNAL, { ...attribs, signal: component });
+        if ((0, asyncSignal_1.isAsyncSignal)(component))
+            return (0, lnode_1.lnodeX)(lnode_1.ELNodeType.ASYNC_SIGNAL, { ...attribs, asyncSignal: component });
         if (typeof component === 'string' || typeof component === 'number') {
             return (0, lnode_1.lnode)('span', { text: component + '', nodeType: lnode_1.ELNodeType.TEXT_ELEMENT });
         }
@@ -40,22 +50,4 @@ const unwrapComponentTree = (component, propagatedAttribs = {}) => {
     return unwrap(component, propagatedAttribs);
 };
 exports.unwrapComponentTree = unwrapComponentTree;
-const unwrapChild = (child) => {
-    if ((0, reactivity_1.isSignal)(child)) {
-        return (0, exports.unwrapChild)(child.get());
-    }
-    if ((0, exports.isComponent)(child)) {
-        return (0, exports.unwrapChild)(child({}));
-    }
-    if (typeof child === 'string' || typeof child === 'number') {
-        return (0, lnode_1.lnode)('span', { text: child + '', nodeType: lnode_1.ELNodeType.TEXT_ELEMENT });
-    }
-    if ((0, lnode_1.isLNode)(child)) {
-        if (child.attributes.signal)
-            return (0, exports.unwrapChild)(child.attributes.signal);
-        return child;
-    }
-    return child;
-};
-exports.unwrapChild = unwrapChild;
 //# sourceMappingURL=component.js.map

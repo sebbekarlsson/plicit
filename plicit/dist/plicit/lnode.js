@@ -9,6 +9,7 @@ const types_1 = require("./types");
 const nodeEvents_1 = require("./nodeEvents");
 const reactivity_1 = require("./reactivity");
 const constants_1 = require("./constants");
+const asyncSignal_1 = require("./reactivity/signal/asyncSignal");
 var ELNodeType;
 (function (ELNodeType) {
     ELNodeType["ELEMENT"] = "ELEMENT";
@@ -18,7 +19,8 @@ var ELNodeType;
     ELNodeType["COMMENT"] = "COMMENT";
     ELNodeType["SLOT"] = "SLOT";
     ELNodeType["COMPONENT"] = "COMPONENT";
-    ELNodeType["SIGNAL"] = "COMPONENT";
+    ELNodeType["SIGNAL"] = "SIGNAL";
+    ELNodeType["ASYNC_SIGNAL"] = "ASYNC_SIGNAL";
 })(ELNodeType || (exports.ELNodeType = ELNodeType = {}));
 const INTERNAL_ATTRIBUTES = [
     "text",
@@ -270,6 +272,21 @@ class LNode {
                 if ((0, reactivity_1.isSignal)(sig)) {
                     this.addGC((0, reactivity_1.watchSignal)(sig, (next) => {
                         if (!this.el)
+                            return;
+                        next.invalidate();
+                        this.patchWith(next);
+                        next.cleanup();
+                    }, { immediate: true }));
+                    return sig.get().getElementOrRender();
+                }
+            }
+            else if (this.type === ELNodeType.ASYNC_SIGNAL && this.attributes.asyncSignal) {
+                const sig = this.attributes.asyncSignal;
+                if ((0, asyncSignal_1.isAsyncSignal)(sig)) {
+                    this.addGC((0, reactivity_1.watchAsyncSignal)(sig, (next) => {
+                        if (!this.el)
+                            return;
+                        if (!next)
                             return;
                         next.invalidate();
                         this.patchWith(next);

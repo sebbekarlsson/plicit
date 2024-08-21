@@ -1,27 +1,38 @@
+import { PendingSignal } from "./components/pending-signal";
+import { isAsyncFunction } from "./is";
 import { ELNodeType, isLNode, lnode, LNode, LNodeAttributes, lnodeX } from "./lnode";
 import { ENodeEvent } from "./nodeEvents";
 import {
   isSignal,
+  MaybeAsyncSignal,
   MaybeSignal,
+  pget,
   Signal,
 } from "./reactivity";
+import { asyncSignal, isAsyncSignal } from "./reactivity/signal/asyncSignal";
 import { popScope, pushScope, withCurrentScope } from "./scope";
 import { Dict } from "./types";
 
 export type UnwrappableComponent =
   | Component
+  | AsyncComponent
   | Signal<LNode>
   | MaybeSignal<LNode>
+  | MaybeAsyncSignal<LNode>
   | string;
-
-export type UnwrappedComponent = MaybeSignal<LNode>;
 
 export type Component<T extends Dict = Dict> = (
   props?: T & LNodeAttributes,
-) =>  Component | Signal<LNode> | MaybeSignal<LNode> | string;
+) =>  Component | Signal<LNode> | MaybeSignal<LNode> | MaybeAsyncSignal<LNode> | string;
+
+export type AsyncComponent<T extends Dict = Dict> = (
+  props?: T & LNodeAttributes,
+) =>  Promise<Component | Signal<LNode> | MaybeSignal<LNode> | MaybeAsyncSignal<LNode> | string>;
+
+export const isAsyncComponent = (x: any): x is AsyncComponent => !!x && isAsyncFunction(x); 
 
 export const isComponent = (x: any): x is Component =>
-  !!x && typeof x === "function";
+  !!x && typeof x === "function" && !isAsyncComponent(x);
 
 
 export const unwrapComponentTree = (
@@ -34,6 +45,11 @@ export const unwrapComponentTree = (
     attribs: LNodeAttributes = {},
     depth: number = 0,
   ) => {
+
+    if (isAsyncComponent(component)) {
+      return unwrap(asyncSignal<any>(async () => await component(attribs), { isComputed: true, fallback: unwrap(pget(attribs.asyncFallback || PendingSignal)) }), attribs, 0);
+    }
+    
     if (isComponent(component)) {
       pushScope();
       const next = component({...attribs, component});
@@ -57,7 +73,8 @@ export const unwrapComponentTree = (
     if (isLNode(component)) {
       return component;
     }
-    if (isSignal(component)) return lnodeX(ELNodeType.SIGNAL, { ...attribs, signal: component }); 
+    if (isSignal(component)) return lnodeX(ELNodeType.SIGNAL, { ...attribs, signal: component });
+    if (isAsyncSignal(component)) return lnodeX(ELNodeType.ASYNC_SIGNAL, { ...attribs, asyncSignal: component });
     if (typeof component === 'string' || typeof component === 'number') {
       return lnode('span', { text: component + '', nodeType: ELNodeType.TEXT_ELEMENT });
     }
@@ -66,20 +83,3 @@ export const unwrapComponentTree = (
 
   return unwrap(component, propagatedAttribs);
 };
-
-export const unwrapChild = (child: UnwrappableComponent): LNode => { 
-  if (isSignal<LNode>(child)) {
-    return unwrapChild(child.get());
-  }
-  if (isComponent(child)) {
-    return unwrapChild(child({}));
-  }
-  if (typeof child === 'string' || typeof child === 'number') {
-    return lnode('span', { text: child + '', nodeType: ELNodeType.TEXT_ELEMENT });
-  }
-  if (isLNode(child)) {
-    if (child.attributes.signal) return unwrapChild(child.attributes.signal);
-    return child;
-  }
-  return child;
-}

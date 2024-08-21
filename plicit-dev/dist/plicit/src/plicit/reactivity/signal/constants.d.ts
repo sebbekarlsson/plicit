@@ -3,5 +3,8 @@ export declare enum ESignalState {
     INITIALIZED = "INITIALIZED",
     CLEAN = "CLEAN",
     DIRTY = "DIRTY",
-    DISPOSED = "DISPOSED"
+    DISPOSED = "DISPOSED",
+    LOADING = "LOADING",
+    RESOLVED = "RESOLVED",
+    ERROR = "ERROR"
 }

@@ -8,5 +8,8 @@ var ESignalState;
     ESignalState["CLEAN"] = "CLEAN";
     ESignalState["DIRTY"] = "DIRTY";
     ESignalState["DISPOSED"] = "DISPOSED";
+    ESignalState["LOADING"] = "LOADING";
+    ESignalState["RESOLVED"] = "RESOLVED";
+    ESignalState["ERROR"] = "ERROR";
 })(ESignalState || (exports.ESignalState = ESignalState = {}));
 //# sourceMappingURL=constants.js.map

@@ -3,41 +3,58 @@ import { debounce, throttle } from "../../utils";
 import { ESignalState } from "./constants";
 import { callTrackableFunction } from "./effect";
 import { GSignal, withSignal } from "./scope";
-import { SignalFunc, SignalOptions, type Signal } from "./types";
+import { type AsyncSignal, AsyncSignalOptions, SignalFuncAsync } from "./types";
 import { canBeAutoDiffed } from "./utils";
 
-export const isSignal = <T = any>(x: any): x is Signal<T> => {
+export const isAsyncSignal = <T = any>(x: any): x is AsyncSignal<T> => {
   if (!x) return false;
   if (typeof x !== "object") return false;
-  return x.sym === "Signal";
+  return x.sym === "AsyncSignal";
 };
 
-export const signal = <T = any>(
-  initial: SignalFunc<T> | T,
-  options: SignalOptions = {},
-): Signal<T> => {
-  const init = isFunction(initial) ? initial : () => initial;
+export const asyncSignal = <T = any>(
+  initial: SignalFuncAsync<T> | T,
+  options: AsyncSignalOptions<T> = {},
+): AsyncSignal<T> => {
+  const init = isFunction(initial) ? initial : async () => initial;
+
+
+  const callInit = async () => {
+    sig.state = ESignalState.LOADING;
+    try {
+      const ret = await init();
+      sig.state = ESignalState.RESOLVED;
+      return ret;
+    } catch (e) {
+      console.error(e);
+      sig.state = ESignalState.ERROR;
+    }
+    return null;
+  }
 
   const triggerFun = () => {
-    if (options.isComputed) {
-      sig._value = init();
-    } else {
-      init();
+    const trig = async () => {
+      if (options.isComputed) {
+        sig._value = await callInit();
+      } else {
+        callInit();
+      }
+
+      GSignal.current = undefined;
+
+      sig.watchers.forEach((watcher) => {
+        watcher(sig._value);
+      });
+
+      if (options.isEffect) {
+        return;
+      }
+
+      sig.trackedEffects.forEach((fx) => {
+        fx();
+      });
     }
-
-    GSignal.current = undefined;
-
-    sig.watchers.forEach((watcher) => {
-      watcher(sig._value);
-    });
-
-    if (options.isEffect) {
-      return;
-    }
-
-    sig.trackedEffects.forEach((fx) => {
-      fx();
-    });
+    trig().catch(e => console.error(e));
   };
 
   const track = () => {
@@ -65,28 +82,24 @@ export const signal = <T = any>(
     trigger = fn;
   }
 
-  const sig: Signal<T> = {
+  const sig: AsyncSignal<T> = {
     isComputed: options.isComputed,
     isEffect: options.isEffect,
-    sym: "Signal",
+    fallback: options.fallback,
+    sym: "AsyncSignal",
     _value: isFunction(initial) ? null : initial,
-    fun: init,
+    fun: callInit,
     state: ESignalState.UNINITIALIZED,
     trigger,
-    peek: () => sig._value || init(),
     tracked: [],
     trackedEffects: [],
     watchers: [],
     get: () => {
-      if (sig.state === ESignalState.UNINITIALIZED || sig._value === null) {
-        sig._value = init();
-        sig.state = ESignalState.INITIALIZED;
-      }
       track();
-      return sig._value;
+      return sig._value || sig.fallback;
     },
-    set: (fun: ((old: T) => T) | T) => {
-      const nextValue = isFunction(fun) ? fun(sig._value) : fun;
+    set: async (fun: ((old: T) => (T | Promise<T>)) | T) => {
+      const nextValue = isFunction(fun) ? (await fun(sig._value)) : fun;
       if (
         options.autoDiffCheck !== false &&
         canBeAutoDiffed(sig._value, nextValue) &&
