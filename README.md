@@ -153,38 +153,8 @@ const products = asyncSignal<Product[]>(async () => {
 ---
 
 ## Getting Started
-First, install:
-```bash
-npm install plicit
-```
-
-Make sure your `tsconfig.json` has the following:
-```json
-{
-  "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "jsx": "react",
-    "jsxFactory": "ljsx",
-    ...
-  }
-  ...
-}
-```
-
-Then create an `index.tsx` with the following content:
-```tsx
-import { Component, setup } from "plicit";
-
-const App: Component = () => {
-  return (
-    <div>
-      Hello world!
-    </div>
-  );
-};
-
-// Mount the app to an element defined in your index.html 
-setup(App, document.getElementById("app"));
-```
-> For more information, take a look at this [sample project](./plicit-dev) which is using webpack.
+Simply run:
+    
+    npx plicit-cli myapp && cd myapp && npm i && npm run dev
+    
+Now your app should be up and running!
