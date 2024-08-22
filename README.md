@@ -16,45 +16,6 @@
 
 ---
 
-## Getting Started
-First, install:
-```bash
-npm install plicit
-```
-
-Make sure your `tsconfig.json` has the following:
-```json
-{
-  "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "jsx": "react",
-    "jsxFactory": "ljsx",
-    ...
-  }
-  ...
-}
-```
-
-Then create an `index.tsx` with the following content:
-```tsx
-import { ljsx, Component, setup } from "plicit";
-
-globalThis.ljsx = ljsx;
-
-const App: Component = () => {
-  return (
-    <div>
-      Hello world!
-    </div>
-  );
-};
-
-// Mount the app to an element defined in your index.html 
-setup(App, document.getElementById("app"));
-```
-> For more information, take a look at this [sample project](./plicit-dev) which is using webpack.
-
 ## Reactivity
 
 ### Explicit Reactivity
@@ -129,3 +90,44 @@ const App = () => {
 ```
 > This will give you a similar result as the previous example,  
 > but instead of an async component, we're using an async signal.
+
+---
+
+## Getting Started
+First, install:
+```bash
+npm install plicit
+```
+
+Make sure your `tsconfig.json` has the following:
+```json
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "jsxFactory": "ljsx",
+    ...
+  }
+  ...
+}
+```
+
+Then create an `index.tsx` with the following content:
+```tsx
+import { ljsx, Component, setup } from "plicit";
+
+globalThis.ljsx = ljsx;
+
+const App: Component = () => {
+  return (
+    <div>
+      Hello world!
+    </div>
+  );
+};
+
+// Mount the app to an element defined in your index.html 
+setup(App, document.getElementById("app"));
+```
+> For more information, take a look at this [sample project](./plicit-dev) which is using webpack.
