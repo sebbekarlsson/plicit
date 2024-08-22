@@ -131,17 +131,6 @@ const MyDonut: Component<{ seed: MaybeSignal<number> }> = (props) => {
   );
 };
 
-
-const AsyncTest: AsyncComponent = async (props) => {
-  await sleep(1000);
-  return <div {...props}>Hello!</div>;
-}
-
-const HelloWorld = async () => {
-  await sleep(1000);
-  return <div>Hello world!</div>;
-}
-
 export const HomeRoute: Component = () => {
   return (
     <div class="w-full h-full">
@@ -154,10 +143,7 @@ export const HomeRoute: Component = () => {
             gridTemplateColumns: "repeat(auto-fill, minmax(33%, auto))",
             gap: "1rem",
           }}
-        >
-          <Card title="Async" subtitle="Async Component">
-            <HelloWorld asyncFallback={() => <div>HAHAH</div>}/>
-          </Card>
+        > 
           <Card title="Donut" subtitle="Donut Chart">
             {() => {
               const seed1 = signal<number>(5013.5823);

@@ -1,5 +1,10 @@
-# Plicit
-A framework for building web user interfaces with explicitly defined reactivity
+<div align="center" style="text-align: center;">
+    <img width="150" src="logo.png"/>
+    <h1>Plicit</h1>
+    <i>A framework for building web user interfaces with explicitly defined reactivity</i>
+</div>
+
+--- 
 
 #### Some unique features:
  * You have full control over the reactivity.  

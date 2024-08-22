@@ -127,6 +127,13 @@ export const router = createRouter({
           icon: COMPONENT_ICON,
           component:  async () =>
             (await import("./routes/examples/drag-drop")).default 
+        },
+        {
+          path: 'async-component',
+          name: 'Async',
+          icon: COMPONENT_ICON,
+          component:  async () =>
+            (await import("./routes/examples/async-component")).default 
         }
       ]
     },
