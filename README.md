@@ -115,7 +115,7 @@ There is also something called __computed signals__ in Plicit, it's just a signa
 const name = signal<string>('John Doe');
 
 // will update everytime `name` is changed
-const reversedName = computedSignal(() => name.get().reverse());
+const reversedName = computedSignal(() => Array.from(name.get()).reverse().join(''));
 
 // A computed signal can also be defined like this:
 const reversedName = signal(() => name.get().reverse(), { isComputed: true });
