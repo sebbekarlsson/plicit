@@ -63,7 +63,7 @@ const App = () => {
   </div>
 }
 ```
-> Here, the `<HelloWorld>` component with begin rendering once the `sleep()` promise has been resolved.
+> Here, the `<HelloWorld>` component will begin rendering once the `sleep()` promise has been resolved.
 
 You can also define a "placeholder" to render while the component is loading:
 ```tsx
@@ -90,6 +90,65 @@ const App = () => {
 ```
 > This will give you a similar result as the previous example,  
 > but instead of an async component, we're using an async signal.
+
+
+### Signals
+As you might have noticed from the examples, signals are used for reactive states.  
+**If you're not familiar with signals**: a signal is basically a container for some data and it will automatically track other functions (or signals) who depends on it.
+
+#### Signals in Plicit
+Signals in Plicit might differ a bit from other implementations, so let's go through some examples.  
+
+##### Basic Counter
+```typescript
+const counter = signal(0);
+
+// This will be triggered everytime the counter is changed.
+effect(() => console.log(counter.get()))
+
+counter.set((count) => count + 1)
+```
+
+##### Computed
+There is also something called __computed signals__ in Plicit, it's just a signal that transforms the value of another signal.
+```typescript
+const name = signal<string>('John Doe');
+
+// will update everytime `name` is changed
+const reversedName = computedSignal(() => name.get().reverse());
+
+// A computed signal can also be defined like this:
+const reversedName = signal(() => name.get().reverse(), { isComputed: true });
+```
+
+##### Async
+An async signal works just like a regular signal, however it's able to be updated asynchronously. 
+```typescript
+const products = asyncSignal<Product[]>(async () => {
+  const response = await fetch('https://somedomain.com/your/api/endpoint');
+  return await response.json();
+});
+
+// You can check whether or not the signal has finished, either by inspecting it's state,
+// or by having another signal react to it's changes.
+// However, inspecting it's state is not reactive.
+
+// Reactive, will be triggered when the promise is resolved
+const productNames = computedSignal(() => {
+  return (products.get() || []).map(product => product.name)
+})
+
+// Not reactive
+if (products.state === ESignalState.RESOLVED) { doSomething() }
+
+```
+You can also provide a fallback value and the signal will return this value if it hasn't been resolved yet
+```typescript
+const products = asyncSignal<Product[]>(async () => {
+  const response = await fetch('https://somedomain.com/your/api/endpoint');
+  return await response.json();
+}, { fallback: [] });
+```
 
 ---
 
