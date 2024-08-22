@@ -1,7 +1,9 @@
 {
   "name": "plicit",
-  "version": "1.0.7",
-  "main": "index.js",
+  "version": "1.0.8",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "cd plicit && npm run build",
@@ -15,14 +17,17 @@
     "plicit-dev"
   ],
   "exports": {
+    "./ljsx": "./dist/plicit/jsx.d.ts",
     ".": {
       "import": {
-        "types": "./plicit/dist/index.d.ts",
-        "default": "./plicit/dist/index.js"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js",
+        "require": "./dist/index.js"
       },
       "require": {
-        "types": "./plicit/dist/index.d.ts",
-        "default": "./plicit/dist/index.js"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js",
+        "require": "./dist/index.js"
       }
     }
   },

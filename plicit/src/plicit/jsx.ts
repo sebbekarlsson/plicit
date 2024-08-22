@@ -1,6 +1,6 @@
 import { Component, isComponent, unwrapComponentTree } from "./component";
-import { ELNodeType, isLNode, lnode, LNodeAttributes } from "./lnode";
-import { isSignal } from "./reactivity";
+import { ELNodeType, isLNode, lnode, LNodeAttributes, LNode } from "./lnode";
+import { isSignal, MaybeSignal } from "./reactivity";
 
 const remapChild = (child: any) => {
   if (typeof child === "string" || typeof child === "number")
@@ -37,3 +37,22 @@ export function ljsx(
 
   return next;
 }
+
+declare global {
+  export function ljsx(
+    tag: string | Component,
+    attribs_: LNodeAttributes,
+    ...childs: any[]
+  ): MaybeSignal<LNode>;
+
+
+  // Just to get rid of some typescript warnings
+  export function React(
+    tag: string | Component,
+    attribs_: LNodeAttributes,
+    ...childs: any[]
+  ): MaybeSignal<LNode>
+}
+
+globalThis.React = ljsx;
+globalThis.ljsx = ljsx;

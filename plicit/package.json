@@ -15,13 +15,13 @@
     "workbox-webpack-plugin": "^7.1.0"
   },
   "version": "1.0.0",
-  "description": "My webpack project",
+  "description": "Reactive UI framework",
   "name": "plicit",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.dev.json",
     "build:watch": "tsc -p tsconfig.json --watch",
     "build:dev": "webpack --mode=development",
     "build:prod": "webpack --mode=production --node-env=production",

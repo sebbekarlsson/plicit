@@ -1,7 +1,6 @@
 import { Component } from "../../component";
 import { CSSProperties } from "../../css";
 import { useInterpolation } from "../../hooks";
-import { ljsx } from "../../jsx";
 import { computedSignal } from "../../reactivity";
 import { onUnmounted } from "../../scope";
 

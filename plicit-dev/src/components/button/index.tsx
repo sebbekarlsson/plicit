@@ -1,4 +1,4 @@
-import { ljsx, LNodeAttributes } from "plicit";
+import { LNodeAttributes } from "plicit";
 
 export const Button = (attributes: LNodeAttributes) => (
   <button

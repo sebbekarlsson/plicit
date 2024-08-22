@@ -174,9 +174,7 @@ Make sure your `tsconfig.json` has the following:
 
 Then create an `index.tsx` with the following content:
 ```tsx
-import { ljsx, Component, setup } from "plicit";
-
-globalThis.ljsx = ljsx;
+import { Component, setup } from "plicit";
 
 const App: Component = () => {
   return (

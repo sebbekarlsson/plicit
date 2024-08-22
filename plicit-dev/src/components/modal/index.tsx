@@ -3,7 +3,6 @@ import { IModal } from "./types";
 import {
   computedSignal,
   lerp,
-  ljsx,
   LNodeAttributes,
   Signal,
   smoothstep,

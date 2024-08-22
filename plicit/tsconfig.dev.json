@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig",
+  "compilerOptions": {
+    "target": "esnext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "jsx": "react",
+    "jsxFactory": "ljsx"
+  },
+    "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "references": []
+
+}

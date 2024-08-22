@@ -1,5 +1,5 @@
 import "./assets/css/index.css";
-import { Component, computedSignal, ljsx, setup, signal } from "plicit";
+import { Component, computedSignal, setup, signal } from "plicit";
 import "./router";
 import { NavBar } from "./components/navbar";
 import { ModalContainer } from "./components/modal/container";
@@ -10,7 +10,6 @@ import { MainRouter } from "./components/router/components/main-router";
 import { Button } from "./components/button";
 import { SIDE_MENU } from "./router";
 
-globalThis.ljsx = ljsx;
 
 
 

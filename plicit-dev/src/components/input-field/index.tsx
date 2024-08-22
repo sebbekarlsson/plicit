@@ -1,4 +1,4 @@
-import { Component, LNodeAttributes, MaybeSignal, isSignal, ljsx } from "plicit";
+import { Component, LNodeAttributes, MaybeSignal, isSignal } from "plicit";
 
 type InputFieldProps = LNodeAttributes & {
   value: MaybeSignal<string | number | null | undefined>;

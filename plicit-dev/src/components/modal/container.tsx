@@ -8,7 +8,6 @@ import {
   watchSignal,
 } from "../../../../plicit/src";
 import { useModals } from "./hook";
-import { ljsx } from "plicit";
 
 export const ModalContainer = () => {
   const modals = useModals();
