@@ -17,9 +17,7 @@ type ToastProps = {
 export const Toast: Component<ToastProps> = (props) => {
   const toast = computedSignal(() => pget(props.toast));
 
-  const interp = computedSignal(
-    () => toast.get().animation.value.get(),
-  );
+  const interp = computedSignal(() => toast.get().animation.value.get());
   const opacity = computedSignal(() => clamp(interp.get(), 0, 1));
 
   const offsetBottom = computedSignal(() => {
@@ -37,18 +35,18 @@ export const Toast: Component<ToastProps> = (props) => {
       class="max-w-xs bg-primary-200 text-sm text-gray-800 rounded-xl shadow-lg"
       role="alert"
       tabindex="-1"
-      style={computedSignal(():CSSProperties  => (
-        {
-        position: "fixed",
-        bottom: `${offsetBottom.get()}px`,
-        left: '0px',
-        right: '0px',
-        marginLeft: "auto",
-        marginRight: "auto",
-        opacity: `${opacity.get() * 100}%`,
-        pointerEvents: "all",
-      }
-      ))}
+      style={computedSignal(
+        (): CSSProperties => ({
+          position: "fixed",
+          bottom: `${offsetBottom.get()}px`,
+          left: "0px",
+          right: "0px",
+          marginLeft: "auto",
+          marginRight: "auto",
+          opacity: `${opacity.get() * 100}%`,
+          pointerEvents: "all",
+        }),
+      )}
     >
       <div class="flex p-4 items-center">
         <div>{toast.get().message}</div>

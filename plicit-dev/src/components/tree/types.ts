@@ -8,8 +8,8 @@ export type ITree<T = any> = {
   children: MaybeSignal<ITree<T>>[];
   render?: Component<{ node: MaybeSignal<ITree<T>> }>;
   selected?: boolean;
-}
+};
 export type ITreeProps = {
   root: MaybeSignal<ITree<any>>;
   hook?: UseTree<any>;
-}
+};

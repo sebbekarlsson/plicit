@@ -14,7 +14,10 @@ export type AsyncSignalOptions<T = any> = SignalOptions & {
     fallback?: T;
 };
 export type SignalFunc<T = any> = () => T;
+export type SignalFuncInit<T = any> = (signal: Signal<T>) => T;
 export type SignalFuncAsync<T = any> = () => Promise<T>;
+export type SignalFuncInitAsync<T = any> = (signal: AsyncSignal<T>) => Promise<T>;
+export type SignalSetter<T = any> = ((old: T) => T) | T;
 export type Trackable = {
     trigger: () => any;
     tracked: Trackable[];
@@ -27,7 +30,8 @@ export type Signal<T = any> = Trackable & {
     state: ESignalState;
     fun?: SignalFunc<T>;
     _value?: T;
-    set: (fun: ((old: T) => T) | T) => void;
+    _link?: Signal<T>;
+    set: (fun: SignalSetter<T>) => void;
     get: () => T;
     peek: () => T;
     trigger: () => void;

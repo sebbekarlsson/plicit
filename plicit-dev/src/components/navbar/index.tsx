@@ -17,30 +17,28 @@ export const NavBar = () => {
       sections: [
         {
           items: [
-            { label: 'Item 1' },
-            { label: 'Item 2' },
-            { label: 'Item 3' },
-            { label: 'Item 4' }
-          ]
-        }
-      ]
-    }
+            { label: "Item 1" },
+            { label: "Item 2" },
+            { label: "Item 3" },
+            { label: "Item 4" },
+          ],
+        },
+      ],
+    },
   });
 
-
   return (
-    <div class="w-full h-[4rem] px-4 bg-primary-950 text-white flex-none flex flex-row select-none" style={{
-      justifyContent: 'space-between',
-    }}>
+    <div
+      class="w-full h-[4rem] px-4 bg-primary-950 text-white flex-none flex flex-row select-none"
+      style={{
+        justifyContent: "space-between",
+      }}
+    >
       <div class="justify-start flex items-center gap-[1rem] h-full">
         <div class="text-primary-200 font-semibold text-lg">Demo App</div>
       </div>
       <div class="justify-end flex items-center gap-[1rem] h-full">
-        <Button
-          ref={elRef}
-        >
-          Dropdown
-        </Button>
+        <Button ref={elRef}>Dropdown</Button>
         <Button
           on={{
             click: () => {
@@ -66,7 +64,7 @@ export const NavBar = () => {
           Toast
         </Button>
       </div>
-      {() => <ContextMenu hook={ctxMenu}/>}
+      {() => <ContextMenu hook={ctxMenu} />}
     </div>
   );
 };

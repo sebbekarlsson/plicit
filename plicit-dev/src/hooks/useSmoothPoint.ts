@@ -1,11 +1,20 @@
-import { onUnmounted, signal, Signal, useAnimationLoop, watchSignal } from "plicit";
+import {
+  onUnmounted,
+  signal,
+  Signal,
+  useAnimationLoop,
+  watchSignal,
+} from "plicit";
 import { clamp, Vector } from "tsmathutil";
 
 export type UseSmoothPointOptions = {
   speed?: number;
-}
+};
 
-export const useSmoothPoint = (targetPoint: Signal<Vector>, options: UseSmoothPointOptions = {}) => {
+export const useSmoothPoint = (
+  targetPoint: Signal<Vector>,
+  options: UseSmoothPointOptions = {},
+) => {
   const initial = targetPoint.get();
   const previous = signal<Vector>(initial);
   const output = signal<Vector>(initial);
@@ -28,7 +37,5 @@ export const useSmoothPoint = (targetPoint: Signal<Vector>, options: UseSmoothPo
     animation.kill();
   });
 
-
   return { animation, point: output };
-  
-}
+};

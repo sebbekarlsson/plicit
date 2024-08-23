@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onUnmounted = exports.onBeforeUnmount = exports.onMounted = exports.trackCurrentScope = exports.withCurrentScope = exports.popScope = exports.pushScope = exports.GScope = exports.createComponentScope = void 0;
 const createComponentScope = () => {
-    return ({
+    return {
         onMounted: [],
         onUnmounted: [],
         onBeforeUnmount: [],
@@ -11,7 +11,7 @@ const createComponentScope = () => {
         stack: [],
         stackIndex: 0,
         current: null,
-    });
+    };
 };
 exports.createComponentScope = createComponentScope;
 // @ts-ignore
@@ -40,8 +40,7 @@ const withCurrentScope = (fun) => {
     fun(scope);
 };
 exports.withCurrentScope = withCurrentScope;
-const trackCurrentScope = () => {
-};
+const trackCurrentScope = () => { };
 exports.trackCurrentScope = trackCurrentScope;
 const onMounted = (fun) => {
     (0, exports.withCurrentScope)((scope) => {

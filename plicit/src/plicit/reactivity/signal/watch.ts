@@ -1,5 +1,5 @@
 import { isSignal } from "./signal";
-import { AsyncSignal, type Signal } from './types';
+import { AsyncSignal, type Signal } from "./types";
 
 export type WatchSignalOptions = {
   immediate?: boolean;
@@ -34,7 +34,6 @@ export const watchSignal = <T = any>(
     unsubscribeFuns.forEach((unsub) => unsub());
   };
 };
-
 
 export const watchAsyncSignal = <T = any>(
   sig: AsyncSignal<T>,

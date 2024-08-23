@@ -154,17 +154,18 @@ const sleep = (time) => {
 };
 exports.sleep = sleep;
 const smartJoin = (arr, delim) => {
-    let result = '';
+    let result = "";
     const join = (a, b, delim) => {
         if (a.endsWith(delim) && b.startsWith(delim))
             return a + b.slice(1);
-        if ((a.endsWith(delim) && !b.startsWith(delim)) || (!a.endsWith(delim) && b.startsWith(delim)))
+        if ((a.endsWith(delim) && !b.startsWith(delim)) ||
+            (!a.endsWith(delim) && b.startsWith(delim)))
             return a + b;
         return `${a}${delim}${b}`;
     };
     for (let i = 0; i < arr.length; i += 2) {
         const a = arr[i];
-        const b = arr[i + 1] || '';
+        const b = arr[i + 1] || "";
         result += join(a, b, delim);
     }
     return result;

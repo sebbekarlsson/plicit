@@ -3,20 +3,22 @@
 @tailwind utilities;
 
 @font-face {
-    font-family: Open-Sans;
-    src: url("../font/OpenSans-VariableFont_wdth,wght.ttf");
+  font-family: Open-Sans;
+  src: url("../font/OpenSans-VariableFont_wdth,wght.ttf");
 }
 
 * {
-    font-family: Open-Sans;
-    box-sizing: border-box;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-text-stroke: 0.09px;
+  font-family: Open-Sans;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-stroke: 0.09px;
 }
 
-html, body, #app {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
+html,
+body,
+#app {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }

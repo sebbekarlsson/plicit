@@ -1,6 +1,9 @@
 import { MaybeSignal, Signal } from "./reactivity";
 
-export type Dict<T = any> = { [key: string]: T };
+export type Dict<
+  T = any,
+  K extends string | symbol | number = string | symbol | number,
+> = Record<K, T>;
 
 export type Indexable<T = any> = Dict<T> | Array<T>;
 
@@ -117,7 +120,10 @@ export const isSVGPolylineElement = (x: any): x is SVGPolylineElement => {
 export const isAnySVGElement = (x: any): boolean => {
   if (typeof x !== "object") return false;
   return (
-    isHTMLElement(x) && SVG_NAMES.map(it => it.toLowerCase()).includes((x.tagName || "").toLowerCase())
+    isHTMLElement(x) &&
+    SVG_NAMES.map((it) => it.toLowerCase()).includes(
+      (x.tagName || "").toLowerCase(),
+    )
   );
 };
 
@@ -126,6 +132,5 @@ export const isComment = (x: any): x is Comment => {
   if (typeof x !== "object") return false;
   return typeof x.appendData === "function";
 };
-
 
 export type ElementClass = string | string[] | Array<string | Signal<string>>;

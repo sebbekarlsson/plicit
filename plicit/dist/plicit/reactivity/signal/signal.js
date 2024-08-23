@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.signal = exports.isSignal = void 0;
 const is_1 = require("../../is");
 const utils_1 = require("../../utils");
+const asyncSignal_1 = require("./asyncSignal");
 const constants_1 = require("./constants");
 const effect_1 = require("./effect");
 const scope_1 = require("./scope");
@@ -15,14 +16,29 @@ const isSignal = (x) => {
     return x.sym === "Signal";
 };
 exports.isSignal = isSignal;
+const findAsyncSignal = (track) => {
+    if ((0, asyncSignal_1.isAsyncSignal)(track))
+        return track;
+    for (const b of track.tracked) {
+        const sig = findAsyncSignal(b);
+        if (sig)
+            return sig;
+    }
+    return null;
+};
 const signal = (initial, options = {}) => {
     const init = (0, is_1.isFunction)(initial) ? initial : () => initial;
     const triggerFun = () => {
         if (options.isComputed) {
-            sig._value = init();
+            const oldValue = sig._value;
+            sig._value = init(sig);
+            if (sig._value === oldValue) {
+                scope_1.GSignal.current = undefined;
+                return;
+            }
         }
         else {
-            init();
+            init(sig);
         }
         scope_1.GSignal.current = undefined;
         sig.watchers.forEach((watcher) => {
@@ -33,6 +49,13 @@ const signal = (initial, options = {}) => {
         }
         sig.trackedEffects.forEach((fx) => {
             fx();
+        });
+        sig.tracked.forEach(async (it) => {
+            if ((0, asyncSignal_1.isAsyncSignal)(it) &&
+                it.state !== constants_1.ESignalState.LOADING &&
+                it.state !== constants_1.ESignalState.UNINITIALIZED) {
+                await it.trigger();
+            }
         });
     };
     const track = () => {
@@ -59,16 +82,16 @@ const signal = (initial, options = {}) => {
         isEffect: options.isEffect,
         sym: "Signal",
         _value: (0, is_1.isFunction)(initial) ? null : initial,
-        fun: init,
+        fun: () => init(sig),
         state: constants_1.ESignalState.UNINITIALIZED,
         trigger,
-        peek: () => sig._value || init(),
+        peek: () => sig._value || init(sig),
         tracked: [],
         trackedEffects: [],
         watchers: [],
         get: () => {
             if (sig.state === constants_1.ESignalState.UNINITIALIZED || sig._value === null) {
-                sig._value = init();
+                sig._value = init(sig);
                 sig.state = constants_1.ESignalState.INITIALIZED;
             }
             track();

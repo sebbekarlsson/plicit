@@ -20,7 +20,7 @@ const asyncSignal = (initial, options = {}) => {
     const callInit = async () => {
         sig.state = constants_1.ESignalState.LOADING;
         try {
-            const ret = await init();
+            const ret = await init(sig);
             sig.state = constants_1.ESignalState.RESOLVED;
             return ret;
         }

@@ -9,5 +9,5 @@ export enum ENodeEvent {
   CLEANUP = "CLEANUP",
   REPLACED = "REPLACED",
   UPDATED = "UPDATED",
-  LOADED = "LOADED"
+  LOADED = "LOADED",
 }

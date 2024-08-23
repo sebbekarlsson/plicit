@@ -1,4 +1,11 @@
-import { computedSignal, isSignal, MaybeSignal, pget, signal, Signal } from "plicit";
+import {
+  computedSignal,
+  isSignal,
+  MaybeSignal,
+  pget,
+  signal,
+  Signal,
+} from "plicit";
 import { ITree } from "../types";
 
 export type UseTreeProps<T = any> = {
@@ -30,13 +37,13 @@ export const useTree = <T = any>(props: UseTreeProps<T>): UseTree => {
 
     nodes.get().forEach((node) => {
       if (isSignal(node)) {
-        node.set(x => ({...x, selected: false}));
+        node.set((x) => ({ ...x, selected: false }));
       }
     });
 
     const node = nodes.get().find((it) => pget(it).id === id);
     if (node && isSignal(node)) {
-      node.set((n) => ({...n, selected: true}))
+      node.set((n) => ({ ...n, selected: true }));
     }
   };
 

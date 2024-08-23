@@ -18,7 +18,7 @@ import {
 } from "./types";
 import { ENodeEvent } from "./nodeEvents";
 import {
-    AsyncSignal,
+  AsyncSignal,
   isSignal,
   MaybeAsyncSignal,
   MaybeSignal,
@@ -32,7 +32,10 @@ import { ReactiveDep } from "./reactivity";
 import { DEFAULT_WATCHED_NODE_PROPS } from "./constants";
 import { isAsyncSignal } from "./reactivity/signal/asyncSignal";
 
-export type LNodeChild = Component | MaybeSignal<LNode> | MaybeAsyncSignal<LNode>;
+export type LNodeChild =
+  | Component
+  | MaybeSignal<LNode>
+  | MaybeAsyncSignal<LNode>;
 
 export type LNodeRef = Signal<LNode | undefined>; //Ref<LNode | undefined>;
 
@@ -45,7 +48,7 @@ export enum ELNodeType {
   SLOT = "SLOT",
   COMPONENT = "COMPONENT",
   SIGNAL = "SIGNAL",
-  ASYNC_SIGNAL = "ASYNC_SIGNAL"
+  ASYNC_SIGNAL = "ASYNC_SIGNAL",
 }
 
 type WithSignals<T> = {
@@ -439,7 +442,10 @@ export class LNode {
           );
           return sig.get().getElementOrRender();
         }
-      } else if (this.type === ELNodeType.ASYNC_SIGNAL && this.attributes.asyncSignal) {
+      } else if (
+        this.type === ELNodeType.ASYNC_SIGNAL &&
+        this.attributes.asyncSignal
+      ) {
         const sig = this.attributes.asyncSignal;
         if (isAsyncSignal<LNode>(sig)) {
           this.addGC(
@@ -629,17 +635,22 @@ export class LNode {
       }
     }
 
-    const watchedAttributes = [...(pget(this.attributes.watch) || []), ...DEFAULT_WATCHED_NODE_PROPS];
+    const watchedAttributes = [
+      ...(pget(this.attributes.watch) || []),
+      ...DEFAULT_WATCHED_NODE_PROPS,
+    ];
     for (const key of watchedAttributes) {
       const attrib = this.attributes[key];
       if (isSignal(attrib)) {
-        this.addGC(watchSignal(
-          attrib,
-          (value) => {
-            this.setAttribute(key, value);
-          },
-          { immediate: true },
-        ));
+        this.addGC(
+          watchSignal(
+            attrib,
+            (value) => {
+              this.setAttribute(key, value);
+            },
+            { immediate: true },
+          ),
+        );
       }
     }
 

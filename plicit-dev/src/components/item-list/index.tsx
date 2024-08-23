@@ -4,23 +4,22 @@ import { useToasts } from "../toast/hook";
 import { computedSignal, signal } from "plicit";
 
 export const ItemList = () => {
-
   const toasts = useToasts();
-  
-  const items = signal<{ label: string, id: number }[]>([]);
+
+  const items = signal<{ label: string; id: number }[]>([]);
   const nextItem = signal<string>("");
   let idCounter: number = 0;
 
   const addItem = (label: string) => {
-    items.set((items) => [...items, { label, id: idCounter++ } ]);
+    items.set((items) => [...items, { label, id: idCounter++ }]);
 
-    toasts.push({ message: `You added ${label}!` })
-  }
+    toasts.push({ message: `You added ${label}!` });
+  };
 
   const removeItem = (id: number) => {
-    items.set(items => items.filter(it => it.id !== id));
-    toasts.push({ message: `You deleted an item!` })
-  }
+    items.set((items) => items.filter((it) => it.id !== id));
+    toasts.push({ message: `You deleted an item!` });
+  };
 
   return (
     <div class="space-y-2">
@@ -28,7 +27,7 @@ export const ItemList = () => {
         {() => (
           <InputField
             onChange={(next) => {
-              nextItem.set(next + '');
+              nextItem.set(next + "");
             }}
             type="text"
             placeholder="Name your item..."
@@ -41,7 +40,7 @@ export const ItemList = () => {
               const next = nextItem.get();
               if (next.length <= 0) return;
               addItem(next);
-              nextItem.set('');
+              nextItem.set("");
             },
           }}
         >
@@ -52,11 +51,14 @@ export const ItemList = () => {
         <div deps={[items]} class="h-[300px] overflow-auto">
           {items.get().map((it) => {
             return (
-              <div class="w-full h-[2rem] flex items-center text-gray-700 hover:bg-blue-100 cursor-pointer" on={{
-                click: () => {
-                  removeItem(it.id);
-                }
-              }}>
+              <div
+                class="w-full h-[2rem] flex items-center text-gray-700 hover:bg-blue-100 cursor-pointer"
+                on={{
+                  click: () => {
+                    removeItem(it.id);
+                  },
+                }}
+              >
                 {it.label}
               </div>
             );

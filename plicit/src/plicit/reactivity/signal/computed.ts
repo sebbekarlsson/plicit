@@ -1,7 +1,11 @@
 import { GSignal } from "./scope";
-import { signal  } from "./signal";
-import { SignalFunc, SignalFuncAsync, SignalOptions, type Signal } from './types';
-
+import { signal } from "./signal";
+import {
+  SignalFunc,
+  SignalFuncAsync,
+  SignalOptions,
+  type Signal,
+} from "./types";
 
 export const computedSignal = <T = any>(
   init: SignalFunc<T>,

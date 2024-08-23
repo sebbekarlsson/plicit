@@ -5,11 +5,10 @@ import { onUnmounted } from "../scope";
 
 export const useResizeObserver = (
   target: LNodeRef,
-  callback?: ResizeObserverCallback
+  callback?: ResizeObserverCallback,
 ) => {
-
   let lastEl: HTMLElement | null = null;
-  
+
   let obs: ResizeObserver | null = new ResizeObserver((entries, observer) => {
     if (callback) {
       callback(entries, observer);
@@ -35,16 +34,16 @@ export const useResizeObserver = (
       obs.disconnect();
       obs = null;
     }
-  }
+  };
 
   const stop = () => {
     cleanup();
     stopWatch();
-  }
+  };
 
   onUnmounted(() => {
     stop();
   });
 
-  return { stop }; 
-}
+  return { stop };
+};

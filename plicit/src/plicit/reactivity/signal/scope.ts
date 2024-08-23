@@ -1,4 +1,4 @@
-import { type Signal, type AsyncSignal } from './types';
+import { type Signal, type AsyncSignal } from "./types";
 
 export type GlobalSignalState = {
   current: Signal | AsyncSignal | undefined;
@@ -17,10 +17,22 @@ export const GSignal: GlobalSignalState = oldG || {
 // @ts-ignore
 window.GSignal = GSignal;
 
-
-
-export const withSignal = (sig: Signal | AsyncSignal, fun: () => any) => {
+export const withSignal = <T = any>(
+  sig: Signal | AsyncSignal,
+  fun: () => T,
+): T => {
   GSignal.current = sig;
-  fun();
+  const ret = fun();
   GSignal.current = undefined;
-}
+  return ret;
+};
+
+export const withAsyncSignal = async <T = any>(
+  sig: AsyncSignal,
+  fun: () => T,
+): Promise<T> => {
+  GSignal.current = sig;
+  const ret = await fun();
+  GSignal.current = undefined;
+  return ret;
+};

@@ -9,7 +9,7 @@ const PendingSignal = () => {
         duration: 1.0,
         infinite: true,
         initial: 0,
-        immediate: true
+        immediate: true,
     });
     (0, scope_1.onUnmounted)(() => {
         interp.stop();
@@ -18,7 +18,7 @@ const PendingSignal = () => {
         const rot = (interp.value.get() % (Math.PI * 2)) * 360;
         return {
             transform: `rotate(${rot}deg)`,
-            transformOrigin: 'center'
+            transformOrigin: "center",
         };
     });
     return (ljsx("svg", { width: "24", height: "24", viewBox: "0 0 24 24", xmlns: "http://www.w3.org/2000/svg" },

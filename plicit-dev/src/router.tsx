@@ -18,7 +18,9 @@ export const router = createRouter({
       path: "/",
       name: "index",
       component: (_props) => {
-        return (props) => <div class="w-full h-full">{props.children || _props?.children}</div>;
+        return (props) => (
+          <div class="w-full h-full">{props.children || _props?.children}</div>
+        );
       },
       children: [
         {
@@ -53,9 +55,9 @@ export const router = createRouter({
           <div class="w-full h-full p-4">
             {() =>
               computedSignal(() => (
-                  <h1 class="text-lg font-semibold h-[3rem]">
-                    {route.match?.get()?.route?.name || "EE"}
-                  </h1>
+                <h1 class="text-lg font-semibold h-[3rem]">
+                  {route.match?.get()?.route?.name || "EE"}
+                </h1>
               ))
             }
             {props?.children}
@@ -115,27 +117,29 @@ export const router = createRouter({
       ],
     },
     {
-      path: '/examples',
-      name: 'Examples',
+      path: "/examples",
+      name: "Examples",
       component: (_props) => {
-        return (props) => <div class="w-full h-full">{props.children || _props?.children}</div>;
+        return (props) => (
+          <div class="w-full h-full">{props.children || _props?.children}</div>
+        );
       },
       children: [
         {
-          path: 'drag-drop',
-          name: 'Drag & Drop',
+          path: "drag-drop",
+          name: "Drag & Drop",
           icon: COMPONENT_ICON,
-          component:  async () =>
-            (await import("./routes/examples/drag-drop")).default 
+          component: async () =>
+            (await import("./routes/examples/drag-drop")).default,
         },
         {
-          path: 'async-component',
-          name: 'Async',
+          path: "async-component",
+          name: "Async",
           icon: COMPONENT_ICON,
-          component:  async () =>
-            (await import("./routes/examples/async-component")).default 
-        }
-      ]
+          component: async () =>
+            (await import("./routes/examples/async-component")).default,
+        },
+      ],
     },
   ],
 });

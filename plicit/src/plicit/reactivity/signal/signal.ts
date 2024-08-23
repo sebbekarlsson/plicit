@@ -1,9 +1,16 @@
 import { isFunction } from "../../is";
 import { debounce, throttle } from "../../utils";
+import { isAsyncSignal } from "./asyncSignal";
 import { ESignalState } from "./constants";
 import { callTrackableFunction } from "./effect";
 import { GSignal, withSignal } from "./scope";
-import { SignalFunc, SignalOptions, type Signal } from "./types";
+import {
+  AsyncSignal,
+  SignalFuncInit,
+  SignalOptions,
+  Trackable,
+  type Signal,
+} from "./types";
 import { canBeAutoDiffed } from "./utils";
 
 export const isSignal = <T = any>(x: any): x is Signal<T> => {
@@ -12,17 +19,32 @@ export const isSignal = <T = any>(x: any): x is Signal<T> => {
   return x.sym === "Signal";
 };
 
+const findAsyncSignal = (track: Trackable): AsyncSignal | null => {
+  if (isAsyncSignal(track)) return track;
+  for (const b of track.tracked) {
+    const sig = findAsyncSignal(b);
+    if (sig) return sig;
+  }
+
+  return null;
+};
+
 export const signal = <T = any>(
-  initial: SignalFunc<T> | T,
+  initial: SignalFuncInit<T> | T,
   options: SignalOptions = {},
 ): Signal<T> => {
   const init = isFunction(initial) ? initial : () => initial;
 
   const triggerFun = () => {
     if (options.isComputed) {
-      sig._value = init();
+      const oldValue = sig._value;
+      sig._value = init(sig);
+      if (sig._value === oldValue) {
+        GSignal.current = undefined;
+        return;
+      }
     } else {
-      init();
+      init(sig);
     }
 
     GSignal.current = undefined;
@@ -38,6 +60,16 @@ export const signal = <T = any>(
     sig.trackedEffects.forEach((fx) => {
       fx();
     });
+
+    sig.tracked.forEach(async (it) => {
+      if (
+        isAsyncSignal(it) &&
+        it.state !== ESignalState.LOADING &&
+        it.state !== ESignalState.UNINITIALIZED
+      ) {
+        await it.trigger();
+      }
+    });
   };
 
   const track = () => {
@@ -45,7 +77,6 @@ export const signal = <T = any>(
     if (current && current !== sig && !sig.tracked.includes(current)) {
       sig.tracked.push(current);
     }
-
     if (
       GSignal.currentEffect &&
       !sig.trackedEffects.includes(GSignal.currentEffect) &&
@@ -70,16 +101,16 @@ export const signal = <T = any>(
     isEffect: options.isEffect,
     sym: "Signal",
     _value: isFunction(initial) ? null : initial,
-    fun: init,
+    fun: () => init(sig),
     state: ESignalState.UNINITIALIZED,
     trigger,
-    peek: () => sig._value || init(),
+    peek: () => sig._value || init(sig),
     tracked: [],
     trackedEffects: [],
     watchers: [],
     get: () => {
       if (sig.state === ESignalState.UNINITIALIZED || sig._value === null) {
-        sig._value = init();
+        sig._value = init(sig);
         sig.state = ESignalState.INITIALIZED;
       }
       track();

@@ -63,7 +63,7 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
     return el;
   });
 
-  const triggerBounds = useElementBounds(props.triggerRef); 
+  const triggerBounds = useElementBounds(props.triggerRef);
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -78,8 +78,8 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
       });
     }
     menu.set((old) => {
-      return {...old, open};
-    })
+      return { ...old, open };
+    });
   };
 
   const toggleOpen = () => {
@@ -125,7 +125,7 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
       clearTimeout(leaveTriggerTimer);
       leaveTriggerTimer = null;
     }
-  }
+  };
 
   const onMouseEnterTrigger = () => {
     cancelTimers();
@@ -150,7 +150,6 @@ export const useContextMenu = (props: UseContextMenuProps): UseContextMenu => {
 
   const onMouseLeaveMenu = () => {
     mouseIsOnMenu.set(false);
-
 
     leaveMenuTimer = setTimeout(() => {
       if (mouseIsOnTrigger.get() || mouseIsOnMenu.get()) return;

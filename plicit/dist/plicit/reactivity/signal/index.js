@@ -15,7 +15,9 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./signal"), exports);
+__exportStar(require("./asyncSignal"), exports);
 __exportStar(require("./constants"), exports);
+__exportStar(require("./scope"), exports);
 __exportStar(require("./types"), exports);
 __exportStar(require("./event"), exports);
 __exportStar(require("./computed"), exports);

@@ -12,7 +12,7 @@ export type IRoute = {
     children?: IRoute[];
     icon?: IconPrimitive;
 };
-export type IRouteConfig = Omit<IRoute, 'children'> & {
+export type IRouteConfig = Omit<IRoute, "children"> & {
     children?: IRouteConfig[];
 };
 export type IRouter = {
@@ -22,6 +22,6 @@ export type IRouter = {
     routes: Signal<IRoute>[];
     history: RouterNavigationAction[];
 };
-export type IRouterConfig = Omit<Partial<IRouter>, 'routes'> & {
+export type IRouterConfig = Omit<Partial<IRouter>, "routes"> & {
     routes: IRouteConfig[];
 };

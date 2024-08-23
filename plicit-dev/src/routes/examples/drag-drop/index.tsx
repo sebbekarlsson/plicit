@@ -43,7 +43,13 @@ const useDragAndDrop = (props: UseDragAndDropProps) => {
   const mouse = useMousePosition();
   const states = props.items.map(
     (it): Signal<DragState> =>
-      signal({ dragging: false, position: VEC2(0, 0), clickPos: VEC2(0, 0), item: it, rect: null }),
+      signal({
+        dragging: false,
+        position: VEC2(0, 0),
+        clickPos: VEC2(0, 0),
+        item: it,
+        rect: null,
+      }),
   );
 
   watchSignal(mouse.pos, (p) => {
@@ -64,7 +70,7 @@ const useDragAndDrop = (props: UseDragAndDropProps) => {
       const onDragStart = (event: DragEvent) => {
         const rect = (event.target as HTMLElement).getBoundingClientRect();
         const p = mouse.pos.get().sub(VEC2(rect.x, rect.y));
-        states[i].set((s) => ({...s, dragging: true, clickPos: p, rect }));
+        states[i].set((s) => ({ ...s, dragging: true, clickPos: p, rect }));
         event.dataTransfer!.setData("text/plain", i + "");
         event.dataTransfer!.effectAllowed = "move";
         const img = new Image();
@@ -94,7 +100,7 @@ const useDragAndDrop = (props: UseDragAndDropProps) => {
         if (!node) return;
         const dragstate = states[index];
         if (!dragstate) return;
-        dragstate.set((s) => ({...s, dragging: false }))
+        dragstate.set((s) => ({ ...s, dragging: false }));
 
         dropTo(node.get(), area);
       };
@@ -139,30 +145,34 @@ export default () => {
       </Grid>
       <div>
         {dd.states.map((it, i) => {
-        return (
-          <Thing
-            style={computedSignal(() => {
-              const s = it.get();
-              const rect = s.rect;
-              return {
-                ...(rect ? {
-                  width: rect.width + 'px',
-                  height: rect.height + 'px'
-                } : {}),
-                position: "fixed",
-                left: s.position.x + "px",
-                top: s.position.y + "px",
-                pointerEvents: "none",
-                ...(s.dragging
-                  ? {}
-                  : {
-                       display: 'none'
-                    }),
-              };
-            })}
-          >{i}</Thing>
-        );
-      })}
+          return (
+            <Thing
+              style={computedSignal(() => {
+                const s = it.get();
+                const rect = s.rect;
+                return {
+                  ...(rect
+                    ? {
+                        width: rect.width + "px",
+                        height: rect.height + "px",
+                      }
+                    : {}),
+                  position: "fixed",
+                  left: s.position.x + "px",
+                  top: s.position.y + "px",
+                  pointerEvents: "none",
+                  ...(s.dragging
+                    ? {}
+                    : {
+                        display: "none",
+                      }),
+                };
+              })}
+            >
+              {i}
+            </Thing>
+          );
+        })}
       </div>
     </div>
   );

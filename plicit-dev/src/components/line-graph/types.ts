@@ -4,8 +4,7 @@ export type GraphPointData = {
   index: number;
   value: number;
   interpolatedValue: number;
-}
-
+};
 
 export type LineGraphAxis = {
   tickCount?: number;

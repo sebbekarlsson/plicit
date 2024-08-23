@@ -86,7 +86,7 @@ const TableDemo: Component = () => {
         <InputField
           value=""
           type="text"
-          onChange={(val) => query.set(val + '')}
+          onChange={(val) => query.set(val + "")}
           placeholder="Search..."
         />
       </div>
@@ -123,11 +123,9 @@ const MyDonut: Component<{ seed: MaybeSignal<number> }> = (props) => {
     });
   });
 
-  return (
-        computedSignal(() => (
-          <DonutChart data={slices.get()} size={199} padding={0.3} />
-        ))
-  );
+  return computedSignal(() => (
+    <DonutChart data={slices.get()} size={199} padding={0.3} />
+  ));
 };
 
 export const HomeRoute: Component = () => {
@@ -142,7 +140,7 @@ export const HomeRoute: Component = () => {
             gridTemplateColumns: "repeat(auto-fill, minmax(33%, auto))",
             gap: "1rem",
           }}
-        > 
+        >
           <Card title="Donut" subtitle="Donut Chart">
             {() => {
               const seed1 = signal<number>(5013.5823);

@@ -1,5 +1,5 @@
 import { IconPrimitive } from "../icon/types";
-import { Vector } from 'tsmathutil';
+import { Vector } from "tsmathutil";
 import { UseContextMenu } from "./hooks/useContextMenu";
 export type IContextMenuItem = {
     label: string;
@@ -15,7 +15,7 @@ export type IContextMenu = {
     open: boolean;
     sections: IContextMenuSection[];
 };
-export type IContextMenuConfig = Omit<IContextMenu, 'pos' | 'open'>;
+export type IContextMenuConfig = Omit<IContextMenu, "pos" | "open">;
 export type IContextMenuProps = {
     hook: UseContextMenu;
 };

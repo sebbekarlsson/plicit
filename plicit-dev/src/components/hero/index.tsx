@@ -15,7 +15,9 @@ export const Hero: Component<{ title: string; subtitle?: string }> = (
           {props.title}
         </div>
         {props.subtitle && (
-          <div class="text-primary-900 font-semibold text-center text-lg">{props.subtitle}</div>
+          <div class="text-primary-900 font-semibold text-center text-lg">
+            {props.subtitle}
+          </div>
         )}
       </div>
     </div>

@@ -22,7 +22,7 @@
   "typings": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.dev.json",
-    "build:watch": "tsc -p tsconfig.json --watch",
+    "build:watch": "tsc -p tsconfig.dev.json --watch",
     "build:dev": "webpack --mode=development",
     "build:prod": "webpack --mode=production --node-env=production",
     "watch": "webpack --watch",

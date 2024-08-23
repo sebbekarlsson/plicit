@@ -1,4 +1,11 @@
-import { computedSignal, signal, Signal, stringGenerator, useInterpolation, UseInterpolation } from "plicit";
+import {
+  computedSignal,
+  signal,
+  Signal,
+  stringGenerator,
+  useInterpolation,
+  UseInterpolation,
+} from "plicit";
 import { ToastObject } from "./types";
 
 type Timer = ReturnType<typeof setTimeout>;

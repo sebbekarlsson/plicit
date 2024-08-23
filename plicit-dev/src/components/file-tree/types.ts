@@ -1,7 +1,7 @@
 export enum EFileType {
   TEXT = "TEXT",
   IMAGE = "IMAGE",
-  PDF = "PDF"
+  PDF = "PDF",
 }
 
 export type FSNode = {
@@ -9,4 +9,4 @@ export type FSNode = {
   isDir: boolean;
   children?: FSNode[];
   type?: EFileType;
-}
+};

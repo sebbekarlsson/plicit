@@ -8,7 +8,7 @@ export type ITooltipConfig = {
     targetPosition?: Signal<Vector>;
     centerX?: boolean;
     centerY?: boolean;
-    placement?: 'left' | 'right' | 'top' | 'bottom' | 'center';
+    placement?: "left" | "right" | "top" | "bottom" | "center";
     spacing?: number;
 };
 export type ITooltipProps = {

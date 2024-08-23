@@ -1,6 +1,4 @@
-import {
-  Component,
-} from "./component";
+import { Component } from "./component";
 import { LNode } from "./lnode";
 
 export type ComponentHook = (node?: LNode) => any;
@@ -21,7 +19,7 @@ export type ComponentScope = {
 };
 
 export const createComponentScope = (): ComponentScope => {
-  return ({
+  return {
     onMounted: [],
     onUnmounted: [],
     onBeforeUnmount: [],
@@ -30,7 +28,7 @@ export const createComponentScope = (): ComponentScope => {
     stack: [],
     stackIndex: 0,
     current: null,
-  });
+  };
 };
 
 // @ts-ignore
@@ -60,9 +58,7 @@ export const withCurrentScope = (fun: (scope: ComponentScope) => any) => {
   fun(scope);
 };
 
-export const trackCurrentScope = (
-) => {
-};
+export const trackCurrentScope = () => {};
 
 export const onMounted = (fun: ComponentHook) => {
   withCurrentScope((scope) => {

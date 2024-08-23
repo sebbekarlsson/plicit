@@ -6,5 +6,5 @@ export enum ESignalState {
   DISPOSED = "DISPOSED",
   LOADING = "LOADING",
   RESOLVED = "RESOLVED",
-  ERROR = "ERROR"
+  ERROR = "ERROR",
 }

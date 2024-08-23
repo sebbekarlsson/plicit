@@ -4,7 +4,6 @@ import { Button } from "../../../components/button";
 import { ContextMenu } from "../../../components/context-menu";
 
 export default () => {
-
   const elRef: LNodeRef = signal(undefined);
 
   const ctxMenu = useContextMenu({
@@ -13,18 +12,20 @@ export default () => {
       sections: [
         {
           items: [
-            { label: 'Item 1' },
-            { label: 'Item 2' },
-            { label: 'Item 3' },
-            { label: 'Item 4' }
-          ]
-        }
-      ]
-    }
+            { label: "Item 1" },
+            { label: "Item 2" },
+            { label: "Item 3" },
+            { label: "Item 4" },
+          ],
+        },
+      ],
+    },
   });
-  
-  return <div>
-    <Button ref={elRef}>With Menu</Button>
-    <ContextMenu hook={ctxMenu}/>
-  </div>
-}
+
+  return (
+    <div>
+      <Button ref={elRef}>With Menu</Button>
+      <ContextMenu hook={ctxMenu} />
+    </div>
+  );
+};

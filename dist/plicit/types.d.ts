@@ -1,7 +1,5 @@
 import { Signal } from "./reactivity";
-export type Dict<T = any> = {
-    [key: string]: T;
-};
+export type Dict<T = any, K extends string | symbol | number = (string | symbol | number)> = Record<K, T>;
 export type Indexable<T = any> = Dict<T> | Array<T>;
 export type NativeElement = Element | HTMLElement | SVGElement | Comment;
 export type WebElement = NativeElement | Text;

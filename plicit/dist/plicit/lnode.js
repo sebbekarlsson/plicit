@@ -280,7 +280,8 @@ class LNode {
                     return sig.get().getElementOrRender();
                 }
             }
-            else if (this.type === ELNodeType.ASYNC_SIGNAL && this.attributes.asyncSignal) {
+            else if (this.type === ELNodeType.ASYNC_SIGNAL &&
+                this.attributes.asyncSignal) {
                 const sig = this.attributes.asyncSignal;
                 if ((0, asyncSignal_1.isAsyncSignal)(sig)) {
                     this.addGC((0, reactivity_1.watchAsyncSignal)(sig, (next) => {
@@ -440,7 +441,10 @@ class LNode {
                 el.innerText = (0, reactivity_1.pget)(this.attributes.text) + "";
             }
         }
-        const watchedAttributes = [...((0, reactivity_1.pget)(this.attributes.watch) || []), ...constants_1.DEFAULT_WATCHED_NODE_PROPS];
+        const watchedAttributes = [
+            ...((0, reactivity_1.pget)(this.attributes.watch) || []),
+            ...constants_1.DEFAULT_WATCHED_NODE_PROPS,
+        ];
         for (const key of watchedAttributes) {
             const attrib = this.attributes[key];
             if ((0, reactivity_1.isSignal)(attrib)) {

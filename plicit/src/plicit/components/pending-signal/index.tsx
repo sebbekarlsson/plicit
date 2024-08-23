@@ -9,22 +9,21 @@ export const PendingSignal: Component = () => {
     duration: 1.0,
     infinite: true,
     initial: 0,
-    immediate: true
+    immediate: true,
   });
 
   onUnmounted(() => {
     interp.stop();
   });
 
-
-  const style = computedSignal(():CSSProperties => {
-    const rot = (interp.value.get() % (Math.PI*2)) * 360;
+  const style = computedSignal((): CSSProperties => {
+    const rot = (interp.value.get() % (Math.PI * 2)) * 360;
     return {
       transform: `rotate(${rot}deg)`,
-      transformOrigin: 'center'
-    }
-  })
-  
+      transformOrigin: "center",
+    };
+  });
+
   return (
     <svg
       width="24"

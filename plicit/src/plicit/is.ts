@@ -9,14 +9,14 @@ export const isVowel = (char: string): boolean => {
 
 export const isConsonant = (char: string): boolean => {
   return !isVowel(char);
-}
+};
 
-export const isFunction = (x: any): x is Function => typeof x === 'function';
+export const isFunction = (x: any): x is Function => typeof x === "function";
 
 export type AsyncFun<T = any> = () => Promise<T>;
 export const isAsyncFunction = <T = any>(x: any): x is AsyncFun<T> => {
   if (!x) return false;
-  if (typeof x !== 'function') return false;
-  if (typeof x.constructor !== 'function') return false;
-  return x.constructor.name == 'AsyncFunction';
-}
+  if (typeof x !== "function") return false;
+  if (typeof x.constructor !== "function") return false;
+  return x.constructor.name == "AsyncFunction";
+};

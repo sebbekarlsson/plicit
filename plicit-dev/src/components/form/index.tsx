@@ -1,4 +1,4 @@
-import { Component, pget } from "plicit";
+import { Component, computedSignal, MaybeSignal, pget, pgetDeep } from "plicit";
 import { IFormProps } from "./types";
 import {
   IFormField,
@@ -24,7 +24,19 @@ export const Form: Component<IFormProps> = (props) => {
     const groupedKeys = groups.map((g) => Object.keys(g)).flat();
 
     return (
-      <div class={[clazz, "space-y-4"]}>
+      <div
+        class={[clazz, "space-y-4 select-none"]}
+        style={computedSignal(() => {
+          const x = pget(fields.$hidden);
+          return {
+            ...(x
+              ? {
+                  display: "none",
+                }
+              : {}),
+          };
+        })}
+      >
         {label && <div class="text-gray-600 font-medium">{label}</div>}
         <div class={style ? "" : "space-y-4"} style={style}>
           {groups.map((g) => renderFields(g))}

@@ -308,19 +308,27 @@ export const DonutChart: Component<IDonutChartProps> = (props) => {
         <div>
           <div class="space-y-4">
             {shapes.get().map((shape) => {
-              return <Grid columns="max-content max-content" alignItems="center" gap="1rem">
-                <div>
-                  <div style={{
-                    background: shape.fill,
-                    width: '0.75rem',
-                    aspectRatio: '1 / 1',
-                    borderRadius: '100%'
-                  }}/>
-                </div>
-                <div class="text-sm font-medium text-gray-600">
-                  {shape.label}
-                </div>
-              </Grid>;
+              return (
+                <Grid
+                  columns="max-content max-content"
+                  alignItems="center"
+                  gap="1rem"
+                >
+                  <div>
+                    <div
+                      style={{
+                        background: shape.fill,
+                        width: "0.75rem",
+                        aspectRatio: "1 / 1",
+                        borderRadius: "100%",
+                      }}
+                    />
+                  </div>
+                  <div class="text-sm font-medium text-gray-600">
+                    {shape.label}
+                  </div>
+                </Grid>
+              );
             })}
           </div>
         </div>

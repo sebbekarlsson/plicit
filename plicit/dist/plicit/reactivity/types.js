@@ -6,7 +6,6 @@ const unwrapReactiveDep = (dep) => {
     if ((0, is_1.isFunction)(dep)) {
         return (0, exports.unwrapReactiveDep)(dep());
     }
-    ;
     return dep;
 };
 exports.unwrapReactiveDep = unwrapReactiveDep;

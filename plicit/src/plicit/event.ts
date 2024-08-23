@@ -4,9 +4,11 @@ export type PlicitEvent<T = any, K extends string = string, Target = any> = {
   target?: Target;
 };
 
-export type EventSubscriber<T = any, K extends string = string, Target = any> = (
-  event: PlicitEvent<T, K, Target>,
-) => any;
+export type EventSubscriber<
+  T = any,
+  K extends string = string,
+  Target = any,
+> = (event: PlicitEvent<T, K, Target>) => any;
 
 export class EventEmitter<T = any, K extends string = string, Target = any> {
   slots: Record<string, Array<EventSubscriber<T, K, Target>>> = {};

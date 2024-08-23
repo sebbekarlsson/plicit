@@ -24,7 +24,6 @@ export function ljsx(
     .flat()
     .filter((it) => isLNode(it) || isComponent(it) || isSignal(it));
 
-
   if (typeof tag === "string") {
     return lnode(tag, { ...attribs, __depth: depth + 1, children: children });
   }
@@ -45,13 +44,12 @@ declare global {
     ...childs: any[]
   ): MaybeSignal<LNode>;
 
-
   // Just to get rid of some typescript warnings
   export function React(
     tag: string | Component,
     attribs_: LNodeAttributes,
     ...childs: any[]
-  ): MaybeSignal<LNode>
+  ): MaybeSignal<LNode>;
 }
 
 globalThis.React = ljsx;

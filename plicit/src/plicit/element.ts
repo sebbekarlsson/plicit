@@ -14,7 +14,6 @@ export const setElementAttribute = (
     // @ts-ignore
   }
 
-
   if (!isAnySVGElement(el)) {
     try {
       (el as any)[key] = value;
@@ -47,17 +46,16 @@ export const getElementsDiff = (
   return getElementsAttributesDiff(a, b);
 };
 
-
 type PatchElementsOptions = {
   attributeCallback?: (pair: KeyPair) => void;
   onBeforeReplace?: (old: HTMLElement, next: HTMLElement) => void;
   onAfterReplace?: (old: HTMLElement, next: HTMLElement) => void;
-}
+};
 
 export const patchElements = (
   old: HTMLElement,
   nextEl: HTMLElement,
-  options: PatchElementsOptions = {}
+  options: PatchElementsOptions = {},
 ) => {
   if (old.innerHTML !== nextEl.innerHTML) {
     if (options.onBeforeReplace) {
@@ -81,8 +79,11 @@ export const patchElements = (
   }
 };
 
-
-export const setElementChild = (parent: LNodeNativeElement, child: LNodeNativeElement, index: number) => {
+export const setElementChild = (
+  parent: LNodeNativeElement,
+  child: LNodeNativeElement,
+  index: number,
+) => {
   if (index < 0) return;
   if (parent.contains(child)) return;
   if (parent.childNodes.length <= 0) {
@@ -92,12 +93,12 @@ export const setElementChild = (parent: LNodeNativeElement, child: LNodeNativeEl
 
   const childNodes = Array.from(parent.childNodes);
 
-  if (index < childNodes.length-1) {
-    const after = childNodes[index+1];
+  if (index < childNodes.length - 1) {
+    const after = childNodes[index + 1];
     parent.insertBefore(child, after);
     return;
   }
 
-  const before = childNodes[index-1];
-  parent.insertBefore(child, before); 
-}
+  const before = childNodes[index - 1];
+  parent.insertBefore(child, before);
+};

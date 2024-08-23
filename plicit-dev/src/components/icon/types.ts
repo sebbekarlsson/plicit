@@ -7,9 +7,8 @@ export type IconPrimitive = {
   fill?: string;
   stroke?: string;
   flipH?: MaybeSignal<boolean>;
-}
-
+};
 
 export type IIconProps = {
   icon: IconPrimitive;
-}
+};

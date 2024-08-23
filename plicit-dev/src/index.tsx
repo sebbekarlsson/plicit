@@ -10,10 +10,6 @@ import { MainRouter } from "./components/router/components/main-router";
 import { Button } from "./components/button";
 import { SIDE_MENU } from "./router";
 
-
-
-
-
 const App: Component = () => {
   const sideMenuHook = useSideMenu();
 
@@ -28,7 +24,7 @@ const App: Component = () => {
             maxHeight: "calc(100svh - 4rem)",
           }}
         >
-            <MainRouter />
+          <MainRouter />
         </div>
       </div>
       <ModalContainer />
@@ -37,15 +33,16 @@ const App: Component = () => {
   );
 };
 
-
 const AppDebug: Component = () => {
   const counter = signal<number>(0);
-  
-  return <div>
-    <Button on={{ click: () => counter.set(x => x + 1) }}>Press Me</Button>
-    <span>{ computedSignal(() => counter.get()) }</span>
-  </div>;
-}
+
+  return (
+    <div>
+      <Button on={{ click: () => counter.set((x) => x + 1) }}>Press Me</Button>
+      <span>{computedSignal(() => counter.get())}</span>
+    </div>
+  );
+};
 
 //setup(AppDebug, document.getElementById("app"));
 setup(App, document.getElementById("app"));

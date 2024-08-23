@@ -4,7 +4,10 @@ import { ITableProps, ITableRow } from "./types";
 const TableRow: Component<{ row: ITableRow; head?: boolean }> = (props) => {
   return (
     <tr
-      class={"transition-colors" + (!props.head ? " hover:bg-primary-50" : " bg-gray-100")}
+      class={
+        "transition-colors" +
+        (!props.head ? " hover:bg-primary-50" : " bg-gray-100")
+      }
     >
       {props.row.columns.map((col) => {
         return (
@@ -27,14 +30,14 @@ const TableRow: Component<{ row: ITableRow; head?: boolean }> = (props) => {
 };
 
 export const Table: Component<ITableProps> = (props) => {
-  const labels = computedSignal(
-    () =>
-      unique(
-        props.table.rows.get()
-          .slice(0, 4)
-          .map((row) => row.columns.map((col) => col.label))
-          .flat(),
-      ),
+  const labels = computedSignal(() =>
+    unique(
+      props.table.rows
+        .get()
+        .slice(0, 4)
+        .map((row) => row.columns.map((col) => col.label))
+        .flat(),
+    ),
   );
 
   const headRows = computedSignal((): ITableRow[] => {

@@ -43,19 +43,19 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
   const mouse = useMousePosition();
   const hover = useElementHover(wrapperRef);
 
-  const SEED = (Math.random() * 103.39129) * (1.0 + Math.random());
+  const SEED = Math.random() * 103.39129 * (1.0 + Math.random());
 
   onMounted(() => {
-    console.log('Linegraph mounted! --->');
-  })
+    console.log("Linegraph mounted! --->");
+  });
 
   onUnmounted(() => {
-    console.log('Linegraph unmounted! <---')
-  })
+    console.log("Linegraph unmounted! <---");
+  });
 
   const values = computedSignal(() => {
     return range(N).map(
-      (i) => noise2D(i / N, 0.003123 + i / N, (SEED), OCT, FREQ) * 100,
+      (i) => noise2D(i / N, 0.003123 + i / N, SEED, OCT, FREQ) * 100,
     );
   });
 
@@ -234,7 +234,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
     const tree = quadTree.get();
     const mline = mouseLine.get();
     const all = lines.get();
-    
+
     const qlines = quadTreeFindLines(tree, mline);
     if (qlines.length <= 0 || all.length <= 0) {
       return VEC2(0, 0);
@@ -341,7 +341,7 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
     centerX: true,
     centerY: true,
     smooth: {
-      speed: 10
+      speed: 10,
     },
     placement: "top",
     spacing: 16,
@@ -405,8 +405,16 @@ export const LineGraph: Component<LineGraphProps> = (props) => {
             />
           </linearGradient>
           <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="60%" stop-color={props.color || PRIMARY_COLOR} stop-opacity="0%" />
-            <stop offset="100%" stop-color={props.color || PRIMARY_COLOR} stop-opacity="10%" />
+            <stop
+              offset="60%"
+              stop-color={props.color || PRIMARY_COLOR}
+              stop-opacity="0%"
+            />
+            <stop
+              offset="100%"
+              stop-color={props.color || PRIMARY_COLOR}
+              stop-opacity="10%"
+            />
           </linearGradient>
         </defs>
         {elRect}

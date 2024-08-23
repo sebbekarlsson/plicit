@@ -19,10 +19,10 @@ const signal = (initial, options = {}) => {
     const init = (0, is_1.isFunction)(initial) ? initial : () => initial;
     const triggerFun = () => {
         if (options.isComputed) {
-            sig._value = init();
+            sig._value = init(sig);
         }
         else {
-            init();
+            init(sig);
         }
         scope_1.GSignal.current = undefined;
         sig.watchers.forEach((watcher) => {
@@ -34,11 +34,15 @@ const signal = (initial, options = {}) => {
         sig.trackedEffects.forEach((fx) => {
             fx();
         });
+        sig.tracked.forEach((it) => {
+            // console.log({it})
+        });
     };
     const track = () => {
         const current = scope_1.GSignal.current;
         if (current && current !== sig && !sig.tracked.includes(current)) {
             sig.tracked.push(current);
+            console.log(sig.tracked.length);
         }
         if (scope_1.GSignal.currentEffect &&
             !sig.trackedEffects.includes(scope_1.GSignal.currentEffect) &&
@@ -59,16 +63,16 @@ const signal = (initial, options = {}) => {
         isEffect: options.isEffect,
         sym: "Signal",
         _value: (0, is_1.isFunction)(initial) ? null : initial,
-        fun: init,
+        fun: () => init(sig),
         state: constants_1.ESignalState.UNINITIALIZED,
         trigger,
-        peek: () => sig._value || init(),
+        peek: () => sig._value || init(sig),
         tracked: [],
         trackedEffects: [],
         watchers: [],
         get: () => {
             if (sig.state === constants_1.ESignalState.UNINITIALIZED || sig._value === null) {
-                sig._value = init();
+                sig._value = init(sig);
                 sig.state = constants_1.ESignalState.INITIALIZED;
             }
             track();

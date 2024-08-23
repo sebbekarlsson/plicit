@@ -1,5 +1,7 @@
 export * from './signal';
+export * from './asyncSignal';
 export * from './constants';
+export * from './scope';
 export * from './types';
 export * from './event';
 export * from './computed';

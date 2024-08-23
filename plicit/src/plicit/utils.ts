@@ -181,46 +181,49 @@ export const debounce = <F extends (...args: Parameters<F>) => ReturnType<F>>(
   };
 };
 
-
 export const micro = <T = any>(fun: () => T): Promise<T> => {
   return new Promise<T>((resolve) => {
     queueMicrotask(() => {
       const ret = fun();
       resolve(ret);
-    })
-  })
-}
+    });
+  });
+};
 
 export const sleep = (time: number) => {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, time);
-  })
-}
+  });
+};
 
 export const smartJoin = (arr: string[], delim: string) => {
-  let result: string = '';
+  let result: string = "";
 
   const join = (a: string, b: string, delim: string) => {
     if (a.endsWith(delim) && b.startsWith(delim)) return a + b.slice(1);
-    if ((a.endsWith(delim) && !b.startsWith(delim)) || (!a.endsWith(delim) && b.startsWith(delim))) return a + b;
+    if (
+      (a.endsWith(delim) && !b.startsWith(delim)) ||
+      (!a.endsWith(delim) && b.startsWith(delim))
+    )
+      return a + b;
     return `${a}${delim}${b}`;
-  }
+  };
 
-  for (let i = 0; i < arr.length; i+= 2) {
+  for (let i = 0; i < arr.length; i += 2) {
     const a = arr[i];
-    const b = arr[i+1] || '';
+    const b = arr[i + 1] || "";
     result += join(a, b, delim);
   }
 
   return result;
-}
+};
 
 export const omit = <T extends Dict>(obj: T, keys: string[]): T => {
-  const next = {...obj};
+  const next = { ...obj };
 
   for (const key of keys) {
     delete next[key];
   }
 
   return next;
-}
+};

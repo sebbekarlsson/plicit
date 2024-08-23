@@ -126,7 +126,7 @@ const MenuItem: Component<{
     <div class={"w-full cursor-pointer transition-all"}>
       {computedSignal(() => (
         <div
-          title={props.item.path || ''}
+          title={props.item.path || ""}
           on={{ click: () => handleClick(props.item) }}
           class={
             "w-full h-[2.7rem] hover:bg-primary-500 transition-colors" +

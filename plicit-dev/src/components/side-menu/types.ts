@@ -7,15 +7,15 @@ export type ISideMenuItem = {
   action?: () => any;
   icon?: IconPrimitive;
   items?: ISideMenuItem[];
-}
+};
 
 export type ISideMenu = {
   items: ISideMenuItem[];
-}
+};
 
 export type ISideMenuConfig = ISideMenu;
 
 export type ISideMenuProps = {
   menu: ISideMenuConfig;
-  hook: UseSideMenu; 
-}
+  hook: UseSideMenu;
+};
