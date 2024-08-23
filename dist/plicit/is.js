@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isAsyncFunction = exports.isFunction = exports.isConsonant = exports.isVowel = exports.isFloat = void 0;
+exports.isPromise = exports.isAsyncFunction = exports.isFunction = exports.isConsonant = exports.isVowel = exports.isFloat = void 0;
 const isFloat = (x) => typeof x === "number" && x.toString().includes(".");
 exports.isFloat = isFloat;
 const isVowel = (char) => {
@@ -13,16 +13,22 @@ const isConsonant = (char) => {
     return !(0, exports.isVowel)(char);
 };
 exports.isConsonant = isConsonant;
-const isFunction = (x) => typeof x === 'function';
+const isFunction = (x) => typeof x === "function";
 exports.isFunction = isFunction;
 const isAsyncFunction = (x) => {
     if (!x)
         return false;
-    if (typeof x !== 'function')
+    if (typeof x !== "function")
         return false;
-    if (typeof x.constructor !== 'function')
+    if (typeof x.constructor !== "function")
         return false;
-    return x.constructor.name == 'AsyncFunction';
+    return x.constructor.name == "AsyncFunction";
 };
 exports.isAsyncFunction = isAsyncFunction;
+const isPromise = (x) => {
+    if (typeof x === 'undefined' || x === null)
+        return false;
+    return typeof x.then === 'function';
+};
+exports.isPromise = isPromise;
 //# sourceMappingURL=is.js.map

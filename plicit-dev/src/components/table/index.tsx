@@ -1,5 +1,6 @@
-import { Component, computedSignal, unique } from "plicit";
-import { ITableProps, ITableRow } from "./types";
+import { Component, computedSignal, pget, unique } from "plicit";
+import { ITableBanner, ITableProps, ITableRow } from "./types";
+import { Grid } from "plicit-dev/src/routes/components/grid";
 
 const TableRow: Component<{ row: ITableRow; head?: boolean }> = (props) => {
   return (
@@ -13,7 +14,7 @@ const TableRow: Component<{ row: ITableRow; head?: boolean }> = (props) => {
         return (
           <td
             tag={props.head ? "th" : "td"}
-            class="border-b border-gray-300 px-2"
+            class="border-b border-gray-300 px-4"
             style={{
               borderCollapse: "separate",
               zIndex: "2",
@@ -51,41 +52,68 @@ export const Table: Component<ITableProps> = (props) => {
     ];
   });
 
+  const Banner: Component<{ banner: ITableBanner }> = (props) => {
+    return (
+      <Grid
+        class="flex-none p-4 w-full"
+        columns={props.banner.actions ? "1fr max-content" : undefined}
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        {props.banner.title && props.banner.subtitle && (
+          <div>
+            <div class="text-600 text-lg font-semibold">
+              {computedSignal(() => pget(props.banner.title))}
+            </div>
+            <div class="text-gray-400 font-medium">
+              {computedSignal(() => pget(props.banner.subtitle))}
+            </div>
+          </div>
+        )}
+        {props.banner.actions && <div>{props.banner.actions}</div>}
+        {props.banner.body && <div class="mt-4">{props.banner.body}</div>}
+      </Grid>
+    );
+  };
+
   return (
-    <div
-      class="select-none"
-      style={{
-        maxHeight: "100%",
-        height: "100%",
-        overflow: "auto",
-        display: "flex",
-        flexDirection: "column",
-        flex: "1",
-      }}
-    >
-      <table
-        class="w-full"
+    <div class="w-full h-full flex-col overflow-hidden rounded-lg border border-gray-200 flex flex-col">
+      {props.table.banner && <Banner banner={props.table.banner} />}
+      <div
+        class="select-none"
         style={{
-          textAlign: "left",
-          borderCollapse: "separate",
-          borderSpacing: "0",
+          maxHeight: "100%",
+          height: "100%",
+          overflow: "auto",
+          display: "flex",
+          flexDirection: "column",
+          flex: "1",
         }}
       >
-        {computedSignal(() => (
-          <thead class="sticky top-0 left-0 bg-white">
-            {headRows.get().map((row) => {
-              return <TableRow head row={row} />;
-            })}
-          </thead>
-        ))}
-        {computedSignal(() => (
-          <tbody>
-            {props.table.rows.get().map((row) => {
-              return <TableRow row={row} />;
-            })}
-          </tbody>
-        ))}
-      </table>
+        <table
+          class="w-full"
+          style={{
+            textAlign: "left",
+            borderCollapse: "separate",
+            borderSpacing: "0",
+          }}
+        >
+          {computedSignal(() => (
+            <thead class="sticky top-0 left-0 bg-white">
+              {headRows.get().map((row) => {
+                return <TableRow head row={row} />;
+              })}
+            </thead>
+          ))}
+          {computedSignal(() => (
+            <tbody>
+              {props.table.rows.get().map((row) => {
+                return <TableRow row={row} />;
+              })}
+            </tbody>
+          ))}
+        </table>
+      </div>
     </div>
   );
 };

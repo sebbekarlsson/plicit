@@ -10,4 +10,5 @@ export declare const useFakeDatabase: (props: {
     seed?: number;
 }) => {
     users: Signal<User[]>;
+    totalCount: Signal<number>;
 };

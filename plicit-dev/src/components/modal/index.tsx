@@ -26,7 +26,7 @@ export const Modal = (
 
   return () => (
     <div
-      class="fixed inset-0 z-10 w-screen overflow-y-auto"
+      class="fixed inset-0 z-10 w-screen"
       style={computedSignal(() => ({
         pointerEvents: "all",
         zIndex: props.index + 1 + "",

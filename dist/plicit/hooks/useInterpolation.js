@@ -15,7 +15,7 @@ const useInterpolation = (props) => {
     const run = (args) => {
         stopInterpolation();
         const duration = Math.max(args.duration || props.duration, 0.001);
-        const startValue = (args.from ?? props.initial) ?? value.get();
+        const startValue = args.from ?? props.initial ?? value.get();
         const endValue = args.to;
         let timeStarted = -1;
         let lastTime = -1;

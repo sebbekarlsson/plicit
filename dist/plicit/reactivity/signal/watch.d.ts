@@ -1,4 +1,4 @@
-import { AsyncSignal, type Signal } from './types';
+import { AsyncSignal, type Signal } from "./types";
 export type WatchSignalOptions = {
     immediate?: boolean;
     deep?: boolean;

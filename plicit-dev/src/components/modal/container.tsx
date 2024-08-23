@@ -40,6 +40,7 @@ export const ModalContainer = () => {
         (): CSSProperties => ({
           width: "100vw",
           height: "100vh",
+          overflow: 'hidden',
           position: "fixed",
           left: "0px",
           top: "0px",
@@ -54,7 +55,7 @@ export const ModalContainer = () => {
     >
       {computedSignal(() => {
         return (
-          <div>
+          <div class="overflow-hidden max-h-[100%]">
             {modals.modals.get().map((modal, i) => {
               return <Modal modal={modal} index={i} />;
             })}

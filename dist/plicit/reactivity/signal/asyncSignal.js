@@ -6,6 +6,7 @@ const utils_1 = require("../../utils");
 const constants_1 = require("./constants");
 const effect_1 = require("./effect");
 const scope_1 = require("./scope");
+const signal_1 = require("./signal");
 const utils_2 = require("./utils");
 const isAsyncSignal = (x) => {
     if (!x)
@@ -16,8 +17,11 @@ const isAsyncSignal = (x) => {
 };
 exports.isAsyncSignal = isAsyncSignal;
 const asyncSignal = (initial, options = {}) => {
+    if (options.isComputed !== false) {
+        options.isComputed = true;
+    }
     const init = (0, is_1.isFunction)(initial) ? initial : async () => initial;
-    const callInit = async () => {
+    const callInit_ = async () => {
         sig.state = constants_1.ESignalState.LOADING;
         try {
             const ret = await init(sig);
@@ -30,26 +34,39 @@ const asyncSignal = (initial, options = {}) => {
         }
         return null;
     };
-    const triggerFun = () => {
-        const trig = async () => {
-            if (options.isComputed) {
-                sig._value = await callInit();
-            }
-            else {
-                callInit();
-            }
-            scope_1.GSignal.current = undefined;
-            sig.watchers.forEach((watcher) => {
-                watcher(sig._value);
+    const callInit = options.defer ? () => {
+        return new Promise((resolve) => {
+            queueMicrotask(async () => {
+                (0, scope_1.withSignal)(sig, async () => {
+                    const ret = await callInit_();
+                    resolve(ret);
+                });
             });
-            if (options.isEffect) {
-                return;
+        });
+    } : callInit_;
+    const triggerFun = async () => {
+        scope_1.GSignal.current = sig;
+        if (options.isComputed) {
+            sig._value = await callInit();
+        }
+        else {
+            await callInit();
+        }
+        scope_1.GSignal.current = undefined;
+        sig.watchers.forEach((watcher) => {
+            watcher(sig._value);
+        });
+        if (options.isEffect) {
+            return;
+        }
+        sig.trackedEffects.forEach(async (fx) => {
+            await fx();
+        });
+        sig.tracked.forEach((it) => {
+            if ((0, signal_1.isSignal)(it)) {
+                it.trigger();
             }
-            sig.trackedEffects.forEach((fx) => {
-                fx();
-            });
-        };
-        trig().catch(e => console.error(e));
+        });
     };
     const track = () => {
         const current = scope_1.GSignal.current;
@@ -58,14 +75,12 @@ const asyncSignal = (initial, options = {}) => {
         }
         if (scope_1.GSignal.currentEffect &&
             !sig.trackedEffects.includes(scope_1.GSignal.currentEffect) &&
-            scope_1.GSignal.currentEffect !== trigger) {
+            scope_1.GSignal.currentEffect !== trigger &&
+            !sig.tracked.map((it) => it.trigger).includes(scope_1.GSignal.currentEffect)) {
             sig.trackedEffects.push(scope_1.GSignal.currentEffect);
         }
     };
     let trigger = triggerFun;
-    if (typeof options.debounce === "number") {
-        trigger = (0, utils_1.debounce)(trigger, options.debounce);
-    }
     if (typeof options.throttle === "number") {
         const [fn] = (0, utils_1.throttle)(trigger, options.throttle);
         trigger = fn;
@@ -87,7 +102,7 @@ const asyncSignal = (initial, options = {}) => {
             return sig._value || sig.fallback;
         },
         set: async (fun) => {
-            const nextValue = (0, is_1.isFunction)(fun) ? (await fun(sig._value)) : fun;
+            const nextValue = (0, is_1.isFunction)(fun) ? await fun(sig._value) : fun;
             if (options.autoDiffCheck !== false &&
                 (0, utils_2.canBeAutoDiffed)(sig._value, nextValue) &&
                 nextValue === sig._value) {
@@ -98,9 +113,9 @@ const asyncSignal = (initial, options = {}) => {
             trigger();
         },
     };
-    (0, scope_1.withSignal)(sig, () => {
-        (0, effect_1.callTrackableFunction)(trigger);
-    });
+    (0, scope_1.withAsyncSignal)(sig, async () => {
+        await (0, effect_1.callTrackableAsyncFunction)(trigger);
+    }).catch((e) => console.error(e));
     return sig;
 };
 exports.asyncSignal = asyncSignal;

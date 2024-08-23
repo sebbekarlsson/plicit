@@ -1,2 +1,3 @@
-import { LNodeAttributes } from "plicit";
-export declare const Button: (attributes: LNodeAttributes) => any;
+import { Component } from "plicit";
+import { IButtonProps } from "./types";
+export declare const Button: Component<IButtonProps>;

@@ -32,11 +32,15 @@ export const useFakeDatabase = (props: {
     };
   });
 
+  const unfilteredUsers = computedSignal(() => {
+    return initialUsers;
+  });
+
   const users = computedSignal(() => {
     const qv = props.query.get();
     if (!qv || qv.length <= 1) return initialUsers;
     const q = qv.toLowerCase();
-    return initialUsers.filter((user) => {
+    return unfilteredUsers.get().filter((user) => {
       return (
         user.firstname.toLowerCase().includes(q) ||
         user.lastname.toLowerCase().includes(q)
@@ -44,7 +48,10 @@ export const useFakeDatabase = (props: {
     });
   });
 
+  const totalCount = computedSignal(() => unfilteredUsers.get().length);
+
   return {
     users,
+    totalCount
   };
 };

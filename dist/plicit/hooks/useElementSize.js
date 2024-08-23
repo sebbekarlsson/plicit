@@ -6,7 +6,7 @@ const reactivity_1 = require("../reactivity");
 const scope_1 = require("../scope");
 const useResizeObserver_1 = require("./useResizeObserver");
 const useElementSize = (target) => {
-    const isSVG = (0, reactivity_1.computedSignal)(() => (0, lnode_1.unwrapElement)(target)?.namespaceURI?.includes('svg'));
+    const isSVG = (0, reactivity_1.computedSignal)(() => (0, lnode_1.unwrapElement)(target)?.namespaceURI?.includes("svg"));
     const width = (0, reactivity_1.signal)(0);
     const height = (0, reactivity_1.signal)(0);
     const { stop: stopObserver } = (0, useResizeObserver_1.useResizeObserver)(target, ([entry]) => {

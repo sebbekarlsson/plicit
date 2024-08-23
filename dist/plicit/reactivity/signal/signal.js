@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.signal = exports.isSignal = void 0;
 const is_1 = require("../../is");
 const utils_1 = require("../../utils");
+const asyncSignal_1 = require("./asyncSignal");
 const constants_1 = require("./constants");
 const effect_1 = require("./effect");
 const scope_1 = require("./scope");
@@ -15,11 +16,26 @@ const isSignal = (x) => {
     return x.sym === "Signal";
 };
 exports.isSignal = isSignal;
+const findAsyncSignal = (track) => {
+    if ((0, asyncSignal_1.isAsyncSignal)(track))
+        return track;
+    for (const b of track.tracked) {
+        const sig = findAsyncSignal(b);
+        if (sig)
+            return sig;
+    }
+    return null;
+};
 const signal = (initial, options = {}) => {
     const init = (0, is_1.isFunction)(initial) ? initial : () => initial;
     const triggerFun = () => {
         if (options.isComputed) {
+            const oldValue = sig._value;
             sig._value = init(sig);
+            if (sig._value === oldValue) {
+                scope_1.GSignal.current = undefined;
+                return;
+            }
         }
         else {
             init(sig);
@@ -34,15 +50,18 @@ const signal = (initial, options = {}) => {
         sig.trackedEffects.forEach((fx) => {
             fx();
         });
-        sig.tracked.forEach((it) => {
-            // console.log({it})
+        sig.tracked.forEach(async (it) => {
+            if ((0, asyncSignal_1.isAsyncSignal)(it) &&
+                it.state !== constants_1.ESignalState.LOADING &&
+                it.state !== constants_1.ESignalState.UNINITIALIZED) {
+                await it.trigger();
+            }
         });
     };
     const track = () => {
         const current = scope_1.GSignal.current;
         if (current && current !== sig && !sig.tracked.includes(current)) {
             sig.tracked.push(current);
-            console.log(sig.tracked.length);
         }
         if (scope_1.GSignal.currentEffect &&
             !sig.trackedEffects.includes(scope_1.GSignal.currentEffect) &&

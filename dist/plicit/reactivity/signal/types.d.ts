@@ -12,6 +12,7 @@ export type SignalOptions = Partial<TrackerFlags> & {
 };
 export type AsyncSignalOptions<T = any> = SignalOptions & {
     fallback?: T;
+    defer?: boolean;
 };
 export type SignalFunc<T = any> = () => T;
 export type SignalFuncInit<T = any> = (signal: Signal<T>) => T;
@@ -37,11 +38,11 @@ export type Signal<T = any> = Trackable & {
     trigger: () => void;
     sym: "Signal";
 };
-export type AsyncSignal<T = any> = Omit<Signal<T>, 'fun' | 'set' | 'sym' | 'peek'> & {
-    sym: 'AsyncSignal';
+export type AsyncSignal<T = any> = Omit<Signal<T>, "fun" | "set" | "sym" | "peek"> & {
+    sym: "AsyncSignal";
     fun?: SignalFuncAsync<T>;
     fallback?: T;
-    set: (fun: ((old: T) => (T | Promise<T>)) | T) => Promise<void>;
+    set: (fun: ((old: T) => T | Promise<T>) | T) => Promise<void>;
 };
 export type MaybeSignal<T = any> = T | Signal<T>;
 export type MaybeAsyncSignal<T = any> = T | AsyncSignal<T>;
