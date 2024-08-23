@@ -461,6 +461,14 @@ export class LNode {
               { immediate: true },
             ),
           );
+
+          const ret = sig.get();
+
+          if (!ret) {
+            if (sig.fallback && isLNode(sig.fallback)) return sig.fallback.getElementOrRender();
+            return document.createElement('div');
+          }
+          
           return sig.get().getElementOrRender();
         }
       }

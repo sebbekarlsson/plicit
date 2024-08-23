@@ -16,6 +16,7 @@ export type SignalOptions = Partial<TrackerFlags> & {
 
 export type AsyncSignalOptions<T = any> = SignalOptions & {
   fallback?: T;
+  defer?: boolean;
 };
 
 export type SignalFunc<T = any> = () => T;

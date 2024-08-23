@@ -20,3 +20,8 @@ export const isAsyncFunction = <T = any>(x: any): x is AsyncFun<T> => {
   if (typeof x.constructor !== "function") return false;
   return x.constructor.name == "AsyncFunction";
 };
+
+export const isPromise = <T = any>(x: any): x is Promise<T> => {
+  if (typeof x === 'undefined' || x === null) return false;
+  return typeof x.then === 'function';
+}

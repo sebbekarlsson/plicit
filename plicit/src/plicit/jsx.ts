@@ -1,6 +1,6 @@
 import { Component, isComponent, unwrapComponentTree } from "./component";
 import { ELNodeType, isLNode, lnode, LNodeAttributes, LNode } from "./lnode";
-import { isSignal, MaybeSignal } from "./reactivity";
+import { isAsyncSignal, isSignal, MaybeSignal } from "./reactivity";
 
 const remapChild = (child: any) => {
   if (typeof child === "string" || typeof child === "number")
@@ -22,7 +22,7 @@ export function ljsx(
   let children = childs
     .map((child) => remapChild(child))
     .flat()
-    .filter((it) => isLNode(it) || isComponent(it) || isSignal(it));
+    .filter((it) => isLNode(it) || isComponent(it) || isSignal(it) || isAsyncSignal(it));
 
   if (typeof tag === "string") {
     return lnode(tag, { ...attribs, __depth: depth + 1, children: children });

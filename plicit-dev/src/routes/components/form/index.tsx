@@ -88,15 +88,8 @@ export default () => {
         dog: {
           $label: "Dog",
           $hidden: asyncSignal<boolean>(
-            async (sig) => {
-              await sleep(1);
-              const hasPet = withSignal(sig, () => {
-                return pget(form.fields.person.hasPet.$value);
-              });
-
-              return hasPet === false;
-            },
-            { isComputed: true },
+            async () => pget(form.fields.person.hasPet.$value) === false,
+            { isComputed: true, defer: true },
           ),
           name: {
             $label: "Name",

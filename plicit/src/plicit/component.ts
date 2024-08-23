@@ -104,11 +104,12 @@ export const unwrapComponentTree = (
     }
     if (isSignal(component))
       return lnodeX(ELNodeType.SIGNAL, { ...attribs, signal: component });
-    if (isAsyncSignal(component))
+    if (isAsyncSignal(component)) {
       return lnodeX(ELNodeType.ASYNC_SIGNAL, {
         ...attribs,
         asyncSignal: component,
       });
+    }
     if (typeof component === "string" || typeof component === "number") {
       return lnode("span", {
         text: component + "",

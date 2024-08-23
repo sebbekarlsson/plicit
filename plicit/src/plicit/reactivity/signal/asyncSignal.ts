@@ -2,7 +2,7 @@ import { isFunction } from "../../is";
 import { throttle } from "../../utils";
 import { ESignalState } from "./constants";
 import { callTrackableAsyncFunction } from "./effect";
-import { GSignal, withAsyncSignal } from "./scope";
+import { GSignal, withAsyncSignal, withSignal } from "./scope";
 import { isSignal } from "./signal";
 import {
   type AsyncSignal,
@@ -21,9 +21,14 @@ export const asyncSignal = <T = any>(
   initial: SignalFuncInitAsync<T> | T,
   options: AsyncSignalOptions<T> = {},
 ): AsyncSignal<T> => {
+
+  if (options.isComputed !== false) {
+    options.isComputed = true;
+  }
+  
   const init = isFunction(initial) ? initial : async () => initial;
 
-  const callInit = async () => {
+  const callInit_ = async () => {
     sig.state = ESignalState.LOADING;
     try {
       const ret = await init(sig);
@@ -35,6 +40,17 @@ export const asyncSignal = <T = any>(
     }
     return null;
   };
+
+  const callInit = options.defer ? () => {
+    return new Promise<T>((resolve) => {
+      queueMicrotask(async () => {
+        withSignal(sig, async () => {
+          const ret = await callInit_();
+          resolve(ret);
+        })
+      })
+    })
+  } : callInit_; 
 
   const triggerFun = async () => {
     GSignal.current = sig;

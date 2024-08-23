@@ -43,11 +43,12 @@ const unwrapComponentTree = (component, propagatedAttribs = {}) => {
         }
         if ((0, reactivity_1.isSignal)(component))
             return (0, lnode_1.lnodeX)(lnode_1.ELNodeType.SIGNAL, { ...attribs, signal: component });
-        if ((0, asyncSignal_1.isAsyncSignal)(component))
+        if ((0, asyncSignal_1.isAsyncSignal)(component)) {
             return (0, lnode_1.lnodeX)(lnode_1.ELNodeType.ASYNC_SIGNAL, {
                 ...attribs,
                 asyncSignal: component,
             });
+        }
         if (typeof component === "string" || typeof component === "number") {
             return (0, lnode_1.lnode)("span", {
                 text: component + "",

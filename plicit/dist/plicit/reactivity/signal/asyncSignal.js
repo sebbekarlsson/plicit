@@ -17,8 +17,11 @@ const isAsyncSignal = (x) => {
 };
 exports.isAsyncSignal = isAsyncSignal;
 const asyncSignal = (initial, options = {}) => {
+    if (options.isComputed !== false) {
+        options.isComputed = true;
+    }
     const init = (0, is_1.isFunction)(initial) ? initial : async () => initial;
-    const callInit = async () => {
+    const callInit_ = async () => {
         sig.state = constants_1.ESignalState.LOADING;
         try {
             const ret = await init(sig);
@@ -31,6 +34,16 @@ const asyncSignal = (initial, options = {}) => {
         }
         return null;
     };
+    const callInit = options.defer ? () => {
+        return new Promise((resolve) => {
+            queueMicrotask(async () => {
+                (0, scope_1.withSignal)(sig, async () => {
+                    const ret = await callInit_();
+                    resolve(ret);
+                });
+            });
+        });
+    } : callInit_;
     const triggerFun = async () => {
         scope_1.GSignal.current = sig;
         if (options.isComputed) {

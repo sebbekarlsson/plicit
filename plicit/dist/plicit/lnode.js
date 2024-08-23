@@ -293,6 +293,12 @@ class LNode {
                         this.patchWith(next);
                         next.cleanup();
                     }, { immediate: true }));
+                    const ret = sig.get();
+                    if (!ret) {
+                        if (sig.fallback && (0, exports.isLNode)(sig.fallback))
+                            return sig.fallback.getElementOrRender();
+                        return document.createElement('div');
+                    }
                     return sig.get().getElementOrRender();
                 }
             }
