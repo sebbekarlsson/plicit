@@ -9,7 +9,9 @@ const isProduction = process.env.NODE_ENV == "production";
 
 const stylesHandler = isProduction
   ? MiniCssExtractPlugin.loader
-  : "style-loader";
+                    : "style-loader";
+
+const EXCLUDE =  ["/node_modules/", "/dist/", path.resolve(__dirname, "../node_modules") ];
 
 const config = {
   entry: "./src/index.tsx",
@@ -40,20 +42,23 @@ const config = {
       {
         test: /\.(ts|tsx)$/i,
         loader: "ts-loader",
-        exclude: ["/node_modules/"],
+        exclude: EXCLUDE,
       },
       {
         test: /\.css$/i,
         include: path.resolve(__dirname, "src"),
         use: ["style-loader", "css-loader", "postcss-loader"],
+        exclude: EXCLUDE
       },
       {
         test: /\.(eot|ttf|woff|woff2|png|jpg|gif)$/i,
         type: "asset",
+        exclude: EXCLUDE
       },
       {
         test: /\.svg$/,
-        loader: 'raw-loader'
+        loader: 'raw-loader',
+        exclude: EXCLUDE
       }
 
       // Add your rules for custom modules here
@@ -61,7 +66,10 @@ const config = {
     ],
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".jsx", ".js", "..."],
+    extensions: [".tsx", ".ts", ".jsx", ".js"],
+    alias: {
+      '@': path.resolve(__dirname, 'src/')
+    }
   },
 };
 

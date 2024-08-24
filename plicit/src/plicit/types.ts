@@ -63,7 +63,7 @@ export const isReplaceableElement = (x: any): x is ReplaceableElement => {
 
 export const isText = (x: any): x is Text => {
   if (typeof x !== "object") return false;
-  return typeof x.appendChild === "undefined"; // && typeof x.data === 'string';
+  return (typeof x.appendChild === "undefined" || typeof x.data === 'string'); // && typeof x.data === 'string';
 };
 
 export const isHTMLElement = (x: any): x is HTMLElement => {

@@ -1,6 +1,7 @@
 export * from "./plicit/component";
 export * from "./plicit/scope";
 export * from "./plicit/lnode";
+export * from "./plicit/rendering";
 export * from "./plicit/reactivity";
 export * from "./plicit/types";
 export * from "./plicit/utils";

@@ -5,6 +5,7 @@ export type ITableColumn = {
 };
 export type ITableRow = {
     columns: ITableColumn[];
+    key?: string;
 };
 export type ITableBanner = {
     title?: MaybeSignal<string>;

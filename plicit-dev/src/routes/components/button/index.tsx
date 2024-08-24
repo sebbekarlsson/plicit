@@ -2,7 +2,9 @@ import { Component } from "plicit";
 import { Button } from "../../../components/button";
 
 const view: Component = () => {
-  return <Button>Button</Button>;
+  return <div>
+    <Button>Button</Button>
+  </div>;
 };
 
 export default view;

@@ -1,11 +1,15 @@
 import { Component, LNode, UseInterpolation } from "plicit";
 
-export type IModalConfig = {
+export type IModalCallbacks = {
+  onClose?: () => any;
+}
+
+export type IModalConfig = IModalCallbacks & {
   title: string;
   body: LNode | Component;
 };
 
-export type IModal = {
+export type IModal = IModalCallbacks & {
   title: string;
   body: LNode | Component;
   animation: UseInterpolation;

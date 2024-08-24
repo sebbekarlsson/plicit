@@ -330,8 +330,14 @@ export class LNode {
     }
 
     this.emit({ type: ENodeEvent.BEFORE_REPLACE, payload: {} });
+    const oldEl = this.el;
     this.el = undefined;
     const next = this.render();
+    if (oldEl && isHTMLElement(oldEl) && isHTMLElement(next)) {
+      this.el = patchElements(oldEl, next);
+    } else {
+      this.el = next;
+    }
     if (next !== this.el) {
       this.el.replaceWith(next);
     }

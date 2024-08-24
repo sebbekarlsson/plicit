@@ -1,7 +1,6 @@
 import { computedSignal, smartJoin } from "plicit";
 import { createRouter, useRoute } from "./components/router/hooks";
 import { HomeRoute } from "./routes/home";
-import { PeopleRoute } from "./routes/people";
 import { ISideMenu, ISideMenuItem } from "./components/side-menu/types";
 import { IconPrimitive } from "./components/icon/types";
 import { IRoute } from "./components/router/types";
@@ -32,17 +31,7 @@ export const router = createRouter({
             fill: "currentColor",
             size: "1rem",
           },
-        },
-        {
-          path: "people",
-          name: "People",
-          component: PeopleRoute,
-          icon: {
-            src: async () => import("./assets/icons/people.svg"),
-            fill: "currentColor",
-            size: "1rem",
-          },
-        },
+        }
       ],
     },
     {
@@ -52,15 +41,15 @@ export const router = createRouter({
       component: (_props) => {
         const route = useRoute();
         return (props) => (
-          <div class="w-full h-full p-4">
+          <div class="w-full h-full p-4 flex flex-col overflow-hidden">
             {() =>
               computedSignal(() => (
-                <h1 class="text-lg font-semibold h-[3rem]">
+                <h1 class="text-lg font-semibold h-[3rem] flex-none">
                   {route.match?.get()?.route?.name || "EE"}
                 </h1>
               ))
             }
-            {props?.children}
+              {props?.children}
           </div>
         );
       },
@@ -113,6 +102,13 @@ export const router = createRouter({
           icon: COMPONENT_ICON,
           component: async () =>
             (await import("./routes/components/form")).default,
+        },
+        {
+          path: "table",
+          name: "Table",
+          icon: COMPONENT_ICON,
+          component: async () =>
+            (await import("./routes/components/table")).default,
         },
       ],
     },

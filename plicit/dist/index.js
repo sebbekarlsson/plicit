@@ -17,6 +17,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./plicit/component"), exports);
 __exportStar(require("./plicit/scope"), exports);
 __exportStar(require("./plicit/lnode"), exports);
+__exportStar(require("./plicit/rendering"), exports);
 __exportStar(require("./plicit/reactivity"), exports);
 __exportStar(require("./plicit/types"), exports);
 __exportStar(require("./plicit/utils"), exports);

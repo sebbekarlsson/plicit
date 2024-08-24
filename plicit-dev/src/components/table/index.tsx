@@ -1,20 +1,40 @@
-import { Component, computedSignal, pget, unique } from "plicit";
+import { Component, computedSignal, CSSProperties, onMounted, pget, unique, useInterpolation } from "plicit";
 import { ITableBanner, ITableProps, ITableRow } from "./types";
 import { Grid } from "plicit-dev/src/routes/components/grid";
 
 const TableRow: Component<{ row: ITableRow; head?: boolean }> = (props) => {
+
+  const interp = useInterpolation({
+    initial: 0,
+    duration: 1.0
+  });
+
+  onMounted(() => {
+    console.log('mounted!');
+    interp.run({
+      from: 0.0,
+      to: 1.0
+    });
+  })
+  
   return (
     <tr
+      key={props.key}
       class={
         "transition-colors" +
         (!props.head ? " hover:bg-primary-50" : " bg-gray-100")
       }
+      style={computedSignal(():CSSProperties => {
+        return {
+          opacity: (interp.value.get() * 100) + '%' 
+        }
+      })}
     >
       {props.row.columns.map((col) => {
         return (
           <td
             tag={props.head ? "th" : "td"}
-            class="border-b border-gray-300 px-4"
+            class={["border-b border-gray-300 px-4", props.head ? "font-normal text-gray-900" : "font-normal text-sm text-gray-700"]}
             style={{
               borderCollapse: "separate",
               zIndex: "2",
@@ -107,8 +127,8 @@ export const Table: Component<ITableProps> = (props) => {
           ))}
           {computedSignal(() => (
             <tbody>
-              {props.table.rows.get().map((row) => {
-                return <TableRow row={row} />;
+              {props.table.rows.get().map((row, i) => {
+                return <TableRow row={row} key={row.key || `${i}`} />;
               })}
             </tbody>
           ))}

@@ -1,8 +1,8 @@
-import { Component } from "./component";
-import { LNodeAttributes, LNode } from "./lnode";
 import { MaybeSignal } from "./reactivity";
-export declare function ljsx(tag: string | Component, attribs_: LNodeAttributes, ...childs: any[]): MaybeSignal<LNode>;
+import { VNode, VNodeProps } from "./rendering";
+import { VComponent } from "./rendering/component/types";
+export declare function ljsx(tag: string | VNode | VComponent, attribs_: VNodeProps, ...childs: any[]): MaybeSignal<VNode>;
 declare global {
-    export function ljsx(tag: string | Component, attribs_: LNodeAttributes, ...childs: any[]): MaybeSignal<LNode>;
-    export function React(tag: string | Component, attribs_: LNodeAttributes, ...childs: any[]): MaybeSignal<LNode>;
+    export function ljsx(tag: string | VNode | VComponent, attribs_: VNodeProps, ...childs: any[]): MaybeSignal<VNode>;
+    export function React(tag: string | VNode | VComponent, attribs_: VNodeProps, ...childs: any[]): MaybeSignal<VNode>;
 }

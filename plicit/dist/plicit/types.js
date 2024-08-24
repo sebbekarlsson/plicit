@@ -32,7 +32,7 @@ exports.isReplaceableElement = isReplaceableElement;
 const isText = (x) => {
     if (typeof x !== "object")
         return false;
-    return typeof x.appendChild === "undefined"; // && typeof x.data === 'string';
+    return (typeof x.appendChild === "undefined" || typeof x.data === 'string'); // && typeof x.data === 'string';
 };
 exports.isText = isText;
 const isHTMLElement = (x) => {

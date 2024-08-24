@@ -39,6 +39,9 @@ export const useModals = (): UseModals => {
     });
 
     modals.set((modals) => modals.slice(0, modals.length - 1));
+    if (lastModal.onClose) {
+      lastModal.onClose()
+    }
   };
 
   return {

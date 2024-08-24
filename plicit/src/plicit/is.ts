@@ -25,3 +25,8 @@ export const isPromise = <T = any>(x: any): x is Promise<T> => {
   if (typeof x === 'undefined' || x === null) return false;
   return typeof x.then === 'function';
 }
+
+export const isPrimitive = (x: any): x is (number | string | boolean | undefined | null) => {
+  if (x === null) return true;
+  return ['string', 'boolean', 'number', 'undefined'].includes(typeof x);
+}

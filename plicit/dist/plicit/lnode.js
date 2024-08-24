@@ -182,8 +182,15 @@ class LNode {
             return;
         }
         this.emit({ type: nodeEvents_1.ENodeEvent.BEFORE_REPLACE, payload: {} });
+        const oldEl = this.el;
         this.el = undefined;
         const next = this.render();
+        if (oldEl && (0, types_1.isHTMLElement)(oldEl) && (0, types_1.isHTMLElement)(next)) {
+            this.el = (0, element_1.patchElements)(oldEl, next);
+        }
+        else {
+            this.el = next;
+        }
         if (next !== this.el) {
             this.el.replaceWith(next);
         }

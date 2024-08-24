@@ -1,48 +1,32 @@
 import "./assets/css/index.css";
-import { Component, computedSignal, setup, signal } from "plicit";
-import "./router";
-import { NavBar } from "./components/navbar";
-import { ModalContainer } from "./components/modal/container";
-import { ToastContainer } from "./components/toast/container";
-import { SideMenu } from "./components/side-menu";
-import { useSideMenu } from "./components/side-menu/hooks/useSideMenu";
-import { MainRouter } from "./components/router/components/main-router";
+import { computedSignal, EVNodeType, mountComponent, mountVNode, signal, vnode, VNode } from "plicit"
 import { Button } from "./components/button";
-import { SIDE_MENU } from "./router";
+import { RangeSlider } from "./components/range-slider";
 
-const App: Component = () => {
-  const sideMenuHook = useSideMenu();
+const App = () => {
 
-  return (
-    <div class="w-full h-full flex flex-col">
-      <NavBar />
-      <div class="h-full flex-1 w-full grid grid-cols-[max-content,1fr]">
-        <SideMenu menu={SIDE_MENU} hook={sideMenuHook} />
-        <div
-          class="overflow-auto"
-          style={{
-            maxHeight: "calc(100svh - 4rem)",
-          }}
-        >
-          <MainRouter />
-        </div>
-      </div>
-      <ModalContainer />
-      <ToastContainer />
-    </div>
-  );
+  return <div class="w-full h-full p-16">
+    <RangeSlider value={0}/>
+  </div>; 
+ // const counter = signal<number>(0);
+
+
+ // return <div class="w-full h-full p-4">
+ //   <div class="grid grid-cols-[max-content,max-content] gap-2 items-center">
+ //     <Button on={{ click: () => counter.set(x => x + 1) }}>Increase</Button>
+ //     {counter}
+ //   </div>
+ // </div>;
+  
+  //return vnode('div', {
+  //  style: {
+  //    background: 'red'
+  //  },
+  //  children: [
+  //    vnode('button', { text: 'Increase', on: { click: ()  => counter.set(x => x + 1) } }),
+  //    vnode('span', { text: counter })
+  //  ]
+  //});
 };
-
-const AppDebug: Component = () => {
-  const counter = signal<number>(0);
-
-  return (
-    <div>
-      <Button on={{ click: () => counter.set((x) => x + 1) }}>Press Me</Button>
-      <span>{computedSignal(() => counter.get())}</span>
-    </div>
-  );
-};
-
-//setup(AppDebug, document.getElementById("app"));
-setup(App, document.getElementById("app"));
+mountComponent(App, document.getElementById('app'));
+//mountVNode(App(), document.getElementById('app'));

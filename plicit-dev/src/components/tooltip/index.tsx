@@ -8,7 +8,7 @@ export const Tooltip: Component<ITooltipProps> = (props) => {
       ref={props.hook.toolRef}
       class="bg-white min-w-[4rem] min-h[1rem] shadow-md rounded overflow-hidden select-none"
     >
-      {props.hook.body || props.hook.text || ""}
+      {props.hook.body || props.hook.text || "snopp"}
     </div>
   );
 };

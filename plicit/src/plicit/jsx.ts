@@ -1,55 +1,109 @@
-import { Component, isComponent, unwrapComponentTree } from "./component";
-import { ELNodeType, isLNode, lnode, LNodeAttributes, LNode } from "./lnode";
-import { isAsyncSignal, isSignal, MaybeSignal } from "./reactivity";
+import { isPrimitive } from "./is";
+import { AsyncSignal, isAsyncSignal, isSignal, MaybeSignal, Signal } from "./reactivity";
+import { EVNodeType, isVNode, vnode, VNode, VNodeProps } from "./rendering";
+import { isVComponent, VComponent } from "./rendering/component/types";
 
 const remapChild = (child: any) => {
   if (typeof child === "string" || typeof child === "number")
-    return lnode("span", {
+    return vnode("span", {
       text: child + "",
-      nodeType: ELNodeType.TEXT_ELEMENT,
+      _type: EVNodeType.TEXT
     });
   //if (child === null) return lnode('span', { nodeType: ELNodeType.COMMENT });
   return child;
 };
 
+
+const remapItem = (node: VNode | Signal | AsyncSignal | VComponent) => {
+  if (isVComponent(node)) {
+    return vnode('div', { _component: node, _type: EVNodeType.FUNCTION })
+  }
+  
+  if (isVNode(node)) return node;
+
+  if (isSignal(node) || isAsyncSignal(node)) {
+
+    if (isSignal(node)) {
+      const v = node.peek();
+      if (isPrimitive(v)) {
+        return vnode('div', { text: node, _type: EVNodeType.TEXT });
+      }
+    }
+
+    return vnode('div', { _signal: node});
+  }
+
+  if (isSignal(node) || isAsyncSignal(node)) {
+    return vnode('div', { _signal: node });
+  }
+
+  if (typeof node === 'string') {
+    return vnode(node, {});
+  }
+  
+  return vnode('div', { text: 'INVALID' });
+}
+
 export function ljsx(
-  tag: string | Component,
-  attribs_: LNodeAttributes,
+  tag: string | VNode | VComponent,
+  attribs_: VNodeProps,
   ...childs: any[]
-) {
+): MaybeSignal<VNode> {
   const attribs = attribs_ || {};
-  const depth = typeof attribs.__depth === "number" ? attribs.__depth : 0;
   let children = childs
     .map((child) => remapChild(child))
     .flat()
-    .filter((it) => isLNode(it) || isComponent(it) || isSignal(it) || isAsyncSignal(it));
+    .filter((it) => isVNode(it) || isSignal(it) || isAsyncSignal(it)).map((it => remapItem(it)));
 
-  if (typeof tag === "string") {
-    return lnode(tag, { ...attribs, __depth: depth + 1, children: children });
+//  if (typeof tag === "string") {
+//    return lnode(tag, { ...attribs, __depth: depth + 1, children: children });
+//  }
+//
+//  const next = unwrapComponentTree(tag, {
+//    ...attribs,
+//    __depth: depth + 1,
+//    children: children,
+//  });
+
+
+  if (isVNode(tag)) return tag;
+
+  if (isSignal(tag) || isAsyncSignal(tag)) {
+
+    if (isSignal(tag)) {
+      const v = tag.peek();
+      if (isPrimitive(v)) {
+        return vnode('div', { ...attribs, text: tag, _type: EVNodeType.TEXT, children });
+      }
+    }
+    
+    return vnode('div', { ...attribs, _signal: tag, children });
   }
 
-  const next = unwrapComponentTree(tag, {
-    ...attribs,
-    __depth: depth + 1,
-    children: children,
-  });
+  if (typeof tag === 'string') {
+    return vnode(tag, {...attribs, children});
+  }
 
-  return next;
+  if (isVComponent(tag)) {
+    return vnode('div', { _component: () => tag({...attribs, children}), _type: EVNodeType.FUNCTION })
+  }
+  
+  return vnode('div', { text: 'INVALID' });
 }
 
 declare global {
   export function ljsx(
-    tag: string | Component,
-    attribs_: LNodeAttributes,
+    tag: string | VNode | VComponent,
+    attribs_: VNodeProps,
     ...childs: any[]
-  ): MaybeSignal<LNode>;
+  ): MaybeSignal<VNode>;
 
   // Just to get rid of some typescript warnings
   export function React(
-    tag: string | Component,
-    attribs_: LNodeAttributes,
+    tag: string | VNode | VComponent,
+    attribs_: VNodeProps,
     ...childs: any[]
-  ): MaybeSignal<LNode>;
+  ): MaybeSignal<VNode>;
 }
 
 globalThis.React = ljsx;
